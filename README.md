@@ -20,7 +20,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
   - *Khoanh để chọn*: di chuyển, phóng to/thu nhỏ, nhân bản, đổi màu.
   - *Khoanh để xoá*: xoá mọi thứ nằm trong vòng khoanh.
 - **Hình, chữ, laser**: thêm hình và chữ lên bảng; bút laser để chỉ, nét tự mờ.
-- **Nền bảng**: trơn, ô vuông, **ô li** như vở học sinh, dòng kẻ, chấm.
+- **Nền bảng**: trơn, ô vuông, **ô li** như vở học sinh, dòng kẻ, chấm; chọn trong bảng có hình xem trước từng kiểu.
 
 **Tài liệu**
 - **Chèn ảnh và PDF**: mỗi trang PDF thành một ảnh để viết đè lên.
@@ -43,6 +43,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
   - *Ghi chú cho từng tuần*.
   - Đánh dấu *nghỉ buổi này*, mở nhanh bảng của buổi học, nhắc *buổi tới*.
   - Mục *Lớp chung* gộp lịch của tất cả học sinh.
+- **Thẻ Lịch hôm nay** ở thanh bên: các buổi học trong ngày của cả lớp, đánh dấu buổi *đang học*, bấm để mở lịch học sinh.
 - **Hồ sơ giáo viên** (góc phải thanh trên): ảnh đại diện, họ tên, vai trò, trường, liên hệ, giới thiệu. Chưa cần đăng nhập.
 
 **Giao diện**

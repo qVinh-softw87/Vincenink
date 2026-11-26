@@ -42,7 +42,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
@@ -134,17 +134,17 @@
         <div class="brand-name">Vincenink</div>
         <div class="brand-sub" data-i18n="Bảng dạy học">Bảng dạy học</div>
       </div>
+      <div class="seg lang-seg" id="langSeg" role="group" aria-label="Ngôn ngữ / Language">
+        <button data-lang="vi" title="Tiếng Việt">VI</button><button data-lang="en" title="English">EN</button>
+      </div>
     </div>
     <nav id="studentNav"></nav>
+    <section class="today-card" id="todayCard" aria-live="polite"></section>
     <div class="side-foot">
       <div class="theme-box" id="sideTheme"></div>
       <div class="foot-row">
         <button class="foot-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"><span data-i18n="Cài đặt">Cài đặt</span></button>
         <button class="icon-btn sm" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"></button>
-        <span class="spacer"></span>
-        <div class="seg lang-seg" id="langSeg">
-          <button data-lang="vi">VI</button><button data-lang="en">EN</button>
-        </div>
       </div>
     </div>
     <div class="resizer" data-resize="sidebar" data-i18n-title="Kéo để đổi độ rộng · nhấp đúp để về mặc định" title="Kéo để đổi độ rộng · nhấp đúp để về mặc định"></div>
@@ -167,7 +167,7 @@
       </div>
       <div class="spacer"></div>
       <div class="tb-group" role="group">
-        <label class="tb-item tb-select" data-icon="grid" data-i18n-title="Nền bảng" title="Nền bảng"><select id="bgSelect" aria-label="Nền bảng"></select></label>
+        <button class="tb-item" id="btnBgPick" aria-haspopup="menu" data-i18n-title="Nền bảng" title="Nền bảng"></button>
         <span class="tb-div"></span>
         <button class="tb-item" id="btnExport" data-icon="image" data-i18n-title="Tải bảng thành ảnh PNG" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
         <button class="tb-item" id="btnPdf" data-icon="pdf" data-i18n-title="Tải bảng thành PDF (màu hoặc bản quét)" title="Tải bảng thành PDF"><span>PDF</span></button>
@@ -257,6 +257,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=5" defer></script>
+<script src="app.js?v=6" defer></script>
 </body>
 </html>

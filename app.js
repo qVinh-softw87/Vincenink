@@ -195,6 +195,17 @@ const EN = {
   'Nền be dịu mắt': 'Soft beige paper',
   'Đỡ chói buổi tối': 'Easy on the eyes at night',
   'Như bảng lớp học': 'Like a classroom board',
+  'Giấy trơn, không kẻ': 'Blank paper',
+  'Vẽ hình, làm toán': 'Drawing and maths',
+  'Luyện chữ như vở ô li': 'Handwriting practice (Vietnamese ô li)',
+  'Viết đoạn văn, chính tả': 'Paragraphs and dictation',
+  'Vẽ đồ thị, sơ đồ': 'Graphs and diagrams',
+  'Lịch hôm nay': 'Today',
+  'Hôm nay không có buổi học nào.': 'No lessons today.',
+  'Ghi lịch': 'Add lesson',
+  'Đã nghỉ hôm nay': 'Cancelled today',
+  'Đang học': 'Now',
+  '{b} bảng': '{b} boards',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -218,7 +229,7 @@ function applyStaticI18n() {
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
   applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle();
-  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join(''); $('#bgSelect').value = E.bg;
+  renderBgUI();
 }
 
 /* ---------------- Biểu tượng ---------------- */
@@ -1461,13 +1472,39 @@ async function deleteStudent(st) {
 }
 
 /* ---- Thanh bên ---- */
+/* ---- Thẻ "Lịch hôm nay" ở thanh bên ---- */
+function renderTodayCard() {
+  const el = $('#todayCard'); if (!el) return;
+  const now = new Date(), ds = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const day = weekOccurrences('all', weekStart(now)).find(d => d.date === ds);
+  const list = day ? day.list : [];
+  const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
+  el.innerHTML = `
+    <div class="tc-h"><span class="tc-ic">${ic('calendar', 15)}</span><div><b>${t('Lịch hôm nay')}</b><small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
+      <button class="icon-btn sm" id="tcAdd" title="${t('Ghi lịch học')}">${ic('plus', 16)}</button></div>
+    ${list.length ? `<div class="tc-list">${list.map(o => {
+      const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
+      return `<button class="tc-item ${st}" data-owner="${o.owner}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
+        <span class="tc-time">${o.start}<small>${o.end}</small></span>
+        <span class="tc-body"><b>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</b><small>${esc(o.subject || t('Buổi học'))}</small></span>
+        ${st === 'now' ? `<span class="tc-badge">${t('Đang học')}</span>` : st === 'off' ? `<span class="tc-badge off">${t('Nghỉ')}</span>` : ''}
+      </button>`; }).join('')}</div>`
+      : `<div class="tc-empty"><svg viewBox="0 0 120 64" aria-hidden="true"><rect x="10" y="8" width="70" height="48" rx="6" fill="var(--paper)" stroke="var(--line-strong)"/><path d="M10 20h70M22 8v48M10 32h70M10 44h70" stroke="var(--line)" /><path d="M30 38c6-10 12-10 16-2s10 6 16-4" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><g transform="rotate(35 96 26)"><rect x="90" y="4" width="10" height="40" rx="3" fill="var(--accent)"/><path d="M90 44l5 9 5-9z" fill="var(--accent-ink)"/></g></svg>
+        <span>${t('Hôm nay không có buổi học nào.')}</span></div>`}`;
+  el.onclick = e => {
+    if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds);
+    const it = e.target.closest('.tc-item'); if (it) { S.tab = 'sched'; S.week = weekStart(now); selectStudent(it.dataset.owner); }
+  };
+}
+setInterval(() => renderTodayCard(), 60000);
 function renderSidebar() {
+  renderTodayCard();
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
     <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
-    <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 16)}</button></div>
-    ${students.map(s => `<button class="nav-item ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name">${esc(s.name)}</span><span class="count">${cnt(s.id)}</span></button>`).join('')
+    <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
+    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="count">${cnt(s.id)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
@@ -1615,7 +1652,7 @@ function sched(sid) {
   if (!s.overrides) s.overrides = {};
   return s;
 }
-const saveSched = sid => DB.put('schedule', sched(sid)).catch(() => {});
+const saveSched = sid => { setTimeout(renderTodayCard, 0); return DB.put('schedule', sched(sid)).catch(() => {}); };
 const fixedLabel = f => `${WD[LANG][f.dow]} ${f.start}–${f.end}`;
 function weekOccurrences(sid, ws) {
   const owners = sid === 'all' ? ['all', ...S.students.map(s => s.id)] : [sid];
@@ -1903,6 +1940,31 @@ function themePopover(anchor) {
   m.style.left = clamp(r.right - mw, 8, innerWidth - mw - 8) + 'px'; m.style.top = r.bottom + 6 + 'px';
   setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
 }
+/* ---- Bộ chọn nền bảng: thẻ xem trước ---- */
+const BG_DESC = { plain: 'Giấy trơn, không kẻ', grid: 'Vẽ hình, làm toán', oli: 'Luyện chữ như vở ô li', lines: 'Viết đoạn văn, chính tả', dots: 'Vẽ đồ thị, sơ đồ' };
+function renderBgUI() {
+  const b = $('#btnBgPick'); if (!b) return;
+  const name = t((BGS.find(x => x[0] === E.bg) || BGS[1])[1]);
+  b.innerHTML = `<span class="bgp bgp-${E.bg}"></span><span class="bg-name">${esc(name)}</span>${ic('down', 13)}`;
+}
+function bgPopover(anchor) {
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'popmenu bg-pop'; m.setAttribute('role', 'menu');
+  m.innerHTML = `<div class="tpop-h">${t('Nền bảng')}</div>${BGS.map(([v, n]) => `
+    <button class="bgp-row ${v === E.bg ? 'active' : ''}" data-bg="${v}" role="menuitemradio" aria-checked="${v === E.bg}">
+      <span class="bgp bgp-${v}"></span>
+      <span class="bgp-t"><b>${t(n)}</b><small>${t(BG_DESC[v])}</small></span>
+      ${v === E.bg ? ic('check', 16) : ''}
+    </button>`).join('')}`;
+  m.addEventListener('click', e => {
+    const b = e.target.closest('[data-bg]'); if (!b) return;
+    E.bg = b.dataset.bg; renderBgUI(); requestRender(true); scheduleSave(true); closeMenu();
+  });
+  document.body.append(m); menuEl = m;
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
+  m.style.left = clamp(r.left, 8, innerWidth - mw - 8) + 'px'; m.style.top = r.bottom + 6 + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
+}
 function applyTheme() {
   const th = resolvedTheme(); document.documentElement.dataset.theme = th;
   renderThemeUI();
@@ -1918,12 +1980,11 @@ function renderTopbar() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b) return;
   $('#ownerChip').innerHTML = `${avatarHTML(b.studentId)}<span>${esc(ownerName(b.studentId))}</span>`;
   $('#ownerChip').title = t('Mở trang của {n}', { n: ownerName(b.studentId) });
-  $('#boardTitle').value = b.title; $('#boardDate').value = b.date; $('#bgSelect').value = E.bg;
+  $('#boardTitle').value = b.title; $('#boardDate').value = b.date; renderBgUI();
   updateTitle();
 }
 function bindTopbar() {
-  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join('');
-  $('#bgSelect').onchange = e => { E.bg = e.target.value; requestRender(true); scheduleSave(true); };
+  $('#btnBgPick').onclick = e => bgPopover(e.currentTarget);
   const title = $('#boardTitle');
   title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; b.title = title.value.trim() || b.title; title.value = b.title; await DB.put('boards', b); renderPanel(); renderTopbar(); };
   title.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') title.blur(); };
