@@ -948,3 +948,33 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 }
 .tp-foot { margin: 0; padding: 10px; border-top: 1px solid var(--line); }
 .tp-scroll { position: relative; }
+
+/* =================== v13: trạng thái bấm / rê chuột rõ ràng =================== */
+/* Không để lại viền sau khi bấm chuột; chỉ hiện viền khi dùng bàn phím */
+.tb-item:focus, .top-profile:focus { outline: none; }
+.tb-item:focus-visible, .top-profile:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
+
+/* Rê chuột qua từng nút trong khối thanh trên */
+.tb-item { position: relative; transition: background .15s, color .15s, transform .15s; }
+.tb-item:hover { background: var(--accent-soft); color: var(--accent-ink); box-shadow: none; }
+.tb-item:hover .i { color: var(--accent-ink); }
+.tb-item:active { transform: scale(.97); }
+.tb-item.menu-open { background: var(--accent-soft); color: var(--accent-ink); }
+.top-profile:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.top-profile.menu-open { border-color: var(--accent); }
+
+/* Mũi tên: xuống khi đóng, lên khi mở */
+.chev { transition: transform .2s ease, background .15s, color .15s; }
+.tb-item:hover .chev, .top-profile:hover .chev { background: var(--accent); color: var(--on-accent); }
+.menu-open .chev { transform: rotate(180deg); background: var(--accent); color: var(--on-accent); }
+
+/* Rê chuột qua từng dòng / thẻ trong bảng chọn */
+.popmenu button { transition: background .12s, color .12s, border-color .12s, transform .12s; }
+.popmenu > button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.popmenu > button:hover .i { color: var(--accent-ink); }
+.popmenu > button.danger:hover { background: var(--danger-soft); color: var(--danger); }
+.popmenu > button.danger:hover .i { color: var(--danger); }
+.popmenu .bgp-row:hover { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 45%, transparent); transform: translateX(2px); }
+.popmenu .bgp-row:hover .bgp-t b { color: var(--accent-ink); }
+.popmenu .tpop-card:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-2px); }
+.popmenu .tpop-card:hover .tpop-l { color: var(--accent-ink); }

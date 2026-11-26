@@ -2256,7 +2256,7 @@ function formBox(title, fields, ok, intro = '', row = false) {
 }
 let menuEl = null;
 let menuAnchor = null;
-function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } menuAnchor = null; $$('.menu-open').forEach(x => x.classList.remove('menu-open')); }
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } if (menuAnchor && menuAnchor.contains(document.activeElement)) document.activeElement.blur(); menuAnchor = null; $$('.menu-open').forEach(x => x.classList.remove('menu-open')); }
 // Bấm ra ngoài thì đóng; bấm lại vào chính nút đã mở thì để nút tự đóng (bật/tắt)
 function outsideMenu(e) { if (!menuEl || menuEl.contains(e.target) || (menuAnchor && menuAnchor.contains(e.target))) return; closeMenu(); }
 // Gọi đầu mỗi hàm mở bảng chọn: nếu bảng của nút này đang mở thì đóng lại và trả về true
