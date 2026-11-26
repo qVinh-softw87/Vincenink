@@ -206,6 +206,8 @@ const EN = {
   'Đã nghỉ hôm nay': 'Cancelled today',
   'Đang học': 'Now',
   '{b} bảng': '{b} boards',
+  'Cố định hằng tuần hoặc một buổi': 'Weekly or one-off',
+  'Xem lịch học': 'View schedule',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -282,6 +284,7 @@ const ICONS = {
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
+  chev: '<path d="m6 9 6 6 6-6"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
   s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
@@ -1492,7 +1495,7 @@ function renderTodayCard() {
       : `<div class="tc-empty"><svg viewBox="0 0 120 64" aria-hidden="true"><rect x="10" y="8" width="70" height="48" rx="6" fill="var(--paper)" stroke="var(--line-strong)"/><path d="M10 20h70M22 8v48M10 32h70M10 44h70" stroke="var(--line)" /><path d="M30 38c6-10 12-10 16-2s10 6 16-4" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><g transform="rotate(35 96 26)"><rect x="90" y="4" width="10" height="40" rx="3" fill="var(--accent)"/><path d="M90 44l5 9 5-9z" fill="var(--accent-ink)"/></g></svg>
         <span>${t('Hôm nay không có buổi học nào.')}</span></div>`}`;
   el.onclick = e => {
-    if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds);
+    if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds, true);
     const it = e.target.closest('.tc-item'); if (it) { S.tab = 'sched'; S.week = weekStart(now); selectStudent(it.dataset.owner); }
   };
 }
@@ -1504,13 +1507,28 @@ function renderSidebar() {
   $('#studentNav').innerHTML = `
     <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
     <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
-    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="count">${cnt(s.id)}</span></button>`).join('')
+    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="count">${cnt(s.id)}</span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
   if (e.target.closest('#btnAddStudent')) return studentModal(null);
+  const sm = e.target.closest('[data-smenu]');
+  if (sm) { e.stopPropagation(); return studentMenu(sm, sm.dataset.smenu); }
   const it = e.target.closest('[data-student]'); if (it) selectStudent(it.dataset.student);
 });
+
+function studentMenu(anchor, id) {
+  const st = studentById(id); if (!st) return;
+  const openSched = () => { S.tab = 'sched'; S.week = weekStart(new Date()); selectStudent(id); };
+  popMenu(anchor, [
+    { icon: 'calendar', label: t('Ghi lịch học'), sub: t('Cố định hằng tuần hoặc một buổi'), onClick: async () => { await selectStudent(id); S.tab = 'sched'; renderPanel(); sessionModal(id, null, null); } },
+    { icon: 'clock', label: t('Xem lịch học'), onClick: openSched },
+    { icon: 'plus', label: t('Bảng mới hôm nay'), onClick: async () => { S.studentId = id; await createBoard(id, true); S.tab = 'boards'; renderPanel(); } },
+    { icon: 'edit', label: t('Sửa thông tin học sinh'), onClick: () => studentModal(st) },
+    '-',
+    { icon: 'trash', label: t('Xoá học sinh'), danger: true, onClick: () => deleteStudent(st) },
+  ]);  anchor.closest('.nav-item').classList.add('menu-open');
+}
 
 /* ---- Cột học sinh ---- */
 function renderPanel() {
@@ -1803,18 +1821,18 @@ function overrideModal(owner, f, orig) {
     }]
   });
 }
-function sessionModal(owner, existing, presetDate) {
+function sessionModal(owner, existing, presetDate, pickOwner) {
   const isEdit = !!existing, ref = existing?.ref || {};
   let kind = existing?.kind || 'fixed';
   const pd = presetDate ? parseD(presetDate) : null, body = document.createElement('div');
   const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])];
   body.innerHTML = `
-    ${!isEdit && owner === 'all' && S.students.length ? `<div class="field"><label>${t('Lịch của')}</label><select name="owner">${ownerOpts.map(([v, l]) => `<option value="${v}" ${v === owner ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>` : ''}
+    ${!isEdit && (pickOwner || owner === 'all') && S.students.length ? `<div class="field"><label>${t('Học sinh')}</label><div class="owner-pick">${ownerOpts.map(([v, l]) => `<label class="op-item"><input type="radio" name="owner" value="${v}" ${v === owner ? 'checked' : ''}>${avatarHTML(v)}<span>${esc(l)}</span></label>`).join('')}</div></div>` : ''}
     ${isEdit ? (kind === 'fixed' ? `<div class="info-box">${ic('repeat', 15)}<div>${t('Bạn đang sửa <b>lịch cố định</b>: thay đổi áp dụng cho mọi tuần. Muốn đổi riêng một tuần, hãy bấm vào buổi học trong tuần đó và chọn “Đổi giờ / ngày chỉ tuần này”.')}</div></div>` : '')
     : `<div class="field"><label>${t('Kiểu lịch')}</label><div class="radio-cards">
       <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><b>${ic('repeat', 14)} ${t('Cố định hằng tuần')}</b><span>${t('Luôn lặp lại cùng thứ, cùng giờ. Tuần nào cần đổi thì đổi riêng tuần đó.')}</span></label>
       <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><b>${ic('calendar', 14)} ${t('Chỉ một buổi')}</b><span>${t('Học bù, học thêm, buổi kiểm tra…')}</span></label></div></div>`}
-    <div class="field f-dow"><label>${t('Thứ')}</label><select name="dow">${WD[LANG].map((d, i) => `<option value="${i}" ${(ref.dow ?? (pd ? dow(pd) : 0)) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+    <div class="field f-dow"><label>${t('Thứ')}</label><select name="dow">${WD[LANG].map((d, i) => `<option value="${i}" ${(ref.dow ?? dow(pd || new Date())) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
     <div class="field f-date"><label>${t('Ngày')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
     <div class="row2">
       <div class="field"><label>${t('Bắt đầu')}</label><input type="time" name="start" value="${ref.start || '18:00'}"></div>
@@ -1832,7 +1850,7 @@ function sessionModal(owner, existing, presetDate) {
         const v = n => $(`[name=${n}]`, body)?.value;
         const start = v('start'), end = v('end');
         if (!start || !end || end <= start) { toast(t('Giờ kết thúc phải sau giờ bắt đầu'), true); return false; }
-        const own = v('owner') || owner, sc = sched(own);
+        const own = $('[name=owner]:checked', body)?.value || owner, sc = sched(own);
         const data = { start, end, subject: v('subject').trim(), note: v('note').trim() };
         if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: +v('dow') } : { date: v('date') });
         else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: +v('dow'), ...data });
@@ -1854,11 +1872,12 @@ function profileAvatarHTML(cls = '') {
 function renderProfileCard() {
   const p = profile();
   const first = p.name ? p.name.trim().split(/\s+/).pop() : '';
-  $('#topProfile').innerHTML = `${profileAvatarHTML('round')}<span class="tp-name">${esc(first || t('Hồ sơ'))}</span>${ic('down', 14)}`;
+  $('#topProfile').innerHTML = `${profileAvatarHTML('round')}<span class="tp-name">${esc(first || t('Hồ sơ'))}</span><span class="chev">${ic('chev', 12)}</span>`;
   $('#topProfile').title = p.name ? `${p.name}${p.role ? ' · ' + p.role : ''}` : t('Hồ sơ của bạn');
 }
 function profileMenu() {
   const p = profile();
+  setTimeout(() => $('#topProfile').classList.add('menu-open'), 0);
   popMenu($('#topProfile'), [
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
@@ -1926,10 +1945,10 @@ function renderThemeUI() {
   $('#sideTheme').innerHTML = `
     <div class="tbx-h"><span>${ic('palette', 14)}${t('Giao diện')}</span><b>${esc(label)}</b></div>
     <div class="tbx-row">${THEME_OPTS.map(([v, l]) => `<button class="tbx-chip ${v === cur ? 'active' : ''}" data-theme-v="${v}" title="${t(l)}" aria-label="${t(l)}">${themePreview(v)}</button>`).join('')}</div>`;
-  $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span>${ic('down', 13)}`;
+  $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span><span class="chev">${ic('chev', 12)}</span>`;
 }
 function themePopover(anchor) {
-  closeMenu(); const cur = themeNow();
+  closeMenu(); anchor.classList.add('menu-open'); const cur = themeNow();
   const m = document.createElement('div'); m.className = 'popmenu theme-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Chế độ màu')}</div><div class="tpop-grid">${THEME_OPTS.map(([v, l]) => `
     <button class="tpop-card ${v === cur ? 'active' : ''}" data-theme-v="${v}">${themePreview(v)}<span class="tpop-l">${t(l)}${v === cur ? ic('check', 14) : ''}</span>
@@ -1945,10 +1964,10 @@ const BG_DESC = { plain: 'Giấy trơn, không kẻ', grid: 'Vẽ hình, làm to
 function renderBgUI() {
   const b = $('#btnBgPick'); if (!b) return;
   const name = t((BGS.find(x => x[0] === E.bg) || BGS[1])[1]);
-  b.innerHTML = `<span class="bgp bgp-${E.bg}"></span><span class="bg-name">${esc(name)}</span>${ic('down', 13)}`;
+  b.innerHTML = `<span class="bgp bgp-${E.bg}"></span><span class="bg-name">${esc(name)}</span><span class="chev">${ic('chev', 12)}</span>`;
 }
 function bgPopover(anchor) {
-  closeMenu();
+  closeMenu(); anchor.classList.add('menu-open');
   const m = document.createElement('div'); m.className = 'popmenu bg-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Nền bảng')}</div>${BGS.map(([v, n]) => `
     <button class="bgp-row ${v === E.bg ? 'active' : ''}" data-bg="${v}" role="menuitemradio" aria-checked="${v === E.bg}">
@@ -2160,7 +2179,7 @@ function formBox(title, fields, ok, intro = '', row = false) {
   });
 }
 let menuEl = null;
-function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } }
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } $$('.menu-open').forEach(x => x.classList.remove('menu-open')); }
 function outsideMenu(e) { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }
 function popMenu(anchor, items) {
   closeMenu(); const m = document.createElement('div'); m.className = 'popmenu'; m.setAttribute('role', 'menu');
