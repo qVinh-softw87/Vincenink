@@ -209,6 +209,18 @@ const EN = {
   'Cố định hằng tuần hoặc một buổi': 'Weekly or one-off',
   'Xem lịch học': 'View schedule',
   'Về Vincenink': 'About Vincenink',
+  '45 phút': '45 min',
+  '1 giờ': '1 hour',
+  '1,5 giờ': '1.5 hours',
+  '2 giờ': '2 hours',
+  'Lặp lại mỗi tuần, đổi riêng tuần nào cũng được': 'Repeats every week; any single week can be changed',
+  'Học bù, học thêm, kiểm tra': 'Make-up, extra lesson, test',
+  'Học vào thứ': 'Day of the week',
+  'Ngày học': 'Date',
+  'Thời gian': 'Time',
+  '(tuỳ chọn)': '(optional)',
+  'Lưu lịch': 'Save',
+  'Đã ghi lịch cho {n}': 'Scheduled for {n}',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1826,37 +1838,60 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
   const isEdit = !!existing, ref = existing?.ref || {};
   let kind = existing?.kind || 'fixed';
   const pd = presetDate ? parseD(presetDate) : null, body = document.createElement('div');
+  body.className = 'sess-form';
   const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])];
+  const curDow = ref.dow ?? dow(pd || new Date());
+  const DUR = [[45, t('45 phút')], [60, t('1 giờ')], [90, t('1,5 giờ')], [120, t('2 giờ')]];
   body.innerHTML = `
-    ${!isEdit && (pickOwner || owner === 'all') && S.students.length ? `<div class="field"><label>${t('Học sinh')}</label><div class="owner-pick">${ownerOpts.map(([v, l]) => `<label class="op-item"><input type="radio" name="owner" value="${v}" ${v === owner ? 'checked' : ''}>${avatarHTML(v)}<span>${esc(l)}</span></label>`).join('')}</div></div>` : ''}
+    ${!isEdit && (pickOwner || owner === 'all') && S.students.length ? `
+    <div class="field"><label>${t('Học sinh')}</label>
+      <div class="owner-pick">${ownerOpts.map(([v, l]) => `
+        <label class="op-item"><input type="radio" name="owner" value="${v}" ${v === owner ? 'checked' : ''}>${avatarHTML(v)}<span>${esc(l)}</span><i class="op-check">${ic('check', 11)}</i></label>`).join('')}
+      </div></div>` : ''}
     ${isEdit ? (kind === 'fixed' ? `<div class="info-box">${ic('repeat', 15)}<div>${t('Bạn đang sửa <b>lịch cố định</b>: thay đổi áp dụng cho mọi tuần. Muốn đổi riêng một tuần, hãy bấm vào buổi học trong tuần đó và chọn “Đổi giờ / ngày chỉ tuần này”.')}</div></div>` : '')
-    : `<div class="field"><label>${t('Kiểu lịch')}</label><div class="radio-cards">
-      <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><b>${ic('repeat', 14)} ${t('Cố định hằng tuần')}</b><span>${t('Luôn lặp lại cùng thứ, cùng giờ. Tuần nào cần đổi thì đổi riêng tuần đó.')}</span></label>
-      <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><b>${ic('calendar', 14)} ${t('Chỉ một buổi')}</b><span>${t('Học bù, học thêm, buổi kiểm tra…')}</span></label></div></div>`}
-    <div class="field f-dow"><label>${t('Thứ')}</label><select name="dow">${WD[LANG].map((d, i) => `<option value="${i}" ${(ref.dow ?? dow(pd || new Date())) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
-    <div class="field f-date"><label>${t('Ngày')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
-    <div class="row2">
-      <div class="field"><label>${t('Bắt đầu')}</label><input type="time" name="start" value="${ref.start || '18:00'}"></div>
-      <div class="field"><label>${t('Kết thúc')}</label><input type="time" name="end" value="${ref.end || '19:30'}"></div>
+    : `<div class="field"><label>${t('Kiểu lịch')}</label><div class="kind-cards">
+      <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><span class="kc-ic">${ic('repeat', 17)}</span><span class="kc-t"><b>${t('Cố định hằng tuần')}</b><small>${t('Lặp lại mỗi tuần, đổi riêng tuần nào cũng được')}</small></span></label>
+      <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><span class="kc-ic">${ic('calendar', 17)}</span><span class="kc-t"><b>${t('Chỉ một buổi')}</b><small>${t('Học bù, học thêm, kiểm tra')}</small></span></label></div></div>`}
+    <div class="field f-dow"><label>${t('Học vào thứ')}</label>
+      <div class="day-pills">${WDS[LANG].map((d, i) => `<label class="dp ${i >= 5 ? 'we' : ''}"><input type="radio" name="dow" value="${i}" ${curDow === i ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
+    <div class="field f-date"><label>${t('Ngày học')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
+    <div class="field"><label>${t('Thời gian')}</label>
+      <div class="time-row">
+        <span class="time-box">${ic('clock', 15)}<input type="time" name="start" value="${ref.start || '18:00'}" aria-label="${t('Bắt đầu')}"></span>
+        <span class="time-arrow">→</span>
+        <span class="time-box"><input type="time" name="end" value="${ref.end || '19:30'}" aria-label="${t('Kết thúc')}"></span>
+      </div>
+      <div class="dur-chips">${DUR.map(([m, l]) => `<button type="button" data-dur="${m}">${l}</button>`).join('')}</div>
     </div>
-    <div class="field"><label>${t('Môn / nội dung')}</label><input type="text" name="subject" value="${esc(ref.subject || '')}" placeholder="${t('VD: Toán – phân số')}"></div>
-    <div class="field"><label>${t('Chú thích')}</label><input type="text" name="note" value="${esc(ref.note || '')}" placeholder="${t('VD: Mang vở ô li, ôn bài 5')}"></div>`;
+    <div class="field"><label>${t('Môn / nội dung')}</label><span class="in-ic">${ic('book', 15)}<input type="text" name="subject" value="${esc(ref.subject || '')}" placeholder="${t('VD: Toán – phân số')}"></span></div>
+    <div class="field"><label>${t('Chú thích')} <em class="opt">${t('(tuỳ chọn)')}</em></label><span class="in-ic">${ic('note', 15)}<input type="text" name="note" value="${esc(ref.note || '')}" placeholder="${t('VD: Mang vở ô li, ôn bài 5')}"></span></div>`;
+  const toMin = x => { const [h, m] = (x || '0:0').split(':').map(Number); return h * 60 + m; };
+  const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
+  const syncDur = () => { const d = toMin($('[name=end]', body).value) - toMin($('[name=start]', body).value); $$('[data-dur]', body).forEach(b => b.classList.toggle('active', +b.dataset.dur === d)); };
   const sync = () => { $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once'); };
   body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } });
-  sync();
+  body.addEventListener('input', e => { if (e.target.type === 'time') syncDur(); });
+  body.addEventListener('click', e => {
+    const d = e.target.closest('[data-dur]'); if (!d) return;
+    const st = $('[name=start]', body).value || '18:00';
+    $('[name=end]', body).value = fromMin(Math.min(toMin(st) + +d.dataset.dur, 23 * 60 + 59)); syncDur();
+  });
+  sync(); syncDur();
   openModal({
-    title: isEdit ? t(kind === 'fixed' ? 'Sửa lịch cố định' : 'Sửa buổi học') : t('Ghi lịch học'), body, width: 480,
+    title: isEdit ? t(kind === 'fixed' ? 'Sửa lịch cố định' : 'Sửa buổi học') : t('Ghi lịch học'), body, width: 500,
     actions: [{ label: t('Huỷ') }, {
-      label: t('Lưu'), kind: 'primary', onClick: () => {
+      label: t(isEdit ? 'Lưu' : 'Lưu lịch'), kind: 'primary', onClick: () => {
         const v = n => $(`[name=${n}]`, body)?.value;
         const start = v('start'), end = v('end');
         if (!start || !end || end <= start) { toast(t('Giờ kết thúc phải sau giờ bắt đầu'), true); return false; }
         const own = $('[name=owner]:checked', body)?.value || owner, sc = sched(own);
+        const dw = +($('[name=dow]:checked', body)?.value ?? curDow);
         const data = { start, end, subject: v('subject').trim(), note: v('note').trim() };
-        if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: +v('dow') } : { date: v('date') });
-        else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: +v('dow'), ...data });
+        if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: dw } : { date: v('date') });
+        else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: dw, ...data });
         else { sc.sessions.push({ id: uid(), date: v('date'), ...data }); S.week = weekStart(parseD(v('date'))); }
         saveSched(own); renderPanel();
+        if (!isEdit) toast(t('Đã ghi lịch cho {n}', { n: ownerName(own) }));
       }
     }]
   });

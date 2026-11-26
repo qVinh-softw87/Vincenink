@@ -828,3 +828,73 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .foot-row .foot-btn:hover .fb-go { transform: translateX(2px); color: var(--accent-ink); }
 #app.rail .foot-row .foot-btn { justify-content: center; }
 #app.rail .foot-row .foot-btn span, #app.rail .fb-go { display: none; }
+
+/* =================== v10: bảng Ghi lịch học =================== */
+.sess-form .field { margin-bottom: 16px; }
+.sess-form .field > label { display: flex; align-items: baseline; gap: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; }
+.sess-form .opt { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+.owner-pick { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 6px; max-height: 168px; overflow-y: auto; padding: 2px; }
+.op-item {
+  position: relative; display: flex !important; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--ink-soft); min-width: 0;
+  transition: border-color .12s, background .12s;
+}
+.op-item input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+.op-item .avatar { width: 28px; height: 28px; border-radius: 9px; font-size: 12px; flex-shrink: 0; }
+.op-item > span:not(.avatar) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.op-check { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line-strong); color: transparent; flex-shrink: 0; font-style: normal; }
+.op-check .i { stroke-width: 3; }
+.op-item:hover { border-color: var(--line-strong); }
+.op-item:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.op-item:has(input:checked) .op-check { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+.kind-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kind-cards label {
+  display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px; border-radius: 13px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); transition: border-color .12s, background .12s;
+}
+.kind-cards input { position: absolute; opacity: 0; pointer-events: none; }
+.kc-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--bg); color: var(--muted); }
+.kc-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kc-t b { font-size: 13.5px; color: var(--ink); }
+.kc-t small { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.kind-cards label:hover { border-color: var(--line-strong); }
+.kind-cards label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.kind-cards label:has(input:checked) .kc-ic { background: var(--accent); color: var(--on-accent); }
+
+.day-pills { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.dp { cursor: pointer; }
+.dp input { position: absolute; opacity: 0; pointer-events: none; }
+.dp span {
+  display: grid; place-items: center; height: 38px; border-radius: 11px; font-size: 13px; font-weight: 600; color: var(--ink-soft);
+  border: 1.5px solid var(--line); background: var(--surface); transition: all .12s;
+}
+.dp.we span { color: var(--danger); }
+.dp:hover span { border-color: var(--line-strong); }
+.dp input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent); }
+.dp input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.time-row { display: flex; align-items: center; gap: 8px; }
+.time-box, .in-ic {
+  flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 42px; border-radius: 11px;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); transition: border-color .12s, box-shadow .12s;
+}
+.time-box:focus-within, .in-ic:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.time-box input, .in-ic input, .sess-form .in-ic input[type=text] {
+  flex: 1; min-width: 0; border: 0 !important; background: none !important; outline: none; padding: 0 !important; box-shadow: none !important;
+  font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; height: 100%;
+}
+.in-ic input[type=text] { font-size: 14px; font-weight: 500; }
+.time-box input::-webkit-calendar-picker-indicator { opacity: .45; cursor: pointer; }
+[data-theme="dark"] .time-box input::-webkit-calendar-picker-indicator, [data-theme="chalk"] .time-box input::-webkit-calendar-picker-indicator,
+[data-theme="dark"] .sess-form input[type=date]::-webkit-calendar-picker-indicator, [data-theme="chalk"] .sess-form input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1); }
+.time-arrow { color: var(--muted); font-weight: 600; }
+.dur-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.dur-chips button { padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--ink-soft); background: var(--bg); border: 1px solid var(--line); }
+.dur-chips button:hover { border-color: var(--accent); color: var(--accent-ink); }
+.dur-chips button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.sess-form input[type=date] { height: 42px; font-weight: 600; }
+@media (max-width: 520px) { .kind-cards { grid-template-columns: 1fr; } .dp span { height: 34px; font-size: 12px; } }
+.sess-form .in-ic input[type=text] { font-size: 14px; font-weight: 500; }
+.sess-form input::placeholder { font-weight: 400; color: var(--muted); opacity: .8; }
