@@ -221,6 +221,8 @@ const EN = {
   '(tuỳ chọn)': '(optional)',
   'Lưu lịch': 'Save',
   'Đã ghi lịch cho {n}': 'Scheduled for {n}',
+  'Giờ': 'Hour',
+  'Phút': 'Minute',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1518,9 +1520,9 @@ function renderSidebar() {
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
-    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
+    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span></button>
     <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
-    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="count">${cnt(s.id)}</span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
+    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
@@ -1540,7 +1542,7 @@ function studentMenu(anchor, id) {
     { icon: 'edit', label: t('Sửa thông tin học sinh'), onClick: () => studentModal(st) },
     '-',
     { icon: 'trash', label: t('Xoá học sinh'), danger: true, onClick: () => deleteStudent(st) },
-  ]);  anchor.closest('.nav-item').classList.add('menu-open');
+  ]);  if (menuAnchor === anchor) anchor.closest('.nav-item').classList.add('menu-open');
 }
 
 /* ---- Cột học sinh ---- */
@@ -1810,14 +1812,12 @@ async function openLessonBoard(owner, date, subject) {
 function overrideModal(owner, f, orig) {
   const sc = sched(owner), key = f.id + '@' + orig, cur = sc.overrides[key] || { date: orig, start: f.start, end: f.end, subject: f.subject, note: f.note };
   const ws = weekStart(parseD(orig)), body = document.createElement('div');
+  body.className = 'sess-form'; bindTimeFields(body);
   body.innerHTML = `
     <div class="info-box">${ic('repeat', 15)}<div>${t('Lịch cố định: {x}', { x: `<b>${fixedLabel(f)}</b>${f.subject ? ' · ' + esc(f.subject) : ''}` })}<br>
       ${t('Thay đổi dưới đây <b>chỉ áp dụng tuần {a} – {b}</b>. Các tuần khác vẫn học như lịch cố định.', { a: shortDate(dstr(ws)), b: shortDate(dstr(addDays(ws, 6))) })}</div></div>
     <div class="field"><label>${t('Học vào ngày')}</label><select name="date">${[0, 1, 2, 3, 4, 5, 6].map(i => { const d = dstr(addDays(ws, i)); return `<option value="${d}" ${d === cur.date ? 'selected' : ''}>${WD[LANG][i]} · ${shortDate(d)}</option>`; }).join('')}</select></div>
-    <div class="row2">
-      <div class="field"><label>${t('Bắt đầu')}</label><input type="time" name="start" value="${cur.start}"></div>
-      <div class="field"><label>${t('Kết thúc')}</label><input type="time" name="end" value="${cur.end}"></div>
-    </div>
+    <div class="field"><label>${t('Thời gian')}</label><div class="time-row">${timeField('start', cur.start, t('Bắt đầu'), true)}<span class="time-arrow">→</span>${timeField('end', cur.end, t('Kết thúc'), false)}</div></div>
     <div class="field"><label>${t('Môn / nội dung')}</label><input type="text" name="subject" value="${esc(cur.subject || '')}"></div>
     <div class="field"><label>${t('Chú thích')}</label><input type="text" name="note" value="${esc(cur.note || '')}" placeholder="${t('VD: Dời lịch vì học sinh đi thi')}"></div>`;
   openModal({
@@ -1833,6 +1833,45 @@ function overrideModal(owner, f, orig) {
       }
     }]
   });
+}
+/* ---- Bộ chọn giờ riêng (thay cho bộ chọn mặc định của trình duyệt) ---- */
+const timeField = (name, value, label, icon) => `<button type="button" class="time-box time-btn" data-tp="${name}" aria-label="${esc(label)}">${icon ? ic('clock', 15) : ''}<span class="tv">${value}</span><input type="hidden" name="${name}" value="${value}"><span class="chev">${ic('chev', 12)}</span></button>`;
+function setTimeField(root, name, value) {
+  const b = $(`[data-tp="${name}"]`, root); if (!b) return;
+  $('input', b).value = value; $('.tv', b).textContent = value;
+  b.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function bindTimeFields(root) {
+  root.addEventListener('click', e => { const b = e.target.closest('[data-tp]'); if (b) timePopover(b, root); });
+}
+function timePopover(btn, root) {
+  if (toggleMenu(btn)) return; btn.classList.add('menu-open');
+  const name = btn.dataset.tp, [h0, m0] = $('input', btn).value.split(':').map(Number);
+  const mins = [...new Set([...Array.from({ length: 12 }, (_, i) => i * 5), m0])].sort((a, b) => a - b);
+  let h = h0, m = m0;
+  const m_ = document.createElement('div'); m_.className = 'popmenu time-pop';
+  const draw = () => {
+    m_.innerHTML = `
+      <div class="tp-head"><span class="tp-big">${pad(h)}<em>:</em>${pad(m)}</span><small>${esc(btn.getAttribute('aria-label') || '')}</small></div>
+      <div class="tp-cols">
+        <div class="tp-col"><div class="tp-lbl">${t('Giờ')}</div><div class="tp-scroll" data-col="h">${Array.from({ length: 24 }, (_, i) => `<button type="button" data-h="${i}" class="${i === h ? 'on' : ''} ${i < 6 || i > 22 ? 'dim' : ''}">${pad(i)}</button>`).join('')}</div></div>
+        <div class="tp-col"><div class="tp-lbl">${t('Phút')}</div><div class="tp-scroll" data-col="m">${mins.map(i => `<button type="button" data-m="${i}" class="${i === m ? 'on' : ''}">${pad(i)}</button>`).join('')}</div></div>
+      </div>
+      <div class="tp-foot"><button type="button" class="btn primary sm block" data-ok>${t('Xong')}</button></div>`;
+    $$('.tp-scroll', m_).forEach(c => { const on = $('.on', c); if (on) c.scrollTop = on.offsetTop - c.clientHeight / 2 + on.offsetHeight / 2; });
+  };
+  const apply = () => setTimeField(root, name, `${pad(h)}:${pad(m)}`);
+  m_.addEventListener('click', e => {
+    const hb = e.target.closest('[data-h]'), mb = e.target.closest('[data-m]');
+    if (hb) { h = +hb.dataset.h; apply(); const st = [...$$('.tp-scroll', m_)].map(c => c.scrollTop); draw(); $$('.tp-scroll', m_).forEach((c, i) => c.scrollTop = st[i]); }
+    else if (mb) { m = +mb.dataset.m; apply(); closeMenu(); }
+    else if (e.target.closest('[data-ok]')) closeMenu();
+  });
+  document.body.append(m_); menuEl = m_; draw();
+  const r = btn.getBoundingClientRect(), mw = m_.offsetWidth, mh = m_.offsetHeight;
+  m_.style.left = clamp(r.left, 8, innerWidth - mw - 8) + 'px';
+  m_.style.top = (r.bottom + mh + 8 > innerHeight ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
 }
 function sessionModal(owner, existing, presetDate, pickOwner) {
   const isEdit = !!existing, ref = existing?.ref || {};
@@ -1857,9 +1896,9 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
     <div class="field f-date"><label>${t('Ngày học')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
     <div class="field"><label>${t('Thời gian')}</label>
       <div class="time-row">
-        <span class="time-box">${ic('clock', 15)}<input type="time" name="start" value="${ref.start || '18:00'}" aria-label="${t('Bắt đầu')}"></span>
+        ${timeField('start', ref.start || '18:00', t('Bắt đầu'), true)}
         <span class="time-arrow">→</span>
-        <span class="time-box"><input type="time" name="end" value="${ref.end || '19:30'}" aria-label="${t('Kết thúc')}"></span>
+        ${timeField('end', ref.end || '19:30', t('Kết thúc'), false)}
       </div>
       <div class="dur-chips">${DUR.map(([m, l]) => `<button type="button" data-dur="${m}">${l}</button>`).join('')}</div>
     </div>
@@ -1870,11 +1909,12 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
   const syncDur = () => { const d = toMin($('[name=end]', body).value) - toMin($('[name=start]', body).value); $$('[data-dur]', body).forEach(b => b.classList.toggle('active', +b.dataset.dur === d)); };
   const sync = () => { $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once'); };
   body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } });
-  body.addEventListener('input', e => { if (e.target.type === 'time') syncDur(); });
+  body.addEventListener('input', () => syncDur());
+  bindTimeFields(body);
   body.addEventListener('click', e => {
     const d = e.target.closest('[data-dur]'); if (!d) return;
     const st = $('[name=start]', body).value || '18:00';
-    $('[name=end]', body).value = fromMin(Math.min(toMin(st) + +d.dataset.dur, 23 * 60 + 59)); syncDur();
+    setTimeField(body, 'end', fromMin(Math.min(toMin(st) + +d.dataset.dur, 23 * 60 + 55)));
   });
   sync(); syncDur();
   openModal({
@@ -1913,7 +1953,7 @@ function renderProfileCard() {
 }
 function profileMenu() {
   const p = profile();
-  setTimeout(() => $('#topProfile').classList.add('menu-open'), 0);
+  setTimeout(() => { if (menuAnchor === $('#topProfile')) $('#topProfile').classList.add('menu-open'); }, 0);
   popMenu($('#topProfile'), [
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
@@ -1984,7 +2024,7 @@ function renderThemeUI() {
   $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span><span class="chev">${ic('chev', 12)}</span>`;
 }
 function themePopover(anchor) {
-  closeMenu(); anchor.classList.add('menu-open'); const cur = themeNow();
+  if (toggleMenu(anchor)) return; anchor.classList.add('menu-open'); const cur = themeNow();
   const m = document.createElement('div'); m.className = 'popmenu theme-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Chế độ màu')}</div><div class="tpop-grid">${THEME_OPTS.map(([v, l]) => `
     <button class="tpop-card ${v === cur ? 'active' : ''}" data-theme-v="${v}">${themePreview(v)}<span class="tpop-l">${t(l)}${v === cur ? ic('check', 14) : ''}</span>
@@ -2003,7 +2043,7 @@ function renderBgUI() {
   b.innerHTML = `<span class="bgp bgp-${E.bg}"></span><span class="bg-name">${esc(name)}</span><span class="chev">${ic('chev', 12)}</span>`;
 }
 function bgPopover(anchor) {
-  closeMenu(); anchor.classList.add('menu-open');
+  if (toggleMenu(anchor)) return; anchor.classList.add('menu-open');
   const m = document.createElement('div'); m.className = 'popmenu bg-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Nền bảng')}</div>${BGS.map(([v, n]) => `
     <button class="bgp-row ${v === E.bg ? 'active' : ''}" data-bg="${v}" role="menuitemradio" aria-checked="${v === E.bg}">
@@ -2215,10 +2255,14 @@ function formBox(title, fields, ok, intro = '', row = false) {
   });
 }
 let menuEl = null;
-function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } $$('.menu-open').forEach(x => x.classList.remove('menu-open')); }
-function outsideMenu(e) { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }
+let menuAnchor = null;
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } menuAnchor = null; $$('.menu-open').forEach(x => x.classList.remove('menu-open')); }
+// Bấm ra ngoài thì đóng; bấm lại vào chính nút đã mở thì để nút tự đóng (bật/tắt)
+function outsideMenu(e) { if (!menuEl || menuEl.contains(e.target) || (menuAnchor && menuAnchor.contains(e.target))) return; closeMenu(); }
+// Gọi đầu mỗi hàm mở bảng chọn: nếu bảng của nút này đang mở thì đóng lại và trả về true
+function toggleMenu(anchor) { if (menuEl && menuAnchor === anchor) { closeMenu(); return true; } closeMenu(); menuAnchor = anchor; return false; }
 function popMenu(anchor, items) {
-  closeMenu(); const m = document.createElement('div'); m.className = 'popmenu'; m.setAttribute('role', 'menu');
+  if (toggleMenu(anchor)) return; const m = document.createElement('div'); m.className = 'popmenu'; m.setAttribute('role', 'menu');
   items.forEach(it => {
     if (it === '-') { m.insertAdjacentHTML('beforeend', '<div class="sep"></div>'); return; }
     const b = document.createElement('button'); if (it.danger) b.className = 'danger';

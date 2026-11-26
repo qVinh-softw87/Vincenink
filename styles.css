@@ -898,3 +898,53 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 @media (max-width: 520px) { .kind-cards { grid-template-columns: 1fr; } .dp span { height: 34px; font-size: 12px; } }
 .sess-form .in-ic input[type=text] { font-size: 14px; font-weight: 500; }
 .sess-form input::placeholder { font-weight: 400; color: var(--muted); opacity: .8; }
+
+/* =================== v11: bộ chọn giờ =================== */
+.time-btn { cursor: pointer; text-align: left; }
+.time-btn .tv { flex: 1; font-size: 16px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.time-btn:hover { border-color: var(--accent); }
+.time-btn.menu-open { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.time-pop { width: 236px; padding: 10px; z-index: 130; }
+.tp-head { display: flex; align-items: baseline; justify-content: space-between; padding: 2px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.tp-big { font-size: 26px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.tp-big em { font-style: normal; color: var(--accent); margin: 0 1px; }
+.tp-head small { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.tp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tp-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; text-align: center; margin-bottom: 4px; }
+.tp-scroll { height: 204px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; padding: 2px; scrollbar-width: thin; border-radius: 10px; background: var(--bg); }
+.popmenu .tp-scroll button {
+  flex-shrink: 0; justify-content: center; height: 34px; padding: 0; border-radius: 8px; font-size: 14px; font-weight: 600;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.popmenu .tp-scroll button.dim { color: var(--muted); font-weight: 500; }
+.popmenu .tp-scroll button:hover { background: var(--hover); color: var(--ink); }
+.popmenu .tp-scroll button.on { background: var(--accent); color: var(--on-accent); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent); }
+.tp-foot { margin-top: 10px; }
+.popmenu .tp-foot .btn { justify-content: center; color: var(--on-accent); }
+.popmenu .tp-foot .btn:hover { color: var(--on-accent); background: var(--accent); filter: brightness(.93); }
+
+/* =================== v12: bỏ số đếm, bộ chọn giờ trau chuốt hơn =================== */
+.nav-item .count { display: none !important; }
+.nav-item:hover .nav-more, .nav-item.menu-open .nav-more { display: grid; }
+
+.time-pop { width: 264px; padding: 0; overflow: hidden; border-radius: 16px; }
+.tp-head {
+  margin: 0; padding: 14px 16px 12px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent-soft) 30%, transparent));
+}
+.tp-big { font-size: 30px; }
+.tp-cols { padding: 10px 10px 0; gap: 10px; position: relative; }
+.tp-scroll {
+  height: 196px; background: transparent; padding: 78px 2px; scroll-snap-type: y mandatory; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0, #000 30%, #000 70%, transparent 100%);
+}
+.tp-scroll::-webkit-scrollbar { display: none; }
+.popmenu .tp-scroll button { scroll-snap-align: center; height: 38px; font-size: 16px; border-radius: 10px; }
+.popmenu .tp-scroll button.on { font-size: 17px; }
+.tp-cols::after {
+  content: ""; position: absolute; left: 10px; right: 10px; top: calc(10px + 18px + 98px - 20px); height: 40px; pointer-events: none;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.tp-foot { margin: 0; padding: 10px; border-top: 1px solid var(--line); }
+.tp-scroll { position: relative; }
