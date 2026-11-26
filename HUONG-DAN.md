@@ -1,58 +1,73 @@
-# Vincenink — Bảng dạy học
-
-Bảng trắng (tông be dịu mắt) để dạy học: viết vẽ, chèn tài liệu, quản lý bảng theo ngày và theo từng học sinh.
+# Hướng dẫn sử dụng Vincenink
 
 ## Mở trang
 
-- **Cách khuyên dùng (Mac):** nhấp đúp tệp `Mo-Vincenink.command`. Trang sẽ mở ở `http://localhost:8080`.
-  Lần đầu macOS có thể chặn tệp này. Khi đó bấm chuột phải vào tệp → **Open** → **Open**.
-  Cần mở bằng cách này thì mới dùng được Google Drive.
-- **Cách nhanh:** nhấp đúp `index.html`. Mọi thứ đều chạy, trừ Google Drive.
+- **Trên mạng** (sau khi bật GitHub Pages): https://qvinh-softw87.github.io/Vincenink/
+- **Trên máy Mac**: nhấp đúp `Mo-Vincenink.command`. Lần đầu nếu bị chặn, bấm chuột phải → **Open** → **Open**.
+- Hoặc nhấp đúp `index.html`.
 
-> Dữ liệu (bảng, học sinh, tài liệu) được lưu **trong trình duyệt** trên máy này.
-> Mở bằng `localhost:8080` và mở bằng tệp `index.html` là **hai kho dữ liệu riêng**, nên hãy luôn dùng một cách.
-> Thỉnh thoảng vào **Cài đặt & sao lưu → Tải bản sao lưu** (hoặc Sao lưu lên Drive) để giữ an toàn.
+> Mỗi cách mở là một kho dữ liệu riêng của trình duyệt.
+> Hãy dùng cố định một cách, và thỉnh thoảng vào **Cài đặt → Tải bản sao lưu**.
 
-## Tính năng
+## Bố cục
 
-| Mục | Cách dùng |
+- **Cột trái**: *Lớp chung* và danh sách học sinh.
+  Bên dưới là **hồ sơ của bạn** (bấm vào để sửa ảnh đại diện và thông tin), nút **cài đặt**, nút **sáng/tối**, nút **giới thiệu** và nút chuyển **VI/EN**.
+- **Cột giữa**: thông tin học sinh đang chọn, nhắc **buổi tới**, và 4 thẻ:
+  - **Bảng**: các bảng theo ngày. Bấm *Bảng mới hôm nay* để tạo bảng mới; dấu ⋯ để đổi tên, đổi ngày, nhân bản hoặc xoá.
+  - **Tài liệu**: tải tệp lên cho học sinh. Ảnh và PDF đưa thẳng lên bảng được, kể cả dạng *bản quét*.
+  - **Lịch**: lịch học theo tuần (xem phần bên dưới).
+  - **Ghi chú**: tiến độ, điểm cần lưu ý; tự lưu khi gõ.
+- **Bảng vẽ**: thanh công cụ ở dưới cùng, thanh tuỳ chỉnh (màu, độ dày) ngay phía trên.
+
+## Công cụ vẽ
+
+| Công cụ | Cách dùng |
 |---|---|
-| **Bút thanh đậm** | Bút (P). Chế độ *Thanh đậm*: viết chậm thì nét đậm, viết nhanh thì nét thanh; với Apple Pencil/bút cảm ứng thì theo lực nhấn. Muốn nét đều nhau thì chọn *Nét đều*. |
-| **Nhiều màu** | 8 màu có sẵn, cộng ô cầu vồng để chọn màu bất kỳ. Phím 1–8 để chọn nhanh. |
-| **Bút dạ quang** | (M) Tô nổi bật, trong suốt, không che chữ bên dưới. |
-| **Tẩy** | (E) *Tẩy từng phần* xoá đúng chỗ đi qua. *Tẩy cả nét* xoá cả nét chạm vào. Tẩy không xoá ảnh/PDF, nên không sợ lỡ tay. |
-| **Khoanh vùng** | (L) *Khoanh để chọn*: khoanh rồi kéo để di chuyển, kéo ô vuông ở góc để phóng to/thu nhỏ, hoặc xoá/nhân bản/đổi màu. *Khoanh để xoá*: phần nào trong vòng khoanh sẽ bị xoá (cả ảnh, PDF). |
-| **Hình, chữ, laser** | Đường thẳng, mũi tên, chữ nhật, tròn, tam giác (giữ Shift để vẽ thẳng/vuông). Chữ (T). Bút laser (K) để chỉ, tự mờ sau 1 giây. |
-| **Chèn ảnh/PDF** | Nút ảnh trên thanh công cụ, kéo thả vào bảng, hoặc dán bằng Ctrl+V. PDF được tách thành từng trang để viết đè lên. |
-| **Nền bảng** | Trơn, Ô vuông, **Ô li** (như vở học sinh), Dòng kẻ, Chấm. |
-| **Nhiều bảng theo ngày** | Mỗi học sinh hoặc *Lớp chung* có danh sách bảng, nhóm theo ngày. Có *Bảng mới hôm nay*, nhân bản bảng để làm mẫu, đổi ngày, chuyển bảng sang học sinh khác. |
-| **Mục riêng từng học sinh** | Mỗi em có 3 thẻ: **Bảng**, **Tài liệu** (tải tệp lên, đưa thẳng lên bảng, lưu lên Drive) và **Ghi chú** (tiến độ, bài về nhà). |
-| **Google Drive** | Lưu tài liệu lên Drive, lấy tệp từ Drive (Google Docs/Slides tự đổi sang PDF), lưu ảnh bảng và sao lưu toàn bộ lên Drive. Tệp được xếp vào `Vincenink / <tên học sinh> / Tài liệu` và `/ Bảng`. |
-| **Khác** | Hoàn tác/làm lại, thu phóng, kéo bảng vô hạn, toàn màn hình, ẩn thanh bên (F), xuất PNG. Bảng tự lưu. |
+| **Bút (P)** | *Thanh đậm*: nét theo lực nhấn/tốc độ. *Nét đều*: dày đều. Con trỏ là cây bút có ngòi đúng màu đang chọn. |
+| **Dạ quang (M)** | Tô nổi bật, không che chữ bên dưới. |
+| **Tẩy (E)** | *Từng phần* hoặc *cả nét*. Không xoá ảnh/PDF. |
+| **Khoanh vùng (L)** | *Để chọn*: kéo để di chuyển, kéo ô vuông ở góc để đổi cỡ. *Để xoá*: xoá mọi thứ trong vòng khoanh. |
+| **Hình (S)** | Thẳng, mũi tên, chữ nhật, tròn, tam giác. Giữ Shift để vẽ vuông hoặc thẳng góc. |
+| **Chữ (T)** | Bấm vào bảng để gõ. Nhấp đúp vào chữ để sửa. |
+| **Laser (K)** | Chỉ cho học sinh, nét tự mờ. |
 
-## Kết nối Google Drive (làm một lần)
+## Chèn tài liệu
 
-1. Vào https://console.cloud.google.com/ và tạo một dự án mới.
-2. **APIs & Services → Library**: bật **Google Drive API** và **Google Picker API**.
-3. **OAuth consent screen**: chọn *External*, điền tên ứng dụng, thêm email của bạn vào *Test users*.
-4. **Credentials → Create credentials → OAuth client ID** → loại *Web application*.
-   Ở *Authorized JavaScript origins* thêm: `http://localhost:8080`
-5. **Credentials → Create credentials → API key**.
-6. Mở Vincenink → **Cài đặt & sao lưu**, dán *Client ID* và *API key*, rồi bấm **Lưu & thử kết nối**.
+Bấm nút ảnh trên thanh công cụ (hoặc phím `I`), rồi chọn:
+- **Ảnh hoặc PDF**: giữ nguyên màu.
+- **Bản quét (làm rõ chữ)**: làm trắng nền giấy, chữ đen rõ. Hợp với ảnh chụp vở, phiếu bài tập, PDF scan mờ.
+- **Chụp tài liệu bằng camera**: trên điện thoại/iPad, chụp xong ảnh được làm rõ tự động.
 
-Ứng dụng chỉ xin quyền `drive.file`. Nghĩa là nó chỉ thấy tệp do chính nó tạo ra, hoặc tệp bạn tự chọn qua trình chọn của Drive. Nó không đọc được phần còn lại trong Drive của bạn.
+Bạn cũng có thể kéo thả tệp vào bảng hoặc dán bằng `Ctrl/⌘ + V`.
 
-## Gợi ý khi dạy trên iPad
+## Tải bảng về
 
-Bật **Cài đặt → Chỉ viết bằng bút cảm ứng**. Khi đó Apple Pencil để viết, còn ngón tay chỉ để kéo và chụm phóng to, nên đặt lòng bàn tay lên màn hình cũng không bị vẽ bậy.
-Để dùng trên iPad, bạn cần đưa thư mục này lên một trang web tĩnh (ví dụ GitHub Pages hoặc Netlify), rồi thêm địa chỉ đó vào *Authorized JavaScript origins* nếu muốn dùng Drive.
+- **PNG**: ảnh toàn bộ nội dung bảng.
+- **PDF**: chọn các tuỳ chọn sau, rồi gửi cho học sinh hoặc phụ huynh.
+  - Kiểu *Màu* hoặc *Bản quét* (đen trắng, nhẹ, in rõ).
+  - Khổ A4 dọc hoặc ngang; chia nhiều trang hoặc gộp 1 trang.
+  - Có in kèm nền ô/kẻ hay không.
+  - Có thêm tiêu đề hay không (tên bảng, học sinh, ngày, tên giáo viên từ hồ sơ).
 
-## Cấu trúc thư mục
+## Lịch học
 
-```
-index.html        giao diện
-styles.css        màu sắc, bố cục (tông be)
-app.js            toàn bộ chức năng
-vendor/           bộ đọc PDF (pdf.js), chạy không cần mạng
-Mo-Vincenink.command   mở nhanh trên Mac
-```
+Trong thẻ **Lịch** của mỗi học sinh:
+- Dùng mũi tên ‹ › để chuyển tuần.
+- Bấm **Thêm buổi học** (hoặc dấu + cạnh từng ngày) để thêm buổi, chọn một trong hai loại:
+  - **Cố định hằng tuần**: tự lặp lại cùng thứ, cùng giờ.
+  - **Chỉ một buổi**: học bù, học thêm, đổi lịch.
+- Bấm vào một buổi để:
+  - **Mở bảng cho buổi này**: mở bảng của ngày đó, hoặc tạo mới nếu chưa có.
+  - **Sửa** buổi học.
+  - **Nghỉ buổi này**: chỉ áp dụng cho tuần đó.
+  - **Xoá**.
+- **Ghi chú tuần này**: ghi nội dung dạy, bài về nhà cho riêng tuần đang xem.
+- Ở **Lớp chung**, thẻ Lịch gộp lịch của tất cả học sinh để bạn xem cả tuần.
+
+## Cài đặt
+
+- Ngôn ngữ Tiếng Việt / English.
+- Chế độ màu Sáng / Tối / Theo máy.
+- **Chỉ viết bằng bút cảm ứng** (cho iPad): ngón tay chỉ dùng kéo và phóng to.
+- Tải bản sao lưu hoặc khôi phục dữ liệu.

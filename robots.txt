@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://qvinh-softw87.github.io/Vincenink/sitemap.xml

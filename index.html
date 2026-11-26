@@ -1,28 +1,152 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%23A86B3C%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2219%22 font-family=%22sans-serif%22 font-weight=%22700%22 fill=%22%23FFF8EE%22 text-anchor=%22middle%22%3EV%3C/text%3E%3C/svg%3E">
-<title>Vincenink — Bảng dạy học</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vincenink – Bảng trắng dạy học trực tuyến miễn phí cho giáo viên &amp; gia sư</title>
+<meta name="description" content="Vincenink là bảng trắng dạy học trực tuyến miễn phí: bút thanh đậm, nền ô li như vở học sinh, chèn PDF và ảnh bài tập, xuất PDF bản quét, quản lý bảng, tài liệu và lịch học riêng cho từng học sinh. Không cần đăng nhập, mở là dạy.">
+<meta name="keywords" content="bảng trắng online, bảng trắng dạy học, bảng dạy học trực tuyến, bảng vẽ online, dạy học online, dạy học trực tuyến, gia sư online, bảng ô li, vở ô li online, lịch học gia sư, quản lý học sinh, whiteboard online, online whiteboard for teachers, digital whiteboard, tutoring whiteboard">
+<meta name="author" content="Vincenink">
+<meta name="application-name" content="Vincenink">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://qvinh-softw87.github.io/Vincenink/">
+<!-- Dán mã xác minh Google Search Console vào đây khi có: -->
+<!-- <meta name="google-site-verification" content="MA_XAC_MINH"> -->
+
+<meta name="theme-color" content="#F3ECE0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1714" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vincenink">
+<meta property="og:title" content="Vincenink – Bảng trắng dạy học trực tuyến miễn phí">
+<meta property="og:description" content="Viết bút thanh đậm, nền ô li, chèn PDF bài tập, xuất PDF bản quét, lịch học và tài liệu riêng cho từng học sinh. Không cần đăng nhập.">
+<meta property="og:url" content="https://qvinh-softw87.github.io/Vincenink/">
+<meta property="og:image" content="https://qvinh-softw87.github.io/Vincenink/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Vincenink – Bảng trắng dạy học trực tuyến">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vincenink – Bảng trắng dạy học trực tuyến miễn phí">
+<meta name="twitter:description" content="Bảng trắng cho giáo viên và gia sư: bút thanh đậm, ô li, chèn PDF, lịch học từng học sinh.">
+<meta name="twitter:image" content="https://qvinh-softw87.github.io/Vincenink/assets/og-image.png">
+
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script>
+  // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
+  (function () {
+    try {
+      var t = localStorage.getItem('vincenink.theme') || 'system';
+      if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  })();
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://qvinh-softw87.github.io/Vincenink/#website",
+      "url": "https://qvinh-softw87.github.io/Vincenink/",
+      "name": "Vincenink",
+      "alternateName": "Vincenink – Bảng trắng dạy học",
+      "inLanguage": ["vi", "en"]
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://qvinh-softw87.github.io/Vincenink/#app",
+      "name": "Vincenink",
+      "url": "https://qvinh-softw87.github.io/Vincenink/",
+      "image": "https://qvinh-softw87.github.io/Vincenink/assets/og-image.png",
+      "description": "Bảng trắng dạy học trực tuyến miễn phí cho giáo viên và gia sư: bút thanh đậm, nền ô li, chèn PDF/ảnh, xuất PDF bản quét, quản lý bảng, tài liệu và lịch học theo từng học sinh.",
+      "applicationCategory": "EducationalApplication",
+      "applicationSubCategory": "Online whiteboard",
+      "operatingSystem": "Any (web browser)",
+      "browserRequirements": "Requires JavaScript and a modern browser",
+      "inLanguage": ["vi", "en"],
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "VND" },
+      "audience": { "@type": "EducationalAudience", "educationalRole": "teacher" },
+      "featureList": [
+        "Bút thanh đậm theo lực nhấn và tốc độ viết",
+        "Nền ô li, ô vuông, dòng kẻ, chấm",
+        "Tẩy từng phần và khoanh vùng để xoá",
+        "Chèn ảnh, PDF và bản quét làm rõ chữ",
+        "Xuất PNG và PDF (màu hoặc bản quét đen trắng)",
+        "Nhiều bảng theo ngày, mục riêng cho từng học sinh",
+        "Lịch học cố định hằng tuần và theo từng tuần",
+        "Tiếng Việt và tiếng Anh, chế độ sáng và tối"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Vincenink có miễn phí không?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Có. Vincenink miễn phí, không cần tạo tài khoản hay đăng nhập. Bạn mở trang là có thể dạy ngay." }
+        },
+        {
+          "@type": "Question",
+          "name": "Dữ liệu bài giảng được lưu ở đâu?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Bảng, tài liệu, lịch học và ghi chú được lưu ngay trong trình duyệt trên máy của bạn. Bạn có thể tải bản sao lưu về máy và khôi phục bất cứ lúc nào." }
+        },
+        {
+          "@type": "Question",
+          "name": "Có dùng được trên iPad với Apple Pencil không?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Có. Nét bút thay đổi theo lực nhấn. Bật chế độ Chỉ viết bằng bút cảm ứng để ngón tay chỉ dùng kéo và phóng to bảng." }
+        },
+        {
+          "@type": "Question",
+          "name": "Có thể đưa phiếu bài tập PDF hoặc ảnh chụp vở lên bảng không?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Có. Bạn chèn ảnh hoặc PDF, mỗi trang thành một ảnh để viết đè lên. Chế độ bản quét giúp làm trắng nền giấy và làm rõ chữ của ảnh chụp." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
+<noscript>
+  <div style="padding:24px;font-family:sans-serif">Vincenink cần bật JavaScript để chạy. / Vincenink needs JavaScript enabled.</div>
+</noscript>
+
 <div id="app">
-  <aside id="sidebar">
+  <aside id="sidebar" aria-label="Học sinh">
     <div class="brand">
-      <div class="logo">V</div>
+      <img class="logo" src="assets/logo.png" alt="Vincenink" width="38" height="38">
       <div>
         <div class="brand-name">Vincenink</div>
-        <div class="brand-sub">Bảng dạy học</div>
+        <div class="brand-sub" data-i18n="Bảng dạy học">Bảng dạy học</div>
       </div>
     </div>
     <nav id="studentNav"></nav>
     <div class="side-foot">
-      <button class="side-btn" id="btnSettings" data-icon="settings"><span>Cài đặt &amp; sao lưu</span></button>
+      <button class="profile-card" id="profileCard"></button>
+      <div class="foot-row">
+        <button class="icon-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"></button>
+        <button class="icon-btn" id="btnTheme" data-i18n-title="Chế độ sáng / tối" title="Chế độ sáng / tối"></button>
+        <button class="icon-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"></button>
+        <span class="spacer"></span>
+        <div class="seg lang-seg" id="langSeg">
+          <button data-lang="vi">VI</button><button data-lang="en">EN</button>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -30,34 +154,98 @@
 
   <main id="stage">
     <header id="topbar">
-      <button class="icon-btn" id="btnFocus" data-icon="sidebar" title="Ẩn/hiện thanh bên (F)"></button>
+      <button class="icon-btn" id="btnFocus" data-icon="sidebar" data-i18n-title="Ẩn/hiện thanh bên (F)" title="Ẩn/hiện thanh bên (F)"></button>
       <button id="ownerChip" class="owner-chip"></button>
-      <input id="boardTitle" class="title-input" maxlength="80" placeholder="Tên bảng" spellcheck="false">
-      <label class="date-pill" title="Ngày của bảng" data-icon="calendar"><input type="date" id="boardDate"></label>
-      <span id="saveStatus" class="status"></span>
+      <input id="boardTitle" class="title-input" maxlength="80" spellcheck="false" data-i18n-ph="Tên bảng" placeholder="Tên bảng" aria-label="Tên bảng">
+      <label class="date-pill" data-icon="calendar" data-i18n-title="Ngày của bảng" title="Ngày của bảng"><input type="date" id="boardDate"></label>
+      <span id="saveStatus" class="status" aria-live="polite"></span>
       <div class="spacer"></div>
-      <label class="bg-pick" title="Nền bảng" data-icon="grid"><select id="bgSelect"></select></label>
-      <button class="btn ghost sm" id="btnExport" data-icon="download" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
-      <button class="btn ghost sm" id="btnDriveSave" data-icon="cloud" title="Lưu ảnh bảng lên Google Drive"><span>Drive</span></button>
-      <button class="icon-btn" id="btnFull" data-icon="maximize" title="Toàn màn hình"></button>
+      <label class="bg-pick" data-icon="grid" data-i18n-title="Nền bảng" title="Nền bảng"><select id="bgSelect" aria-label="Nền bảng"></select></label>
+      <button class="btn ghost sm" id="btnExport" data-icon="image" data-i18n-title="Tải bảng thành ảnh PNG" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
+      <button class="btn ghost sm" id="btnPdf" data-icon="pdf" data-i18n-title="Tải bảng thành PDF (màu hoặc bản quét)" title="Tải bảng thành PDF"><span>PDF</span></button>
+      <button class="icon-btn" id="btnTheme2" data-i18n-title="Chế độ sáng / tối" title="Chế độ sáng / tối"></button>
+      <button class="icon-btn" id="btnFull" data-icon="maximize" data-i18n-title="Toàn màn hình" title="Toàn màn hình"></button>
     </header>
 
     <div id="canvasWrap">
-      <canvas id="board"></canvas>
+      <canvas id="board" aria-label="Bảng vẽ"></canvas>
       <div id="selbar" class="floating hidden"></div>
       <div id="props" class="floating"></div>
-      <div id="toolbar" class="floating"></div>
+      <div id="toolbar" class="floating" role="toolbar"></div>
       <div id="zoombar" class="floating"></div>
-      <div id="dropHint"><div>Thả ảnh hoặc PDF vào đây để đưa lên bảng</div></div>
+      <div id="dropHint"><div data-i18n="Thả ảnh hoặc PDF vào đây để đưa lên bảng">Thả ảnh hoặc PDF vào đây để đưa lên bảng</div></div>
     </div>
   </main>
 </div>
 
+<!-- Trang giới thiệu: hiện ở lần đầu mở, và là nội dung chính để Google đọc -->
+<div id="welcome" class="welcome hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <article class="welcome-card">
+    <header class="wl-head">
+      <img src="assets/logo.png" alt="" width="64" height="64">
+      <div>
+        <h1 id="welcomeTitle"><span class="l-vi">Vincenink – Bảng trắng dạy học trực tuyến</span><span class="l-en">Vincenink – Online teaching whiteboard</span></h1>
+        <p class="wl-lead l-vi">Bảng trắng miễn phí dành cho giáo viên và gia sư. Viết như trên giấy, đưa phiếu bài tập lên bảng, và giữ bài giảng, tài liệu, lịch học riêng cho từng học sinh. Không cần đăng nhập, mở là dạy.</p>
+        <p class="wl-lead l-en">A free whiteboard for teachers and tutors. Write like on paper, put worksheets on the board, and keep lessons, files and schedules for every student. No sign-up — open it and teach.</p>
+      </div>
+    </header>
+
+    <section class="l-vi">
+      <h2>Mọi thứ để dạy một buổi học</h2>
+      <ul class="wl-grid">
+        <li><b>Bút thanh đậm</b>Nét thay đổi theo lực nhấn của Apple Pencil hoặc tốc độ viết, đẹp như viết bút mực.</li>
+        <li><b>Nền ô li như vở</b>Ô li, ô vuông, dòng kẻ, chấm — luyện chữ và trình bày bài như trên vở.</li>
+        <li><b>Tẩy và khoanh để xoá</b>Tẩy đúng chỗ cần tẩy, hoặc khoanh một vùng để xoá hay di chuyển.</li>
+        <li><b>Chèn PDF, ảnh, bản quét</b>Đưa phiếu bài tập lên bảng để viết đè; chế độ bản quét làm trắng nền, rõ chữ.</li>
+        <li><b>Xuất PDF và PNG</b>Gửi lại bài giảng cho học sinh dưới dạng PDF màu hoặc PDF quét đen trắng.</li>
+        <li><b>Hồ sơ từng học sinh</b>Mỗi em có bảng theo ngày, tài liệu, lịch học hằng tuần và ghi chú tiến độ.</li>
+      </ul>
+      <h2>Câu hỏi thường gặp</h2>
+      <h3>Vincenink có miễn phí không?</h3>
+      <p>Có. Vincenink miễn phí, không cần tạo tài khoản hay đăng nhập.</p>
+      <h3>Dữ liệu bài giảng được lưu ở đâu?</h3>
+      <p>Ngay trong trình duyệt trên máy của bạn. Bạn có thể tải bản sao lưu về máy và khôi phục bất cứ lúc nào.</p>
+      <h3>Có dùng được trên iPad với Apple Pencil không?</h3>
+      <p>Có. Bật “Chỉ viết bằng bút cảm ứng” để ngón tay chỉ dùng kéo và phóng to bảng.</p>
+      <h3>Có thể đưa phiếu bài tập PDF hoặc ảnh chụp vở lên bảng không?</h3>
+      <p>Có. Mỗi trang PDF thành một ảnh để viết đè lên; chế độ bản quét giúp ảnh chụp rõ chữ hơn.</p>
+    </section>
+
+    <section class="l-en">
+      <h2>Everything you need to teach a lesson</h2>
+      <ul class="wl-grid">
+        <li><b>Calligraphic pen</b>Strokes follow Apple Pencil pressure or writing speed, like a real ink pen.</li>
+        <li><b>Notebook backgrounds</b>Vietnamese ô li handwriting paper, grid, ruled lines and dots.</li>
+        <li><b>Eraser and lasso</b>Erase exactly what you need, or lasso an area to delete or move it.</li>
+        <li><b>PDFs, photos and scans</b>Put worksheets on the board and write over them; scan mode whitens paper and sharpens text.</li>
+        <li><b>Export PDF and PNG</b>Send the lesson back as a colour PDF or a clean black-and-white scan.</li>
+        <li><b>Per-student space</b>Each student gets dated boards, files, a weekly schedule and progress notes.</li>
+      </ul>
+      <h2>Frequently asked questions</h2>
+      <h3>Is Vincenink free?</h3>
+      <p>Yes. It is free and needs no account or sign-in.</p>
+      <h3>Where is my data stored?</h3>
+      <p>In your browser on this device. You can download a backup and restore it at any time.</p>
+      <h3>Does it work on iPad with Apple Pencil?</h3>
+      <p>Yes. Turn on “Stylus-only drawing” so fingers only pan and zoom.</p>
+      <h3>Can I put PDF worksheets or photos on the board?</h3>
+      <p>Yes. Each PDF page becomes an image you can write over; scan mode makes phone photos easier to read.</p>
+    </section>
+
+    <footer class="wl-foot">
+      <button class="btn primary" id="btnStart"><span class="l-vi">Bắt đầu dạy ngay</span><span class="l-en">Start teaching</span></button>
+    </footer>
+  </article>
+</div>
+
 <input type="file" id="fileInsert" accept="image/*,application/pdf" hidden multiple>
+<input type="file" id="fileScan" accept="image/*,application/pdf" hidden multiple>
+<input type="file" id="fileCamera" accept="image/*" capture="environment" hidden>
 <input type="file" id="fileUpload" hidden multiple>
 <input type="file" id="fileImport" accept="application/json,.json" hidden>
+<input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
-<div id="toasts"></div>
-<script src="app.js"></script>
+<div id="toasts" aria-live="polite"></div>
+<script src="app.js" defer></script>
 </body>
 </html>

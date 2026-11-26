@@ -1,6 +1,6 @@
 /* =====================================================================
    Vincenink — Bảng dạy học
-   Toàn bộ dữ liệu lưu trong trình duyệt (IndexedDB). Google Drive tuỳ chọn.
+   Toàn bộ dữ liệu lưu trong trình duyệt (IndexedDB). Không cần máy chủ.
    ===================================================================== */
 'use strict';
 
@@ -12,13 +12,13 @@ const pad = n => String(n).padStart(2, '0');
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const r1 = v => Math.round(v * 10) / 10;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayStr = () => dstr(new Date());
+const parseD = ds => { const [y, m, d] = ds.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const weekStart = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return addDays(x, -((x.getDay() + 6) % 7)); };
+const dow = d => (d.getDay() + 6) % 7; // 0 = Thứ 2
 const shortDate = ds => { const [, m, d] = ds.split('-'); return `${d}/${m}`; };
-function fmtDateLong(ds) {
-  const [y, m, d] = ds.split('-').map(Number);
-  const s = new Date(y, m - 1, d).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 const fmtTime = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const fmtDT = ts => { const d = new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; };
 function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
@@ -29,7 +29,7 @@ const scriptCache = {};
 function loadScript(src) {
   if (!scriptCache[src]) scriptCache[src] = new Promise((res, rej) => {
     const s = document.createElement('script'); s.src = src; s.async = true; s.onload = res;
-    s.onerror = () => { delete scriptCache[src]; rej(new Error('Không tải được ' + src)); };
+    s.onerror = () => { delete scriptCache[src]; s.remove(); rej(new Error('load ' + src)); };
     document.head.append(s);
   });
   return scriptCache[src];
@@ -39,6 +39,133 @@ function download(blob, name) {
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 const safeName = s => (s || 'bang').replace(/[\\/:*?"<>|]+/g, '-').trim();
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* */ } } };
+
+/* =====================================================================
+   Ngôn ngữ (Tiếng Việt / English)
+   ===================================================================== */
+let LANG = (() => {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (q === 'en' || q === 'vi') return q;
+  return ls.get('vincenink.lang', (navigator.language || 'vi').toLowerCase().startsWith('vi') ? 'vi' : 'en');
+})();
+const EN = {
+  'Bảng dạy học': 'Teaching board',
+  'Cài đặt & sao lưu': 'Settings & backup', 'Cài đặt &amp; sao lưu': 'Settings & backup',
+  'Chế độ sáng / tối': 'Light / dark mode', 'Giới thiệu Vincenink': 'About Vincenink',
+  'Ẩn/hiện thanh bên (F)': 'Show/hide sidebar (F)', 'Tên bảng': 'Board name', 'Ngày của bảng': 'Board date',
+  'Nền bảng': 'Background', 'Tải bảng thành ảnh PNG': 'Download board as PNG', 'Tải bảng thành PDF (màu hoặc bản quét)': 'Download board as PDF (colour or scan)',
+  'Toàn màn hình': 'Full screen', 'Thả ảnh hoặc PDF vào đây để đưa lên bảng': 'Drop an image or PDF here to put it on the board',
+  'Trơn': 'Plain', 'Ô vuông': 'Grid', 'Ô li': 'Ô li (handwriting)', 'Dòng kẻ': 'Ruled', 'Chấm': 'Dots',
+  'Kéo bảng (H) — hoặc giữ phím Space': 'Pan (H) — or hold Space', 'Bút viết (P)': 'Pen (P)', 'Bút dạ quang (M)': 'Highlighter (M)',
+  'Tẩy (E)': 'Eraser (E)', 'Khoanh vùng (L) — chọn hoặc xoá': 'Lasso (L) — select or erase', 'Hình (S)': 'Shapes (S)', 'Chữ (T)': 'Text (T)',
+  'Bút laser (K) — chỉ để trỏ, tự mờ': 'Laser pointer (K) — fades away',
+  'Hoàn tác (Ctrl+Z)': 'Undo (Ctrl+Z)', 'Làm lại (Ctrl+Shift+Z)': 'Redo (Ctrl+Shift+Z)', 'Chèn ảnh / PDF / bản quét (I)': 'Insert image / PDF / scan (I)', 'Xoá sạch bảng': 'Clear board',
+  'Thu nhỏ (−)': 'Zoom out (−)', 'Về 100% (0)': 'Reset to 100% (0)', 'Phóng to (+)': 'Zoom in (+)', 'Xem toàn bộ nội dung': 'Fit to content',
+  'Thanh đậm': 'Calligraphic', 'Nét đều': 'Uniform', 'Tẩy từng phần': 'Erase part', 'Tẩy cả nét': 'Erase stroke',
+  'Khoanh để chọn': 'Lasso select', 'Khoanh để xoá': 'Lasso erase', 'Vẽ vòng quanh phần muốn xoá': 'Draw around what you want to erase',
+  'Khoanh rồi kéo để di chuyển · bấm vào ảnh để chọn': 'Lasso, then drag to move · click an image to select it',
+  'Đường thẳng': 'Line', 'Mũi tên': 'Arrow', 'Hình chữ nhật': 'Rectangle', 'Hình tròn/elip': 'Circle/ellipse', 'Tam giác': 'Triangle',
+  'Cỡ chữ': 'Font size', 'Bấm vào bảng để gõ · nhấp đúp chữ để sửa': 'Click the board to type · double-click text to edit',
+  'Bút laser để chỉ cho học sinh — nét tự biến mất sau 1 giây': 'Point things out to students — the trail fades after 1 second',
+  'Kéo để di chuyển bảng · Ctrl + cuộn (hoặc chụm 2 ngón) để phóng to': 'Drag to pan · Ctrl + scroll (or pinch) to zoom',
+  'Độ dày ( [ và ] )': 'Thickness ( [ and ] )', 'Màu tuỳ chọn': 'Custom colour',
+  'Xoá (Delete)': 'Delete (Del)', 'Nhân bản (Ctrl+D)': 'Duplicate (Ctrl+D)', 'Đổi sang màu đang chọn': 'Apply current colour', 'Đưa lên trên': 'Bring to front', 'Đưa xuống dưới': 'Send to back',
+  'Không có nét nào trong vùng khoanh': 'Nothing inside the lasso',
+  'Kéo để di chuyển · kéo ô vuông ở góc để phóng to/thu nhỏ': 'Drag to move · drag the corner square to resize',
+  'Không đọc được ảnh này': 'Could not read this image', 'Đang mở PDF…': 'Opening PDF…', 'Chèn PDF lên bảng': 'Insert PDF',
+  'Từ trang': 'From page', 'Đến trang (tổng {n} trang)': 'To page ({n} pages in total)', 'Chèn': 'Insert',
+  'Mỗi trang sẽ thành một ảnh trên bảng, xếp từ trên xuống. Bạn có thể viết đè lên.': 'Each page becomes an image on the board, stacked top to bottom. You can write over them.',
+  'Đang xử lý trang {i}/{n}…': 'Processing page {i}/{n}…', 'Không mở được tệp PDF này': 'Could not open this PDF',
+  'Chỉ đưa được ảnh hoặc PDF lên bảng. Với Word/PowerPoint, hãy lưu sang PDF trước.': 'Only images and PDFs can go on the board. Save Word/PowerPoint files as PDF first.',
+  'Bảng đang trống': 'The board is empty', 'Xoá sạch bảng?': 'Clear the board?',
+  'Mọi nét vẽ, chữ và tài liệu trên bảng này sẽ bị xoá. Bạn vẫn có thể bấm Hoàn tác (Ctrl+Z) ngay sau đó.': 'All strokes, text and documents on this board will be removed. You can still press Undo (Ctrl+Z) right after.',
+  'Xoá sạch': 'Clear', 'Đang lưu…': 'Saving…', 'Đã lưu': 'Saved', 'Không lưu được — bộ nhớ trình duyệt có thể đã đầy': 'Could not save — browser storage may be full',
+  'Buổi học {d}': 'Lesson {d}', ' (bản sao)': ' (copy)', 'Đã nhân bản bảng': 'Board duplicated', 'Xoá bảng này?': 'Delete this board?',
+  '“{t}” sẽ bị xoá vĩnh viễn và không thể khôi phục.': '“{t}” will be permanently deleted.', 'Xoá': 'Delete', 'Huỷ': 'Cancel', 'Lưu': 'Save',
+  'Sửa thông tin bảng': 'Edit board', 'Ngày': 'Date', 'Thuộc về': 'Belongs to', 'Lớp chung': 'Whole class', 'Học sinh': 'Student',
+  'Tên học sinh': 'Student name', 'VD: Nguyễn Minh An': 'e.g. Minh An Nguyen', 'Lớp / ghi chú ngắn (tuỳ chọn)': 'Class / short note (optional)',
+  'VD: Lớp 5 · Toán, Tiếng Việt': 'e.g. Grade 5 · Maths, English', 'Màu nhận diện': 'Colour', 'Thêm học sinh': 'Add student', 'Sửa học sinh': 'Edit student',
+  'Xoá học sinh': 'Delete student', 'Đã thêm {n} và tạo bảng đầu tiên': 'Added {n} and created their first board',
+  'Xoá học sinh {n}?': 'Delete student {n}?', 'Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của học sinh này trên máy.': 'This also deletes their {b} boards, {f} files and schedule on this device.',
+  'Học sinh · {n}': 'Students · {n}', 'Chưa có học sinh nào.': 'No students yet.',
+  'Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.': 'Click + to add one — each student gets their own boards, files, schedule and notes.',
+  '{b} bảng · {f} tài liệu': '{b} boards · {f} files', 'Sửa thông tin học sinh': 'Edit student', 'Buổi tới: {x}': 'Next lesson: {x}',
+  'Bảng': 'Boards', 'Tài liệu': 'Files', 'Lịch': 'Schedule', 'Ghi chú': 'Notes',
+  'Bảng mới hôm nay': 'New board for today', 'Tìm bảng theo tên hoặc ngày…': 'Search boards by name or date…', 'Hôm nay · ': 'Today · ',
+  'Sửa lúc {t}': 'Edited {t}', 'Tuỳ chọn': 'Options', 'Không tìm thấy bảng': 'No boards found', 'Chưa có bảng nào': 'No boards yet',
+  'Thử từ khoá khác.': 'Try another keyword.', 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.': 'Click “New board for today” to start a lesson.',
+  'Đổi tên, ngày, chủ sở hữu': 'Rename, change date or owner', 'Nhân bản (dùng làm mẫu)': 'Duplicate (use as template)', 'Xoá bảng': 'Delete board',
+  'Tải tài liệu lên': 'Upload files', 'Kéo thả hoặc bấm để chọn tệp': 'Drag & drop or click to choose', 'Ảnh và PDF có thể đưa thẳng lên bảng': 'Images and PDFs can go straight onto the board',
+  'Đưa lên bảng': 'Put on board', 'Đưa lên bảng (bản quét, làm rõ chữ)': 'Put on board as scan (sharpen text)', 'Mở xem': 'Open', 'Tải về máy': 'Download',
+  'Đổi tên': 'Rename', 'Đổi tên tài liệu': 'Rename file', 'Tên': 'Name', 'Xoá khỏi máy': 'Delete from device', 'Xoá tài liệu?': 'Delete file?',
+  '“{n}” sẽ bị xoá khỏi trình duyệt.': '“{n}” will be removed from this browser.', 'Chưa có tài liệu': 'No files yet',
+  'Đề bài, phiếu bài tập, ảnh chụp vở… của {n} sẽ được lưu ở đây.': 'Worksheets, exercises and notebook photos for {n} will be kept here.',
+  'Đã lưu {c} tài liệu cho {n}': 'Saved {c} file(s) for {n}', 'Không lưu được {n}': 'Could not save {n}',
+  'Ghi chú về {n}: tiến độ, điểm cần lưu ý, bài tập về nhà…': 'Notes about {n}: progress, things to watch, homework…',
+  'Ghi chú chung cho cả lớp: nội dung tuần này, nhắc nhở…': 'Notes for the whole class: this week’s content, reminders…', 'Ghi chú tự lưu khi bạn gõ.': 'Notes save automatically as you type.',
+  'Tuần này': 'This week', 'Tuần trước': 'Previous week', 'Tuần sau': 'Next week', 'Trống': 'Free', 'Thêm buổi vào ngày này': 'Add a lesson on this day',
+  'Ghi chú tuần này': 'Notes for this week', 'Nội dung dạy, bài về nhà, nhắc phụ huynh…': 'What to teach, homework, reminders for parents…',
+  'Thêm buổi học': 'Add lesson', 'Lịch cố định hằng tuần': 'Weekly fixed schedule', 'Chưa có lịch cố định. Thêm một buổi “Cố định hằng tuần” để nó tự lặp lại mỗi tuần.': 'No fixed schedule yet. Add a “Every week” lesson and it repeats automatically.',
+  'Cố định': 'Weekly', 'Một buổi': 'One-off', 'Đã nghỉ': 'Cancelled',
+  'Sửa buổi học': 'Edit lesson', 'Loại lịch': 'Type', 'Cố định hằng tuần': 'Every week', 'Lặp lại vào cùng thứ, cùng giờ': 'Repeats on the same day and time',
+  'Chỉ một buổi': 'One-off', 'Học bù, học thêm, đổi lịch…': 'Make-up, extra lesson, rescheduled…', 'Thứ': 'Day', 'Bắt đầu': 'Start', 'Kết thúc': 'End',
+  'Môn / nội dung': 'Subject / topic', 'VD: Toán – phân số': 'e.g. Maths – fractions', 'Ghi chú (tuỳ chọn)': 'Note (optional)', 'Áp dụng cho': 'For',
+  'Mở bảng cho buổi này': 'Open board for this lesson', 'Sửa': 'Edit', 'Nghỉ buổi này': 'Cancel this lesson', 'Học lại buổi này': 'Restore this lesson',
+  'Xoá lịch cố định': 'Delete weekly lesson', 'Xoá buổi này': 'Delete lesson', 'Mở trang học sinh': 'Open student',
+  'Xoá lịch cố định?': 'Delete weekly lesson?', 'Buổi “{s}” sẽ không còn lặp lại mỗi tuần.': '“{s}” will no longer repeat every week.',
+  'Giờ kết thúc phải sau giờ bắt đầu': 'End time must be after start time', 'Buổi học': 'Lesson',
+  'Hồ sơ của bạn': 'Your profile', 'Thêm thông tin cá nhân': 'Add your profile', 'Giáo viên': 'Teacher', 'Đổi ảnh': 'Change photo', 'Xoá ảnh': 'Remove photo', 'Chọn ảnh đại diện': 'Choose a photo',
+  'Họ và tên': 'Full name', 'Vai trò': 'Role', 'VD: Giáo viên Toán, Gia sư Tiếng Anh': 'e.g. Maths teacher, English tutor', 'Trường / trung tâm': 'School / centre',
+  'Email': 'Email', 'Số điện thoại': 'Phone', 'Giới thiệu ngắn': 'Short bio', 'Kinh nghiệm, phương pháp dạy, môn phụ trách…': 'Experience, teaching style, subjects…',
+  'Thông tin chỉ lưu trên máy này và được dùng để ghi tên bạn lên tệp PDF xuất ra.': 'Stored only on this device and used to put your name on exported PDFs.', 'Đã lưu hồ sơ': 'Profile saved',
+  'Giao diện': 'Appearance', 'Ngôn ngữ': 'Language', 'Chế độ màu': 'Colour mode', 'Sáng': 'Light', 'Tối': 'Dark', 'Theo máy': 'System',
+  'Chỉ viết bằng bút cảm ứng': 'Stylus-only drawing',
+  'Dành cho iPad/máy tính bảng: Apple Pencil để viết, ngón tay chỉ để kéo và phóng to — tránh lỡ tay chạm lòng bàn tay vào bảng.': 'For iPad/tablets: write with Apple Pencil, fingers only pan and zoom — no accidental palm marks.',
+  'Sao lưu dữ liệu': 'Backup', 'Dữ liệu được lưu ngay trong trình duyệt trên máy này. Thỉnh thoảng hãy tải bản sao lưu để không mất bài giảng.': 'Your data lives in this browser on this device. Download a backup now and then so you never lose a lesson.',
+  'Tải bản sao lưu': 'Download backup', 'Khôi phục từ tệp': 'Restore from file', 'Phím tắt': 'Keyboard shortcuts', 'Xong': 'Done', 'Mở trang giới thiệu': 'Open the welcome page',
+  'Bút · Dạ quang · Tẩy': 'Pen · Highlighter · Eraser', 'Khoanh vùng · Hình · Chữ · Laser': 'Lasso · Shapes · Text · Laser', 'Di chuyển bảng': 'Pan the board',
+  'Phóng to / thu nhỏ': 'Zoom in / out', 'Giảm / tăng độ dày': 'Thinner / thicker', 'Chọn nhanh màu': 'Quick colour', 'Hoàn tác / Làm lại': 'Undo / Redo',
+  'Xoá / nhân bản vùng chọn': 'Delete / duplicate selection', 'Ẩn/hiện thanh bên': 'Show/hide sidebar', 'Chèn ảnh / PDF': 'Insert image / PDF',
+  'Đang tạo bản sao lưu…': 'Creating backup…', 'Tệp không phải bản sao lưu Vincenink': 'This is not a Vincenink backup file', 'Khôi phục bản sao lưu?': 'Restore backup?',
+  'Dữ liệu hiện tại trên máy sẽ được <b>thay thế</b> bằng bản sao lưu ngày {d} ({s} học sinh, {b} bảng, {f} tài liệu).': 'Current data on this device will be <b>replaced</b> by the backup from {d} ({s} students, {b} boards, {f} files).',
+  'Khôi phục': 'Restore', 'Không khôi phục được: {m}': 'Restore failed: {m}',
+  'Ảnh hoặc PDF': 'Image or PDF', 'Chèn nguyên bản, giữ màu': 'Insert as is, keep colours', 'Bản quét (làm rõ chữ)': 'Scan (sharpen text)',
+  'Làm trắng nền giấy, chữ đen rõ — hợp ảnh chụp, PDF scan': 'Whitens paper, darkens text — for photos and scanned PDFs', 'Chụp tài liệu bằng camera': 'Capture with camera',
+  'Điện thoại / iPad: chụp phiếu bài tập rồi tự làm rõ': 'Phone / iPad: snap a worksheet, auto-sharpened',
+  'Tải PDF': 'Download PDF', 'Kiểu PDF': 'PDF style', 'Màu': 'Colour', 'Giữ nguyên màu như trên bảng': 'Exactly as on the board', 'Bản quét': 'Scan',
+  'Đen trắng, nền trắng — nhẹ, in rõ': 'Black & white on white — small and print-friendly', 'Khổ giấy': 'Page size', 'A4 dọc': 'A4 portrait', 'A4 ngang': 'A4 landscape', 'Tự động': 'Auto',
+  'Chia trang': 'Layout', 'Chia thành nhiều trang A4': 'Split into A4 pages', 'Gộp vừa 1 trang': 'Fit on one page', 'In kèm nền ô/kẻ': 'Include background lines',
+  'Thêm tiêu đề (tên bảng, học sinh, ngày, giáo viên)': 'Add a header (board, student, date, teacher)', 'Đang tạo PDF…': 'Creating PDF…', 'Đã tải PDF ({n} trang)': 'PDF downloaded ({n} pages)',
+  'Tạo PDF': 'Create PDF', 'Giáo viên: {n}': 'Teacher: {n}',
+  'Chưa có lịch.': 'Nothing scheduled.',
+  '✏️ Bài giảng đang chờ bạn…': '✏️ Your lesson is waiting…', 'Bảng trắng dạy học trực tuyến': 'Online teaching whiteboard',
+  'Trình duyệt không cho lưu dữ liệu (IndexedDB). Hãy mở bằng Chrome/Safari bản mới.': 'This browser cannot store data (IndexedDB). Please use a recent Chrome or Safari.',
+};
+const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
+const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
+function t(s, vars) {
+  let r = LANG === 'en' && EN[s] !== undefined ? EN[s] : s;
+  if (vars) for (const k in vars) r = r.split('{' + k + '}').join(vars[k]);
+  return r;
+}
+const locale = () => LANG === 'en' ? 'en-GB' : 'vi-VN';
+function fmtDateLong(ds) {
+  const s = parseD(ds).toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function applyStaticI18n() {
+  document.documentElement.lang = LANG;
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle.replace('&amp;', '&')); });
+  $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $$('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang === LANG));
+}
+function setLang(l) {
+  if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
+  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); updateTitle();
+  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join(''); $('#bgSelect').value = E.bg;
+}
 
 /* ---------------- Biểu tượng ---------------- */
 const ICONS = {
@@ -53,6 +180,9 @@ const ICONS = {
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8h10M7 12h10M7 16h6"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  pdf: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6M9 15l3 3 3-3"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   wipe: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
@@ -60,9 +190,6 @@ const ICONS = {
   copy: '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
-  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
-  cloudUp: '<path d="M12 13v8"/><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="m8 17 4-4 4 4"/>',
-  cloudDown: '<path d="M12 13v8l-4-4M12 21l4-4"/><path d="M4.4 15.4A7 7 0 1 1 15.7 9h1.8a4.5 4.5 0 0 1 2.5 8.2"/>',
   settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   sidebar: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
   file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
@@ -73,7 +200,9 @@ const ICONS = {
   fit: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
   grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
   calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-  external: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   book: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
@@ -82,43 +211,48 @@ const ICONS = {
   edit: '<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 1 1 3 3L12 15l-4 1 1-4Z"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
   toBoard: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 7v7M9 11l3 3 3-3"/>',
-  palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
-  s_line: '<path d="M5 19 19 5"/>',
-  s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>',
-  s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
-  s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>',
-  s_triangle: '<path d="M12 4 21 20H3Z"/>',
-  move: '<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
+  s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
 };
-const ic = (n, s = 20) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
+const ic = (n, s = 20) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
-/* ---------------- Hằng số ---------------- */
-const PAPER = '#FFFCF6';
+/* ---------------- Hằng số & giao diện màu ---------------- */
 const COLORS = ['#2F2A25', '#1F4E8C', '#C0392B', '#2E7D4F', '#D98E04', '#7B4FA0', '#D6668A', '#5B8DB8'];
 const MARKERS = ['#FFD54A', '#9BE27A', '#FF9EC4', '#8FD3FF', '#FFB067'];
 const STUDENT_COLORS = ['#C98B5A', '#7FA37A', '#6F93B8', '#B9798F', '#C9A64B', '#8E7CB0', '#5FA3A0', '#B5674D'];
 const BGS = [['plain', 'Trơn'], ['grid', 'Ô vuông'], ['oli', 'Ô li'], ['lines', 'Dòng kẻ'], ['dots', 'Chấm']];
 const SIZE_RANGE = { pen: [1, 30], marker: [6, 60], eraser: [8, 120], shape: [1, 20], text: [12, 96] };
 const TOOLS = [
-  ['hand', 'hand', 'Kéo bảng (H) — hoặc giữ phím Space'],
-  ['pen', 'pen', 'Bút viết (P)'],
-  ['marker', 'marker', 'Bút dạ quang (M)'],
-  ['eraser', 'eraser', 'Tẩy (E)'],
-  ['lasso', 'lasso', 'Khoanh vùng (L) — chọn hoặc xoá'],
-  ['shape', 'shapes', 'Hình (S)'],
-  ['text', 'text', 'Chữ (T)'],
-  ['laser', 'laser', 'Bút laser (K) — chỉ để trỏ, tự mờ'],
+  ['hand', 'hand', 'Kéo bảng (H) — hoặc giữ phím Space'], ['pen', 'pen', 'Bút viết (P)'], ['marker', 'marker', 'Bút dạ quang (M)'],
+  ['eraser', 'eraser', 'Tẩy (E)'], ['lasso', 'lasso', 'Khoanh vùng (L) — chọn hoặc xoá'], ['shape', 'shapes', 'Hình (S)'],
+  ['text', 'text', 'Chữ (T)'], ['laser', 'laser', 'Bút laser (K) — chỉ để trỏ, tự mờ'],
 ];
+const THEMES = {
+  light: { paper: '#FFFCF6', line: 'rgba(140,105,60,0.13)', strong: 'rgba(140,105,60,0.27)', dot: 'rgba(140,105,60,0.38)', margin: 'rgba(196,92,80,0.28)', ph: '#EFE6D8', sel: '#A86B3C', dark: false },
+  dark: { paper: '#1F1C18', line: 'rgba(230,205,170,0.08)', strong: 'rgba(230,205,170,0.17)', dot: 'rgba(230,205,170,0.24)', margin: 'rgba(230,120,100,0.3)', ph: '#2E2923', sel: '#D79A63', dark: true },
+};
+// Màu mực tối được làm sáng khi hiển thị trên nền tối (dữ liệu gốc giữ nguyên để in/xuất)
+const DARK_INK = { '#2F2A25': '#EEE6D9', '#1F4E8C': '#79A7E6', '#7B4FA0': '#B88CDD', '#2E7D4F': '#62C08A', '#C0392B': '#F0705F', '#5B8DB8': '#8FB9E0' };
+let RT = THEMES.light;
+const inkColor = c => (RT.dark && DARK_INK[c]) || c;
+let themePref = ls.get('vincenink.theme', 'system');
+const mq = matchMedia('(prefers-color-scheme: dark)');
+const resolvedTheme = () => themePref === 'system' ? (mq.matches ? 'dark' : 'light') : themePref;
 
 /* ---------------- Cơ sở dữ liệu (IndexedDB) ---------------- */
 const DB = {
   db: null,
   open() {
     return new Promise((res, rej) => {
-      const r = indexedDB.open('vincenink', 1);
+      const r = indexedDB.open('vincenink', 2);
       r.onupgradeneeded = () => {
         const d = r.result;
-        ['students', 'boards', 'boardData', 'files', 'settings'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); });
+        ['students', 'boards', 'boardData', 'files', 'settings', 'schedule'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); });
       };
       r.onsuccess = () => { this.db = r.result; res(); };
       r.onerror = () => rej(r.error);
@@ -126,9 +260,8 @@ const DB = {
   },
   req(store, mode, fn) {
     return new Promise((res, rej) => {
-      const t = this.db.transaction(store, mode); const q = fn(t.objectStore(store));
-      t.oncomplete = () => res(q ? q.result : undefined);
-      t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+      const tx = this.db.transaction(store, mode); const q = fn(tx.objectStore(store));
+      tx.oncomplete = () => res(q ? q.result : undefined); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
     });
   },
   all(s) { return this.req(s, 'readonly', st => st.getAll()); },
@@ -138,11 +271,11 @@ const DB = {
   clear(s) { return this.req(s, 'readwrite', st => st.clear()); },
 };
 
-/* ---------------- Trạng thái ứng dụng ---------------- */
+/* ---------------- Trạng thái ---------------- */
 const S = {
-  students: [], boards: [], files: [],
-  settings: { id: 'main', penOnly: false, clientId: '', apiKey: '', classNote: '', lastStudent: 'all', lastBoard: null },
-  studentId: 'all', boardId: null, tab: 'boards', search: '',
+  students: [], boards: [], files: [], sched: new Map(),
+  settings: { id: 'main', penOnly: false, classNote: '', lastStudent: 'all', lastBoard: null, profile: {} },
+  studentId: 'all', boardId: null, tab: 'boards', search: '', week: weekStart(new Date()),
 };
 const E = {
   items: [], bg: 'grid', view: { x: 0, y: 0, s: 1 },
@@ -152,20 +285,20 @@ const E = {
 };
 const PREF_KEYS = ['tool', 'color', 'markerColor', 'penStyle', 'eraserMode', 'lassoMode', 'shape', 'sizes'];
 function loadPrefs() {
-  try { const p = JSON.parse(localStorage.getItem('vincenink.prefs') || '{}'); PREF_KEYS.forEach(k => { if (p[k] !== undefined) E[k] = k === 'sizes' ? { ...E.sizes, ...p[k] } : p[k]; }); } catch (e) { /* bỏ qua */ }
+  try { const p = JSON.parse(ls.get('vincenink.prefs', '{}')); PREF_KEYS.forEach(k => { if (p[k] !== undefined) E[k] = k === 'sizes' ? { ...E.sizes, ...p[k] } : p[k]; }); } catch (e) { /* */ }
   if (E.tool === 'laser' || E.tool === 'hand') E.tool = 'pen';
 }
-function savePrefs() { try { const p = {}; PREF_KEYS.forEach(k => p[k] = E[k]); localStorage.setItem('vincenink.prefs', JSON.stringify(p)); } catch (e) { /* bỏ qua */ } }
+function savePrefs() { const p = {}; PREF_KEYS.forEach(k => p[k] = E[k]); ls.set('vincenink.prefs', JSON.stringify(p)); }
 const saveSettings = () => DB.put('settings', S.settings).catch(() => {});
 const studentById = id => S.students.find(s => s.id === id);
-const ownerName = id => id === 'all' ? 'Lớp chung' : (studentById(id)?.name || 'Học sinh');
+const ownerName = id => id === 'all' ? t('Lớp chung') : (studentById(id)?.name || t('Học sinh'));
 const ownerColor = id => id === 'all' ? null : (studentById(id)?.color || STUDENT_COLORS[0]);
 const avatarHTML = (id, cls = '') => id === 'all'
-  ? `<span class="avatar class ${cls}">${ic('book', cls ? 20 : 16)}</span>`
+  ? `<span class="avatar class ${cls}">${ic('book', cls.includes('lg') ? 20 : 16)}</span>`
   : `<span class="avatar ${cls}" style="background:${ownerColor(id)}">${esc((ownerName(id).trim()[0] || '?').toUpperCase())}</span>`;
 
 /* =====================================================================
-   BỘ VẼ (canvas engine)
+   BỘ VẼ (canvas)
    ===================================================================== */
 const wrap = $('#canvasWrap');
 const cv = $('#board');
@@ -193,11 +326,11 @@ function requestRender(dirty) { if (dirty) baseDirty = true; if (!rafId) rafId =
 const fontStr = fs => `${fs}px "Be Vietnam Pro", system-ui, sans-serif`;
 function textMetrics(it) {
   mctx.font = fontStr(it.fs);
-  const lines = it.text.split('\n');
-  let w = 0; for (const l of lines) w = Math.max(w, mctx.measureText(l || ' ').width);
+  const lines = it.text.split('\n'); let w = 0;
+  for (const l of lines) w = Math.max(w, mctx.measureText(l || ' ').width);
   return { w: w + 2, h: lines.length * it.fs * 1.3 };
 }
-function arrowHead(it) { return Math.max(it.size * 3.5, 12); }
+const arrowHead = it => Math.max(it.size * 3.5, 12);
 function bbox(it) {
   let b = bbCache.get(it); if (b) return b;
   if (it.type === 'stroke') {
@@ -206,11 +339,9 @@ function bbox(it) {
     const h = it.size / 2 + 1; b = { x: x0 - h, y: y0 - h, w: x1 - x0 + 2 * h, h: y1 - y0 + 2 * h };
   } else if (it.type === 'shape') {
     const h = it.size / 2 + (it.kind === 'arrow' ? arrowHead(it) : 0) + 1;
-    const x0 = Math.min(it.x1, it.x2), y0 = Math.min(it.y1, it.y2);
-    b = { x: x0 - h, y: y0 - h, w: Math.abs(it.x2 - it.x1) + 2 * h, h: Math.abs(it.y2 - it.y1) + 2 * h };
-  } else if (it.type === 'text') {
-    const m = textMetrics(it); b = { x: it.x, y: it.y, w: m.w, h: m.h };
-  } else b = { x: it.x, y: it.y, w: it.w, h: it.h };
+    b = { x: Math.min(it.x1, it.x2) - h, y: Math.min(it.y1, it.y2) - h, w: Math.abs(it.x2 - it.x1) + 2 * h, h: Math.abs(it.y2 - it.y1) + 2 * h };
+  } else if (it.type === 'text') { const m = textMetrics(it); b = { x: it.x, y: it.y, w: m.w, h: m.h }; }
+  else b = { x: it.x, y: it.y, w: it.w, h: it.h };
   bbCache.set(it, b); return b;
 }
 function unionBounds(list) {
@@ -229,9 +360,7 @@ function tracePath(c, pts, cont) {
   if (cont) c.lineTo(pts[0][0], pts[0][1]); else c.moveTo(pts[0][0], pts[0][1]);
   const n = pts.length;
   if (n < 3) { for (let i = 1; i < n; i++) c.lineTo(pts[i][0], pts[i][1]); return; }
-  for (let i = 1; i < n - 1; i++) {
-    c.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2);
-  }
+  for (let i = 1; i < n - 1; i++) c.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2);
   c.lineTo(pts[n - 1][0], pts[n - 1][1]);
 }
 function inkWidths(it) {
@@ -240,12 +369,12 @@ function inkWidths(it) {
   const w = raw.slice();
   for (let i = 1; i < n - 1; i++) w[i] = (raw[i - 1] + raw[i] * 2 + raw[i + 1]) / 4;
   const T = Math.min(6, Math.floor(n / 3));
-  for (let i = 0; i < T; i++) { const f = 0.4 + 0.6 * (i / T); w[i] *= f; w[n - 1 - i] *= 0.5 + 0.5 * (i / T); }
+  for (let i = 0; i < T; i++) { w[i] *= 0.4 + 0.6 * (i / T); w[n - 1 - i] *= 0.5 + 0.5 * (i / T); }
   return w;
 }
 function drawInk(c, it) {
-  const P = it.pts, n = P.length; const ws = inkWidths(it);
-  c.fillStyle = it.color; c.beginPath();
+  const P = it.pts, n = P.length, ws = inkWidths(it);
+  c.fillStyle = inkColor(it.color); c.beginPath();
   if (n < 2) { c.arc(P[0][0], P[0][1], Math.max(0.6, it.size * 0.4), 0, Math.PI * 2); c.fill(); return; }
   const L = [], R = [];
   for (let i = 0; i < n; i++) {
@@ -265,9 +394,9 @@ function drawInk(c, it) {
 function drawStroke(c, it) {
   const P = it.pts; if (!P.length) return;
   c.save();
-  if (it.tool === 'marker') { c.globalAlpha = 0.42; c.globalCompositeOperation = 'multiply'; }
+  if (it.tool === 'marker') { c.globalAlpha = RT.dark ? 0.34 : 0.42; if (!RT.dark) c.globalCompositeOperation = 'multiply'; }
   if (it.style === 'even' || it.tool === 'marker') {
-    c.strokeStyle = it.color; c.lineWidth = it.size; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.strokeStyle = it.tool === 'marker' ? it.color : inkColor(it.color); c.lineWidth = it.size; c.lineCap = 'round'; c.lineJoin = 'round';
     c.beginPath(); tracePath(c, P, false); if (P.length === 1) c.lineTo(P[0][0] + 0.01, P[0][1]); c.stroke();
   } else drawInk(c, it);
   c.restore();
@@ -288,19 +417,15 @@ function shapePath(c, it) {
     case 'triangle': c.moveTo(x0 + w / 2, y0); c.lineTo(x0 + w, y0 + h); c.lineTo(x0, y0 + h); c.closePath(); break;
   }
 }
-function drawShape(c, it) {
-  c.save(); c.strokeStyle = it.color; c.lineWidth = it.size; c.lineCap = 'round'; c.lineJoin = 'round';
-  shapePath(c, it); c.stroke(); c.restore();
-}
+function drawShape(c, it) { c.save(); c.strokeStyle = inkColor(it.color); c.lineWidth = it.size; c.lineCap = 'round'; c.lineJoin = 'round'; shapePath(c, it); c.stroke(); c.restore(); }
 function drawText(c, it) {
-  c.save(); c.fillStyle = it.color; c.font = fontStr(it.fs); c.textBaseline = 'top';
+  c.save(); c.fillStyle = inkColor(it.color); c.font = fontStr(it.fs); c.textBaseline = 'top';
   it.text.split('\n').forEach((l, i) => c.fillText(l, it.x, it.y + i * it.fs * 1.3 + it.fs * 0.08));
   c.restore();
 }
 function drawImageItem(c, it) {
   const im = getImg(it.src);
-  if (im) c.drawImage(im, it.x, it.y, it.w, it.h);
-  else { c.fillStyle = '#EFE6D8'; c.fillRect(it.x, it.y, it.w, it.h); }
+  if (im) c.drawImage(im, it.x, it.y, it.w, it.h); else { c.fillStyle = RT.ph; c.fillRect(it.x, it.y, it.w, it.h); }
 }
 function drawItem(c, it) {
   if (it === E.editing) return;
@@ -310,35 +435,35 @@ function drawItem(c, it) {
   else if (it.type === 'image') drawImageItem(c, it);
 }
 
-/* ---- Nền ---- */
+/* ---- Nền bảng ---- */
 function drawBg(c, w, h, view, type) {
   if (type === 'plain') return;
   const s = view.s, mod = (a, b) => ((a % b) + b) % b;
-  const light = 'rgba(140,105,60,0.13)', strong = 'rgba(140,105,60,0.27)';
   c.save(); c.lineWidth = 1;
   const hl = (st, col, off) => { c.strokeStyle = col; c.beginPath(); for (let y = mod(off, st); y < h; y += st) { const yy = Math.round(y) + 0.5; c.moveTo(0, yy); c.lineTo(w, yy); } c.stroke(); };
   const vl = (st, col, off) => { c.strokeStyle = col; c.beginPath(); for (let x = mod(off, st); x < w; x += st) { const xx = Math.round(x) + 0.5; c.moveTo(xx, 0); c.lineTo(xx, h); } c.stroke(); };
-  if (type === 'grid') { let st = 32 * s; while (st < 10) st *= 2; hl(st, light, view.y); vl(st, light, view.x); }
+  if (type === 'grid') { let st = 32 * s; while (st < 10) st *= 2; hl(st, RT.line, view.y); vl(st, RT.line, view.x); }
   else if (type === 'lines') {
-    let st = 36 * s; while (st < 10) st *= 2; hl(st, light, view.y);
-    const mx = view.x + 64 * s; if (mx > 0 && mx < w) { c.strokeStyle = 'rgba(196,92,80,0.28)'; c.beginPath(); c.moveTo(mx, 0); c.lineTo(mx, h); c.stroke(); }
+    let st = 36 * s; while (st < 10) st *= 2; hl(st, RT.line, view.y);
+    const mx = view.x + 64 * s; if (mx > 0 && mx < w) { c.strokeStyle = RT.margin; c.beginPath(); c.moveTo(mx, 0); c.lineTo(mx, h); c.stroke(); }
   } else if (type === 'dots') {
     let st = 28 * s; while (st < 10) st *= 2; const r = clamp(1.4 * s, 0.9, 2);
-    c.fillStyle = 'rgba(140,105,60,0.38)'; c.beginPath();
+    c.fillStyle = RT.dot; c.beginPath();
     for (let x = mod(view.x, st); x < w; x += st) for (let y = mod(view.y, st); y < h; y += st) c.rect(x - r / 2, y - r / 2, r, r);
     c.fill();
   } else if (type === 'oli') {
     const big = 48 * s;
-    if (big >= 6) { if (big / 4 >= 4) hl(big / 4, light, view.y); hl(big, strong, view.y); vl(big, strong, view.x); }
+    if (big >= 6) { if (big / 4 >= 4) hl(big / 4, RT.line, view.y); hl(big, RT.strong, view.y); vl(big, RT.strong, view.x); }
   }
   c.restore();
 }
 
 /* ---- Vẽ cả cảnh ---- */
 function drawScene(c, w, h, view, k, opts = {}) {
+  const prev = RT; RT = THEMES[opts.theme || resolvedTheme()];
   c.setTransform(k, 0, 0, k, 0, 0);
-  c.fillStyle = PAPER; c.fillRect(0, 0, w, h);
-  drawBg(c, w, h, view, opts.bg || E.bg);
+  c.fillStyle = RT.paper; c.fillRect(0, 0, w, h);
+  if (opts.bg !== false) drawBg(c, w, h, view, typeof opts.bg === 'string' ? opts.bg : E.bg);
   c.setTransform(k * view.s, 0, 0, k * view.s, k * view.x, k * view.y);
   const vx = -view.x / view.s, vy = -view.y / view.s, vw = w / view.s, vh = h / view.s;
   for (const it of (opts.items || E.items)) {
@@ -346,33 +471,30 @@ function drawScene(c, w, h, view, k, opts = {}) {
     if (b.x > vx + vw || b.y > vy + vh || b.x + b.w < vx || b.y + b.h < vy) continue;
     drawItem(c, it);
   }
+  RT = prev;
 }
 
 function frame() {
-  rafId = 0;
+  rafId = 0; RT = THEMES[resolvedTheme()];
   if (baseDirty) { drawScene(bctx, W, H, E.view, DPR); baseDirty = false; }
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(base, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(base, 0, 0);
   const s = E.view.s;
   ctx.setTransform(DPR * s, 0, 0, DPR * s, DPR * E.view.x, DPR * E.view.y);
   if (E.cur) drawItem(ctx, E.cur);
-  // Vùng chọn
   if (E.sel.size) {
-    const b = selBounds(); const pd = 6 / s;
-    ctx.save(); ctx.strokeStyle = '#A86B3C'; ctx.lineWidth = 1.5 / s; ctx.setLineDash([6 / s, 4 / s]);
+    const b = selBounds(), pd = 6 / s;
+    ctx.save(); ctx.strokeStyle = RT.sel; ctx.lineWidth = 1.5 / s; ctx.setLineDash([6 / s, 4 / s]);
     ctx.strokeRect(b.x - pd, b.y - pd, b.w + 2 * pd, b.h + 2 * pd); ctx.setLineDash([]);
-    const hs = 12 / s; ctx.fillStyle = '#fff'; ctx.lineWidth = 2 / s;
+    const hs = 12 / s; ctx.fillStyle = RT.paper; ctx.lineWidth = 2 / s;
     ctx.fillRect(b.x + b.w + pd - hs / 2, b.y + b.h + pd - hs / 2, hs, hs); ctx.strokeRect(b.x + b.w + pd - hs / 2, b.y + b.h + pd - hs / 2, hs, hs);
     ctx.restore();
   }
-  // Đường khoanh
   if (E.drag && E.drag.mode === 'lasso' && E.drag.pts.length > 1) {
     const erase = E.lassoMode === 'erase';
     ctx.save(); ctx.beginPath(); E.drag.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
-    ctx.fillStyle = erase ? 'rgba(181,71,58,0.08)' : 'rgba(168,107,60,0.07)'; ctx.fill();
-    ctx.strokeStyle = erase ? '#B5473A' : '#A86B3C'; ctx.lineWidth = 1.5 / s; ctx.setLineDash([5 / s, 4 / s]); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = erase ? 'rgba(200,80,60,0.09)' : 'rgba(168,107,60,0.08)'; ctx.fill();
+    ctx.strokeStyle = erase ? '#C9503F' : RT.sel; ctx.lineWidth = 1.5 / s; ctx.setLineDash([5 / s, 4 / s]); ctx.stroke(); ctx.restore();
   }
-  // Laser
   const now = performance.now();
   E.laser = E.laser.filter(p => now - p.t < 900);
   if (E.laser.length) {
@@ -386,12 +508,12 @@ function frame() {
     }
     ctx.restore();
   }
-  // Con trỏ tẩy / laser
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (E.hover && !(E.drag && E.drag.mode === 'pan')) {
     if (E.tool === 'eraser') {
       ctx.beginPath(); ctx.arc(E.hover.x, E.hover.y, E.sizes.eraser / 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill(); ctx.strokeStyle = 'rgba(90,70,50,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = RT.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)'; ctx.fill();
+      ctx.strokeStyle = RT.dark ? 'rgba(240,225,200,0.7)' : 'rgba(90,70,50,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
     } else if (E.tool === 'laser') {
       ctx.beginPath(); ctx.arc(E.hover.x, E.hover.y, 5, 0, Math.PI * 2); ctx.fillStyle = '#E83E30';
       ctx.shadowColor = 'rgba(255,60,40,.9)'; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
@@ -404,8 +526,8 @@ function frame() {
 /* ---- Hình học ---- */
 function distSeg(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
-  let t = l2 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0; t = clamp(t, 0, 1);
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  let k = l2 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0; k = clamp(k, 0, 1);
+  return Math.hypot(px - (ax + k * dx), py - (ay + k * dy));
 }
 function polyHit(pts, x, y, r) {
   if (pts.length === 1) return Math.hypot(pts[0][0] - x, pts[0][1] - y) <= r;
@@ -440,9 +562,8 @@ function densify(pts, step) {
   if (pts.length < 2) return pts.slice();
   const out = [pts[0]];
   for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i], d = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const n = Math.floor(d / step);
-    for (let k = 1; k <= n; k++) { const t = k / (n + 1); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]); }
+    const a = pts[i - 1], b = pts[i], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.floor(d / step);
+    for (let k = 1; k <= n; k++) { const f = k / (n + 1); out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]); }
     out.push(b);
   }
   return out;
@@ -471,18 +592,12 @@ function scaleItem(it, ax, ay, k) {
 }
 const selBounds = () => unionBounds([...E.sel]);
 
-/* ---- Lịch sử (hoàn tác) ---- */
+/* ---- Hoàn tác ---- */
 function pushUndo(prev = E.items) { E.undo.push(prev); if (E.undo.length > 150) E.undo.shift(); E.redo = []; updateUndoBtns(); }
 function setItems(arr) { E.items = arr; requestRender(true); scheduleSave(true); }
 function commitItems(arr) { pushUndo(); setItems(arr); }
-function undo() {
-  commitTextEdit(); if (!E.undo.length) return;
-  E.redo.push(E.items); E.items = E.undo.pop(); E.sel.clear(); requestRender(true); scheduleSave(true); updateUndoBtns();
-}
-function redo() {
-  if (!E.redo.length) return;
-  E.undo.push(E.items); E.items = E.redo.pop(); E.sel.clear(); requestRender(true); scheduleSave(true); updateUndoBtns();
-}
+function undo() { commitTextEdit(); if (!E.undo.length) return; E.redo.push(E.items); E.items = E.undo.pop(); E.sel.clear(); requestRender(true); scheduleSave(true); updateUndoBtns(); }
+function redo() { if (!E.redo.length) return; E.undo.push(E.items); E.items = E.redo.pop(); E.sel.clear(); requestRender(true); scheduleSave(true); updateUndoBtns(); }
 function updateUndoBtns() {
   const u = $('#toolbar [data-act=undo]'), r = $('#toolbar [data-act=redo]');
   if (u) u.disabled = !E.undo.length; if (r) r.disabled = !E.redo.length;
@@ -505,16 +620,32 @@ function fitContent() {
 }
 function updateZoomLabel() { const z = $('#zoombar .zl'); if (z) z.textContent = Math.round(E.view.s * 100) + '%'; }
 
+/* ---- Con trỏ hình bút ---- */
+function cursorSVG(kind, color) {
+  const c = encodeURIComponent(color);
+  if (kind === 'marker') {
+    return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg stroke='white' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M9.5 14.5 20 4l4 4-10.5 10.5z' fill='%235E5347'/%3E%3Cpath d='M9.5 14.5l4 4-2.5 2.5-4-4z' fill='${c}'/%3E%3Cpath d='M7 17l4 4-3 3H3v-2z' fill='${c}'/%3E%3C/g%3E%3C/svg%3E") 3 25, crosshair`;
+  }
+  return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg stroke='white' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M8 21 20.5 8.5a2.5 2.5 0 0 0-3.5-3.5L4.5 17.5z' fill='%233B332B'/%3E%3Cpath d='M4.5 17.5 8 21l-5 2z' fill='${c}'/%3E%3C/g%3E%3C/svg%3E") 3 24, crosshair`;
+}
+function updateCursor() {
+  if (E.drag && E.drag.mode === 'pan') return;
+  if (spaceDown) { cv.style.cursor = 'grab'; return; }
+  if (E.tool === 'pen') cv.style.cursor = cursorSVG('pen', inkColor(E.color));
+  else if (E.tool === 'marker') cv.style.cursor = cursorSVG('marker', E.markerColor);
+  else if (E.tool === 'shape') cv.style.cursor = 'crosshair';
+  else cv.style.cursor = '';
+}
+
 /* =====================================================================
-   Tương tác con trỏ / bút
+   Tương tác con trỏ / bút / cảm ứng
    ===================================================================== */
 const touches = new Map();
 let pinch = null, spaceDown = false;
-
-function curSizeWorld(kind) { return E.sizes[kind] / E.view.s; }
+const curSizeWorld = kind => E.sizes[kind] / E.view.s;
 
 cv.addEventListener('pointerdown', e => {
-  if (E.editing) { commitTextEdit(); if (E.tool === 'text') return; }
+  if (E.editing || textEl) { commitTextEdit(); if (E.tool === 'text') return; }
   closeMenu();
   if (innerWidth <= 900 && !$('#app').classList.contains('focus')) { $('#app').classList.add('focus'); return; }
   cv.setPointerCapture(e.pointerId);
@@ -527,7 +658,7 @@ cv.addEventListener('pointerdown', e => {
   }
   if (E.drag) return;
   if (e.button === 1 || e.button === 2 || spaceDown || E.tool === 'hand') {
-    E.drag = { mode: 'pan', id: e.pointerId, last: p }; cv.classList.add('panning'); return;
+    E.drag = { mode: 'pan', id: e.pointerId, last: p }; cv.classList.add('panning'); cv.style.cursor = ''; return;
   }
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   const w = toWorld(p);
@@ -542,7 +673,6 @@ cv.addEventListener('pointerdown', e => {
     case 'laser': E.drag = { mode: 'laser', id: e.pointerId }; E.laser.push({ ...w, t: performance.now() }); requestRender(); break;
   }
 });
-
 cv.addEventListener('pointermove', e => {
   const p = pos(e);
   E.hover = e.pointerType === 'touch' ? null : p;
@@ -559,18 +689,17 @@ cv.addEventListener('pointermove', e => {
     case 'erase': { const w = toWorld(p); eraseSeg(d.last, w); d.last = w; requestRender(true); break; }
     case 'lasso': { const w = toWorld(p); d.pts.push([w.x, w.y]); requestRender(); break; }
     case 'move': {
-      const w = toWorld(p); const dx = w.x - d.start.x, dy = w.y - d.start.y; d.moved = d.moved || Math.hypot(dx, dy) * E.view.s > 2;
+      const w = toWorld(p), dx = w.x - d.start.x, dy = w.y - d.start.y; d.moved = d.moved || Math.hypot(dx, dy) * E.view.s > 2;
       d.idx.forEach((i, j) => { E.items[i] = translateItem(d.orig[j], dx, dy); });
       E.sel = new Set(d.idx.map(i => E.items[i])); requestRender(true); break;
     }
     case 'scale': {
-      const w = toWorld(p); const b = d.box;
-      const k = Math.max(0.05, ((w.x - b.x) + (w.y - b.y)) / (b.w + b.h)); d.moved = true;
+      const w = toWorld(p), b = d.box, k = Math.max(0.05, ((w.x - b.x) + (w.y - b.y)) / (b.w + b.h)); d.moved = true;
       d.idx.forEach((i, j) => { E.items[i] = scaleItem(d.orig[j], b.x, b.y, k); });
       E.sel = new Set(d.idx.map(i => E.items[i])); requestRender(true); break;
     }
     case 'shape': {
-      const w = toWorld(p); let x2 = w.x, y2 = w.y; const c = E.cur;
+      const w = toWorld(p), c = E.cur; let x2 = w.x, y2 = w.y;
       if (e.shiftKey) {
         const dx = x2 - c.x1, dy = y2 - c.y1;
         if (c.kind === 'line' || c.kind === 'arrow') { const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), l = Math.hypot(dx, dy); x2 = c.x1 + Math.cos(a) * l; y2 = c.y1 + Math.sin(a) * l; }
@@ -581,7 +710,6 @@ cv.addEventListener('pointermove', e => {
     case 'laser': E.laser.push({ ...toWorld(p), t: performance.now() }); requestRender(); break;
   }
 });
-
 function endPointer(e) {
   if (e.pointerType === 'touch') {
     touches.delete(e.pointerId);
@@ -590,7 +718,7 @@ function endPointer(e) {
   const d = E.drag; if (!d || d.id !== e.pointerId) return;
   E.drag = null; cv.classList.remove('panning');
   switch (d.mode) {
-    case 'pan': scheduleSave(false); break;
+    case 'pan': scheduleSave(false); updateCursor(); break;
     case 'stroke':
       if (E.cur && E.cur.pts.length) {
         const w = toWorld(pos(e)), l = E.cur.pts[E.cur.pts.length - 1];
@@ -601,8 +729,7 @@ function endPointer(e) {
     case 'erase': if (d.changed) { pushUndo(d.before); scheduleSave(true); } break;
     case 'lasso': lassoUp(d); break;
     case 'move': case 'scale':
-      if (!d.moved) { E.items = E.undo.pop(); E.sel = new Set(d.idx.map(i => E.items[i])); updateUndoBtns(); }
-      else scheduleSave(true);
+      if (!d.moved) { E.items = E.undo.pop(); E.sel = new Set(d.idx.map(i => E.items[i])); updateUndoBtns(); } else scheduleSave(true);
       requestRender(true); break;
     case 'shape': {
       const c = E.cur; E.cur = null;
@@ -624,10 +751,9 @@ cv.addEventListener('wheel', e => {
 }, { passive: false });
 cv.addEventListener('dblclick', e => {
   const w = toWorld(pos(e));
-  const t = [...E.items].reverse().find(it => it.type === 'text' && hitItem(it, w.x, w.y, 4 / E.view.s));
-  if (t) startTextEdit(t);
+  const hit = [...E.items].reverse().find(it => it.type === 'text' && hitItem(it, w.x, w.y, 4 / E.view.s));
+  if (hit) startTextEdit(hit);
 });
-
 function startPinch() {
   const [a, b] = [...touches.values()];
   pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, c: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v: { ...E.view } };
@@ -643,13 +769,13 @@ function cancelDrag() {
   const d = E.drag; if (!d) return;
   if (d.mode === 'stroke' || d.mode === 'shape') E.cur = null;
   else if (d.mode === 'erase' && d.changed) E.items = d.before;
-  else if ((d.mode === 'move' || d.mode === 'scale')) { E.items = E.undo.pop(); E.sel.clear(); updateUndoBtns(); }
+  else if (d.mode === 'move' || d.mode === 'scale') { E.items = E.undo.pop(); E.sel.clear(); updateUndoBtns(); }
   E.drag = null; requestRender(true);
 }
 function updateHoverCursor(p) {
-  if (E.tool !== 'lasso' || !E.sel.size) { if (cv.style.cursor) cv.style.cursor = ''; return; }
-  const b = selBounds(), pd = 6 / E.view.s, w = toWorld(p);
-  const hs = toScreen(b.x + b.w + pd, b.y + b.h + pd);
+  if (E.tool !== 'lasso') return;
+  if (!E.sel.size) { cv.style.cursor = ''; return; }
+  const b = selBounds(), pd = 6 / E.view.s, w = toWorld(p), hs = toScreen(b.x + b.w + pd, b.y + b.h + pd);
   if (Math.hypot(p.x - hs.x, p.y - hs.y) < 14) cv.style.cursor = 'nwse-resize';
   else if (w.x >= b.x - pd && w.x <= b.x + b.w + pd && w.y >= b.y - pd && w.y <= b.y + b.h + pd) cv.style.cursor = 'move';
   else cv.style.cursor = '';
@@ -682,8 +808,7 @@ function addPoint(ev) {
 
 /* ---- Tẩy ---- */
 function eraseSeg(a, b) {
-  const r = curSizeWorld('eraser') / 2, dist = Math.hypot(b.x - a.x, b.y - a.y);
-  const n = Math.max(1, Math.ceil(dist / (r * 0.5)));
+  const r = curSizeWorld('eraser') / 2, dist = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(dist / (r * 0.5)));
   for (let i = 1; i <= n; i++) eraseAt({ x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n });
 }
 function eraseAt(pt) {
@@ -696,8 +821,7 @@ function eraseAt(pt) {
       if (!polyHit(it.pts, pt.x, pt.y, rr)) { out.push(it); continue; }
       changed = true;
       if (E.eraserMode === 'stroke') continue;
-      const dense = densify(it.pts, Math.max(0.5, r / 3));
-      splitRuns(dense, q => Math.hypot(q[0] - pt.x, q[1] - pt.y) <= rr).forEach(run => out.push({ ...it, pts: run }));
+      splitRuns(densify(it.pts, Math.max(0.5, r / 3)), q => Math.hypot(q[0] - pt.x, q[1] - pt.y) <= rr).forEach(run => out.push({ ...it, pts: run }));
     } else if (hitItem(it, pt.x, pt.y, r)) changed = true;
     else out.push(it);
   }
@@ -707,8 +831,7 @@ function eraseAt(pt) {
 /* ---- Khoanh vùng ---- */
 function lassoDown(e, p, w) {
   if (E.sel.size) {
-    const b = selBounds(), pd = 6 / E.view.s;
-    const hs = toScreen(b.x + b.w + pd, b.y + b.h + pd);
+    const b = selBounds(), pd = 6 / E.view.s, hs = toScreen(b.x + b.w + pd, b.y + b.h + pd);
     const inside = w.x >= b.x - pd && w.x <= b.x + b.w + pd && w.y >= b.y - pd && w.y <= b.y + b.h + pd;
     const onHandle = Math.hypot(p.x - hs.x, p.y - hs.y) < 14;
     if (onHandle || inside) {
@@ -723,9 +846,8 @@ function lassoDown(e, p, w) {
   requestRender();
 }
 function lassoUp(d) {
-  const poly = d.pts; const b = unionBounds([{ type: 'stroke', size: 0, pts: poly.map(q => [q[0], q[1], 0]) }]);
-  const tiny = !b || (b.w * E.view.s < 6 && b.h * E.view.s < 6);
-  if (tiny) {
+  const poly = d.pts, b = unionBounds([{ type: 'stroke', size: 0, pts: poly.map(q => [q[0], q[1], 0]) }]);
+  if (!b || (b.w * E.view.s < 6 && b.h * E.view.s < 6)) {
     const [x, y] = poly[0];
     const hit = [...E.items].reverse().find(it => hitItem(it, x, y, 6 / E.view.s));
     if (hit) E.sel = new Set([hit]);
@@ -737,18 +859,16 @@ function lassoUp(d) {
       const bb = bbox(it); return pointInPoly(bb.x + bb.w / 2, bb.y + bb.h / 2, poly);
     };
     E.sel = new Set(E.items.filter(inside));
-    if (!E.sel.size) toast('Không có nét nào trong vùng khoanh');
+    if (!E.sel.size) toast(t('Không có nét nào trong vùng khoanh'));
   } else {
     let changed = false; const out = [];
     for (const it of E.items) {
       const bb = bbox(it);
       if (bb.x + bb.w < b.x || bb.x > b.x + b.w || bb.y + bb.h < b.y || bb.y > b.y + b.h) { out.push(it); continue; }
       if (it.type === 'stroke') {
-        if (!it.pts.some(q => pointInPoly(q[0], q[1], poly)) && !(it.pts.length > 1)) { out.push(it); continue; }
         const dense = densify(it.pts, Math.max(0.5, 2 / E.view.s));
         const runs = splitRuns(dense, q => pointInPoly(q[0], q[1], poly));
-        const removed = runs.reduce((a, r) => a + r.length, 0) !== dense.length;
-        if (!removed) { out.push(it); continue; }
+        if (runs.reduce((a, r) => a + r.length, 0) === dense.length) { out.push(it); continue; }
         changed = true; runs.forEach(run => out.push({ ...it, pts: run }));
       } else if (pointInPoly(bb.x + bb.w / 2, bb.y + bb.h / 2, poly)) changed = true;
       else out.push(it);
@@ -758,7 +878,7 @@ function lassoUp(d) {
   requestRender(true);
 }
 
-/* ---- Thao tác với vùng chọn ---- */
+/* ---- Vùng chọn ---- */
 function deleteSelection() { if (!E.sel.size) return; commitItems(E.items.filter(i => !E.sel.has(i))); E.sel.clear(); }
 function duplicateSelection() {
   if (!E.sel.size) return; const off = 24 / E.view.s;
@@ -768,7 +888,8 @@ function duplicateSelection() {
 function recolorSelection() {
   if (!E.sel.size) return; const next = [];
   const items = E.items.map(it => {
-    if (!E.sel.has(it) || it.type === 'image') { if (E.sel.has(it)) next.push(it); return it; }
+    if (!E.sel.has(it)) return it;
+    if (it.type === 'image') { next.push(it); return it; }
     const n = { ...it, color: it.tool === 'marker' ? E.markerColor : E.color }; next.push(n); return n;
   });
   commitItems(items); E.sel = new Set(next);
@@ -778,15 +899,14 @@ function reorderSelection(front) {
   commitItems(front ? [...rest, ...sel] : [...sel, ...rest]);
 }
 function selectAll() { setTool('lasso'); E.sel = new Set(E.items); requestRender(); }
-
 const selbar = $('#selbar');
 function renderSelbar() {
   selbar.innerHTML = `
-    <button class="icon-btn danger" data-s="del" title="Xoá (Delete)">${ic('trash', 18)}</button>
-    <button class="icon-btn" data-s="dup" title="Nhân bản (Ctrl+D)">${ic('copy', 18)}</button>
-    <button class="icon-btn" data-s="color" title="Đổi sang màu đang chọn"><span class="cdot" style="background:${E.color}"></span></button>
-    <button class="icon-btn" data-s="front" title="Đưa lên trên">${ic('up', 18)}</button>
-    <button class="icon-btn" data-s="back" title="Đưa xuống dưới">${ic('down', 18)}</button>`;
+    <button class="icon-btn danger" data-s="del" title="${t('Xoá (Delete)')}">${ic('trash', 18)}</button>
+    <button class="icon-btn" data-s="dup" title="${t('Nhân bản (Ctrl+D)')}">${ic('copy', 18)}</button>
+    <button class="icon-btn" data-s="color" title="${t('Đổi sang màu đang chọn')}"><span class="cdot" style="background:${inkColor(E.color)}"></span></button>
+    <button class="icon-btn" data-s="front" title="${t('Đưa lên trên')}">${ic('up', 18)}</button>
+    <button class="icon-btn" data-s="back" title="${t('Đưa xuống dưới')}">${ic('down', 18)}</button>`;
 }
 selbar.addEventListener('click', e => {
   const b = e.target.closest('[data-s]'); if (!b) return;
@@ -796,11 +916,9 @@ function updateSelBar() {
   if (!E.sel.size || E.drag) { selbar.classList.add('hidden'); return; }
   const b = selBounds(); if (!b) { selbar.classList.add('hidden'); return; }
   selbar.classList.remove('hidden');
-  const tl = toScreen(b.x, b.y), br = toScreen(b.x + b.w, b.y + b.h);
-  const w = selbar.offsetWidth || 180;
+  const tl = toScreen(b.x, b.y), br = toScreen(b.x + b.w, b.y + b.h), w = selbar.offsetWidth || 180;
   let top = tl.y - 58; if (top < 8) top = Math.min(br.y + 16, H - 60);
-  selbar.style.left = clamp((tl.x + br.x) / 2 - w / 2, 8, W - w - 8) + 'px';
-  selbar.style.top = top + 'px';
+  selbar.style.left = clamp((tl.x + br.x) / 2 - w / 2, 8, W - w - 8) + 'px'; selbar.style.top = top + 'px';
 }
 
 /* ---- Chữ ---- */
@@ -808,23 +926,18 @@ let textEl = null;
 function startTextEdit(item, w) {
   commitTextEdit();
   const fs = item ? item.fs : curSizeWorld('text');
-  const x = item ? item.x : w.x, y = item ? item.y : w.y - fs * 0.6;
-  const color = item ? item.color : E.color;
+  const x = item ? item.x : w.x, y = item ? item.y : w.y - fs * 0.6, color = item ? item.color : E.color;
   E.editing = item; requestRender(true);
   const ta = document.createElement('textarea'); ta.className = 'text-editor';
-  ta.value = item ? item.text : '';
-  ta.style.color = color; ta.spellcheck = false;
+  ta.value = item ? item.text : ''; ta.style.color = inkColor(color); ta.spellcheck = false;
   const place = () => {
     const sp = toScreen(x, y), px = fs * E.view.s;
-    ta.style.left = sp.x - 3 + 'px'; ta.style.top = sp.y - 3 + 'px'; ta.style.fontSize = px + 'px';
-    ta.style.padding = '2px'; ta.style.height = 'auto'; ta.style.width = 'auto';
+    ta.style.left = sp.x - 3 + 'px'; ta.style.top = sp.y - 3 + 'px'; ta.style.fontSize = px + 'px'; ta.style.padding = '2px';
+    ta.style.height = 'auto'; ta.style.width = 'auto';
     ta.style.height = ta.scrollHeight + 4 + 'px'; ta.style.width = Math.max(60, ta.scrollWidth + px) + 'px';
   };
   ta.addEventListener('input', place);
-  ta.addEventListener('keydown', ev => {
-    ev.stopPropagation();
-    if (ev.key === 'Escape' || (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey))) { ev.preventDefault(); commitTextEdit(); }
-  });
+  ta.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Escape' || (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey))) { ev.preventDefault(); commitTextEdit(); } });
   ta.addEventListener('blur', () => setTimeout(commitTextEdit, 0));
   wrap.append(ta); textEl = { ta, item, x, y, fs, color }; place();
   const focus = () => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); };
@@ -840,179 +953,290 @@ function commitTextEdit() {
   requestRender(true);
 }
 
-/* ---- Chèn ảnh & PDF ---- */
-async function prepareImageSrc(blob) {
-  const src = await blobToDataURL(blob); const img = await loadImg(src);
-  const max = 2400, big = Math.max(img.naturalWidth, img.naturalHeight);
-  if (big <= max && blob.size < 2.5e6) return { src, w: img.naturalWidth, h: img.naturalHeight };
+/* =====================================================================
+   Chèn ảnh / PDF / bản quét
+   ===================================================================== */
+// Làm rõ như bản quét: chuyển xám, kéo giãn độ tương phản, làm trắng nền giấy
+function scanEnhance(canvas) {
+  const g = canvas.getContext('2d'), { width: w, height: h } = canvas;
+  const img = g.getImageData(0, 0, w, h), d = img.data, n = w * h;
+  const L = new Uint8ClampedArray(n), hist = new Uint32Array(256);
+  for (let i = 0, j = 0; i < n; i++, j += 4) { const v = (d[j] * 0.299 + d[j + 1] * 0.587 + d[j + 2] * 0.114) | 0; L[i] = v; hist[v]++; }
+  const pct = p => { let acc = 0; const target = n * p; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= target) return v; } return 255; };
+  const lo = pct(0.01), hi = Math.max(lo + 30, pct(0.55));
+  const lut = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) { let x = (v - lo) / (hi - lo); x = clamp(x, 0, 1); x = Math.pow(x, 1.6); lut[v] = x > 0.93 ? 255 : Math.round(x * 255); }
+  for (let i = 0, j = 0; i < n; i++, j += 4) { const v = lut[L[i]]; d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  return canvas;
+}
+// Bản quét cho bảng xuất PDF: giữ chữ sạch, nền trắng tinh
+function scanFlatten(canvas) {
+  const g = canvas.getContext('2d'), img = g.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
+  for (let j = 0; j < d.length; j += 4) {
+    const v = d[j] * 0.299 + d[j + 1] * 0.587 + d[j + 2] * 0.114;
+    let x = clamp((v - 35) / (215 - 35), 0, 1); x = Math.pow(x, 1.25);
+    const o = x > 0.9 ? 255 : Math.round(x * 255); d[j] = d[j + 1] = d[j + 2] = o;
+  }
+  g.putImageData(img, 0, 0); return canvas;
+}
+async function prepareImageSrc(blob, scan) {
+  const src = await blobToDataURL(blob), img = await loadImg(src);
+  const max = scan ? 2000 : 2400, big = Math.max(img.naturalWidth, img.naturalHeight);
+  if (!scan && big <= max && blob.size < 2.5e6) return { src, w: img.naturalWidth, h: img.naturalHeight };
   const k = Math.min(1, max / big), c = document.createElement('canvas');
   c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-  const g = c.getContext('2d'); const png = blob.type === 'image/png';
+  const g = c.getContext('2d'), png = blob.type === 'image/png' && !scan;
   if (!png) { g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); }
   g.drawImage(img, 0, 0, c.width, c.height);
+  if (scan) scanEnhance(c);
   return { src: c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.88), w: c.width, h: c.height };
 }
-function viewportWorld() { return { x: -E.view.x / E.view.s, y: -E.view.y / E.view.s, w: W / E.view.s, h: H / E.view.s }; }
+const viewportWorld = () => ({ x: -E.view.x / E.view.s, y: -E.view.y / E.view.s, w: W / E.view.s, h: H / E.view.s });
 function placeItems(items) {
   commitItems([...E.items, ...items]); setTool('lasso'); E.sel = new Set(items); requestRender(true);
-  toast('Kéo để di chuyển · kéo ô vuông ở góc để phóng to/thu nhỏ');
+  toast(t('Kéo để di chuyển · kéo ô vuông ở góc để phóng to/thu nhỏ'));
 }
-async function insertImageBlob(blob) {
+async function insertImageBlob(blob, scan) {
   try {
-    const { src, w, h } = await prepareImageSrc(blob); const v = viewportWorld();
-    const k = Math.min((v.w * 0.6) / w, (v.h * 0.7) / h, 1 / E.view.s * 1.5);
-    const iw = w * k, ih = h * k;
+    const { src, w, h } = await prepareImageSrc(blob, scan), v = viewportWorld();
+    const k = Math.min((v.w * 0.6) / w, (v.h * 0.7) / h, 1.5 / E.view.s), iw = w * k, ih = h * k;
     placeItems([{ type: 'image', x: r1(v.x + (v.w - iw) / 2), y: r1(v.y + (v.h - ih) / 2), w: r1(iw), h: r1(ih), src }]);
-  } catch (err) { toast('Không đọc được ảnh này', true); }
+  } catch (err) { toast(t('Không đọc được ảnh này'), true); }
 }
 async function loadPdfJs() {
   if (window.pdfjsLib) return;
   let dir = 'vendor/';
-  try { await loadScript(dir + 'pdf.min.js'); }
-  catch (e) { dir = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'; await loadScript(dir + 'pdf.min.js'); }
+  try { await loadScript(dir + 'pdf.min.js'); } catch (e) { dir = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'; await loadScript(dir + 'pdf.min.js'); }
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = dir + 'pdf.worker.min.js';
 }
-async function insertPdfBlob(blob) {
+async function insertPdfBlob(blob, scan) {
   try {
-    toast('Đang mở PDF…');
+    toast(t('Đang mở PDF…'));
     await loadPdfJs();
     const pdf = await window.pdfjsLib.getDocument({ data: await blob.arrayBuffer() }).promise;
     let from = 1, to = pdf.numPages;
     if (pdf.numPages > 1) {
-      const r = await formBox('Chèn PDF lên bảng', [
-        { name: 'from', label: 'Từ trang', type: 'number', value: 1, min: 1, max: pdf.numPages },
-        { name: 'to', label: `Đến trang (tổng ${pdf.numPages} trang)`, type: 'number', value: Math.min(pdf.numPages, 20), min: 1, max: pdf.numPages },
-      ], 'Chèn', `<p class="muted">Mỗi trang sẽ thành một ảnh trên bảng, xếp từ trên xuống. Bạn có thể viết đè lên.</p>`, true);
+      const r = await formBox(t('Chèn PDF lên bảng'), [
+        { name: 'from', label: t('Từ trang'), type: 'number', value: 1, min: 1, max: pdf.numPages },
+        { name: 'to', label: t('Đến trang (tổng {n} trang)', { n: pdf.numPages }), type: 'number', value: Math.min(pdf.numPages, 20), min: 1, max: pdf.numPages },
+      ], t('Chèn'), `<p class="muted">${t('Mỗi trang sẽ thành một ảnh trên bảng, xếp từ trên xuống. Bạn có thể viết đè lên.')}</p>`, true);
       if (!r) return;
       from = clamp(parseInt(r.from) || 1, 1, pdf.numPages); to = clamp(parseInt(r.to) || from, from, pdf.numPages);
     }
-    const v = viewportWorld(); const pageW = Math.min(900, W * 0.72) / E.view.s;
-    let y = v.y + 40 / E.view.s; const x = v.x + (v.w - pageW) / 2; const items = [];
+    const v = viewportWorld(), pageW = Math.min(900, W * 0.72) / E.view.s;
+    let y = v.y + 40 / E.view.s; const x = v.x + (v.w - pageW) / 2, items = [];
     for (let i = from; i <= to; i++) {
-      const page = await pdf.getPage(i); const vp1 = page.getViewport({ scale: 1 });
-      const scale = Math.min(2.4, 1700 / vp1.width); const vp = page.getViewport({ scale });
+      const page = await pdf.getPage(i), vp1 = page.getViewport({ scale: 1 });
+      const vp = page.getViewport({ scale: Math.min(2.4, 1700 / vp1.width) });
       const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
       const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
       await page.render({ canvasContext: g, viewport: vp }).promise;
+      if (scan) scanEnhance(c);
       const h = pageW * vp1.height / vp1.width;
-      items.push({ type: 'image', x: r1(x), y: r1(y), w: r1(pageW), h: r1(h), src: c.toDataURL('image/jpeg', 0.86) });
+      items.push({ type: 'image', x: r1(x), y: r1(y), w: r1(pageW), h: r1(h), src: c.toDataURL('image/jpeg', scan ? 0.8 : 0.86) });
       y += h + 28 / E.view.s;
-      if (to - from > 2) toast(`Đang xử lý trang ${i}/${to}…`);
+      if (to - from > 2) toast(t('Đang xử lý trang {i}/{n}…', { i, n: to }));
     }
     placeItems(items);
-  } catch (err) { console.error(err); toast('Không mở được tệp PDF này', true); }
+  } catch (err) { console.error(err); toast(t('Không mở được tệp PDF này'), true); }
 }
-async function insertBlob(blob, name = '') {
-  const t = blob.type || '';
-  if (t.startsWith('image/')) return insertImageBlob(blob);
-  if (t === 'application/pdf' || /\.pdf$/i.test(name)) return insertPdfBlob(blob);
-  toast('Chỉ đưa được ảnh hoặc PDF lên bảng. Với Word/PowerPoint, hãy lưu sang PDF trước.', true);
+async function insertBlob(blob, name = '', scan = false) {
+  const ty = blob.type || '';
+  if (ty.startsWith('image/')) return insertImageBlob(blob, scan);
+  if (ty === 'application/pdf' || /\.pdf$/i.test(name)) return insertPdfBlob(blob, scan);
+  toast(t('Chỉ đưa được ảnh hoặc PDF lên bảng. Với Word/PowerPoint, hãy lưu sang PDF trước.'), true);
+}
+function insertMenu(anchor) {
+  popMenu(anchor, [
+    { icon: 'image', label: t('Ảnh hoặc PDF'), sub: t('Chèn nguyên bản, giữ màu'), onClick: () => $('#fileInsert').click() },
+    { icon: 'scan', label: t('Bản quét (làm rõ chữ)'), sub: t('Làm trắng nền giấy, chữ đen rõ — hợp ảnh chụp, PDF scan'), onClick: () => $('#fileScan').click() },
+    { icon: 'camera', label: t('Chụp tài liệu bằng camera'), sub: t('Điện thoại / iPad: chụp phiếu bài tập rồi tự làm rõ'), onClick: () => $('#fileCamera').click() },
+  ]);
 }
 
-/* ---- Ảnh xuất / ảnh thu nhỏ ---- */
+/* =====================================================================
+   Xuất PNG / PDF
+   ===================================================================== */
 function makeThumb() {
   const b = unionBounds(E.items); if (!b) return null;
-  const c = document.createElement('canvas'); c.width = 192; c.height = 132; const g = c.getContext('2d');
-  drawScene(g, 192, 132, fitView(b, 192, 132, 8, 1), 1);
+  const c = document.createElement('canvas'); c.width = 192; c.height = 132;
+  drawScene(c.getContext('2d'), 192, 132, fitView(b, 192, 132, 8, 1), 1, { theme: 'light' });
   return c.toDataURL('image/jpeg', 0.72);
 }
 function renderBoardPNG() {
   const b = unionBounds(E.items); if (!b) return null;
-  const m = 40; let k = 2; const w = b.w + 2 * m, h = b.h + 2 * m;
-  k = Math.min(k, 8000 / w, 8000 / h);
+  const m = 40, w = b.w + 2 * m, h = b.h + 2 * m, k = Math.min(2, 8000 / w, 8000 / h);
   const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
-  drawScene(c.getContext('2d'), w, h, { s: 1, x: -b.x + m, y: -b.y + m }, k);
+  drawScene(c.getContext('2d'), w, h, { s: 1, x: -b.x + m, y: -b.y + m }, k, { theme: 'light' });
   return new Promise(res => c.toBlob(res, 'image/png'));
+}
+// Trình tạo PDF tối giản: mỗi trang là một ảnh JPEG
+function buildPDF(pages) {
+  const enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+  const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const obj = (id, ...chunks) => { offs[id] = len; push(`${id} 0 obj\n`); chunks.forEach(push); push('\nendobj\n'); };
+  push('%PDF-1.4\n%âãÏÓ\n');
+  const n = pages.length, kids = pages.map((_, i) => `${3 + i * 3} 0 R`).join(' ');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  pages.forEach((p, i) => {
+    const pid = 3 + i * 3, cid = pid + 1, iid = pid + 2;
+    const content = `q ${p.dw.toFixed(2)} 0 0 ${p.dh.toFixed(2)} ${p.dx.toFixed(2)} ${p.dy.toFixed(2)} cm /Im0 Do Q`;
+    obj(pid, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${p.pw} ${p.ph}] /Resources << /XObject << /Im0 ${iid} 0 R >> >> /Contents ${cid} 0 R >>`);
+    obj(cid, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    obj(iid, `<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpeg.length} >>\nstream\n`, p.jpeg, '\nendstream');
+  });
+  const count = 3 + n * 3, xref = len;
+  let x = `xref\n0 ${count}\n0000000000 65535 f \n`;
+  for (let i = 1; i < count; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  push(x + `trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+const canvasJPEG = (c, q) => new Promise(res => c.toBlob(async b => res(new Uint8Array(await b.arrayBuffer())), 'image/jpeg', q));
+async function exportPdfDialog() {
+  if (!unionBounds(E.items)) return toast(t('Bảng đang trống'));
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="field"><label>${t('Kiểu PDF')}</label><div class="radio-cards">
+      <label><input type="radio" name="mode" value="color" checked><b>${t('Màu')}</b><span>${t('Giữ nguyên màu như trên bảng')}</span></label>
+      <label><input type="radio" name="mode" value="scan"><b>${t('Bản quét')}</b><span>${t('Đen trắng, nền trắng — nhẹ, in rõ')}</span></label>
+    </div></div>
+    <div class="row2">
+      <div class="field"><label>${t('Khổ giấy')}</label><select name="orient"><option value="auto">${t('Tự động')}</option><option value="p">${t('A4 dọc')}</option><option value="l">${t('A4 ngang')}</option></select></div>
+      <div class="field"><label>${t('Chia trang')}</label><select name="layout"><option value="split">${t('Chia thành nhiều trang A4')}</option><option value="fit">${t('Gộp vừa 1 trang')}</option></select></div>
+    </div>
+    <label class="check"><input type="checkbox" name="bg"> ${t('In kèm nền ô/kẻ')}</label>
+    <label class="check"><input type="checkbox" name="header" checked> ${t('Thêm tiêu đề (tên bảng, học sinh, ngày, giáo viên)')}</label>`;
+  openModal({
+    title: t('Tải PDF'), body, width: 480, actions: [{ label: t('Huỷ') }, {
+      label: t('Tạo PDF'), kind: 'primary', onClick: () => {
+        const o = { mode: $('[name=mode]:checked', body).value, orient: $('[name=orient]', body).value, layout: $('[name=layout]', body).value, bg: $('[name=bg]', body).checked, header: $('[name=header]', body).checked };
+        setTimeout(() => exportPdf(o), 50);
+      }
+    }]
+  });
+}
+async function exportPdf(o) {
+  const b0 = unionBounds(E.items); if (!b0) return;
+  toast(t('Đang tạo PDF…'));
+  const board = S.boards.find(x => x.id === S.boardId), m = 24;
+  const b = { x: b0.x - m, y: b0.y - m, w: b0.w + 2 * m, h: b0.h + 2 * m };
+  const land = o.orient === 'l' || (o.orient === 'auto' && b.w > b.h * 1.15);
+  const PW = land ? 842 : 595, PH = land ? 595 : 842, M = 28, cw = PW - 2 * M, chPage = PH - 2 * M;
+  const headH = o.header ? b.w * 0.075 : 0; // chiều cao tiêu đề (đơn vị thế giới)
+  const totalH = headH + b.h;
+  const pxW = 1650 * (cw / 535);
+  const k = Math.min(pxW / b.w, 16000 / totalH);
+  const full = document.createElement('canvas'); full.width = Math.round(b.w * k); full.height = Math.round(totalH * k);
+  const g = full.getContext('2d');
+  drawScene(g, b.w, totalH, { s: 1, x: -b.x, y: -b.y + headH }, k, { theme: 'light', bg: o.bg ? E.bg : false });
+  if (o.header) {
+    g.setTransform(k, 0, 0, k, 0, 0); g.fillStyle = THEMES.light.paper; g.fillRect(0, 0, b.w, headH);
+    const fs = headH * 0.36, prof = S.settings.profile || {};
+    g.fillStyle = '#3B332B'; g.font = `600 ${fs}px "Be Vietnam Pro", system-ui, sans-serif`; g.textBaseline = 'top';
+    g.fillText(board ? board.title : 'Vincenink', m, headH * 0.12);
+    const sub = [ownerName(board?.studentId || 'all'), board ? fmtDateLong(board.date) : '', prof.name ? t('Giáo viên: {n}', { n: prof.name }) : ''].filter(Boolean).join('  ·  ');
+    g.fillStyle = '#8A7D6D'; g.font = `${fs * 0.62}px "Be Vietnam Pro", system-ui, sans-serif`; g.fillText(sub, m, headH * 0.58);
+    g.strokeStyle = '#E2D6C3'; g.lineWidth = Math.max(1, headH * 0.02); g.beginPath(); g.moveTo(m, headH * 0.97); g.lineTo(b.w - m, headH * 0.97); g.stroke();
+  }
+  if (o.mode === 'scan') scanFlatten(full);
+  const pages = [];
+  if (o.layout === 'fit') {
+    const s = Math.min(cw / full.width, chPage / full.height), dw = full.width * s, dh = full.height * s;
+    pages.push({ jpeg: await canvasJPEG(full, o.mode === 'scan' ? 0.82 : 0.9), w: full.width, h: full.height, pw: PW, ph: PH, dw, dh, dx: (PW - dw) / 2, dy: PH - M - dh });
+  } else {
+    const sliceH = Math.floor(full.width * chPage / cw);
+    for (let y = 0; y < full.height; y += sliceH) {
+      const h = Math.min(sliceH, full.height - y); if (h < 4) break;
+      const c = document.createElement('canvas'); c.width = full.width; c.height = h;
+      c.getContext('2d').drawImage(full, 0, y, full.width, h, 0, 0, full.width, h);
+      const s = cw / full.width, dh = h * s;
+      pages.push({ jpeg: await canvasJPEG(c, o.mode === 'scan' ? 0.82 : 0.9), w: c.width, h, pw: PW, ph: PH, dw: cw, dh, dx: M, dy: PH - M - dh });
+    }
+  }
+  download(buildPDF(pages), safeName(board ? `${board.date} - ${board.title}` : 'vincenink') + (o.mode === 'scan' ? ' (scan)' : '') + '.pdf');
+  toast(t('Đã tải PDF ({n} trang)', { n: pages.length }));
 }
 
 /* =====================================================================
-   Thanh công cụ
+   Thanh công cụ & thuộc tính
    ===================================================================== */
-function buildToolbar() {
-  const tb = $('#toolbar');
-  tb.innerHTML = TOOLS.map(([id, icon, label]) => `<button class="tool" data-tool="${id}" title="${label}">${ic(icon, 21)}${id === 'pen' || id === 'marker' ? '<span class="swatch-mini"></span>' : ''}</button>`).join('')
+function renderToolbar() {
+  $('#toolbar').innerHTML = TOOLS.map(([id, icon, label]) => `<button class="tool ${E.tool === id ? 'active' : ''}" data-tool="${id}" title="${t(label)}" aria-label="${t(label)}">${ic(icon, 21)}${id === 'pen' || id === 'marker' ? '<span class="swatch-mini"></span>' : ''}</button>`).join('')
     + `<span class="tsep"></span>
-       <button class="tool" data-act="undo" title="Hoàn tác (Ctrl+Z)">${ic('undo', 21)}</button>
-       <button class="tool" data-act="redo" title="Làm lại (Ctrl+Shift+Z)">${ic('redo', 21)}</button>
+       <button class="tool" data-act="undo" title="${t('Hoàn tác (Ctrl+Z)')}">${ic('undo', 21)}</button>
+       <button class="tool" data-act="redo" title="${t('Làm lại (Ctrl+Shift+Z)')}">${ic('redo', 21)}</button>
        <span class="tsep"></span>
-       <button class="tool" data-act="insert" title="Chèn ảnh / PDF (I) — hoặc kéo thả, dán Ctrl+V">${ic('image', 21)}</button>
-       <button class="tool" data-act="clear" title="Xoá sạch bảng">${ic('wipe', 21)}</button>`;
-  tb.addEventListener('click', e => {
-    const t = e.target.closest('[data-tool]'); if (t) return setTool(t.dataset.tool);
-    const a = e.target.closest('[data-act]'); if (!a) return;
-    if (a.dataset.act === 'undo') undo();
-    else if (a.dataset.act === 'redo') redo();
-    else if (a.dataset.act === 'insert') $('#fileInsert').click();
-    else if (a.dataset.act === 'clear') clearBoard();
-  });
+       <button class="tool" data-act="insert" title="${t('Chèn ảnh / PDF / bản quét (I)')}">${ic('image', 21)}</button>
+       <button class="tool" data-act="clear" title="${t('Xoá sạch bảng')}">${ic('wipe', 21)}</button>`;
   $('#zoombar').innerHTML = `
-    <button class="icon-btn sm" data-z="out" title="Thu nhỏ (−)">${ic('minus', 17)}</button>
-    <button class="zl" data-z="reset" title="Về 100% (0)">100%</button>
-    <button class="icon-btn sm" data-z="in" title="Phóng to (+)">${ic('plus', 17)}</button>
-    <button class="icon-btn sm" data-z="fit" title="Xem toàn bộ nội dung">${ic('fit', 17)}</button>`;
-  $('#zoombar').addEventListener('click', e => {
-    const z = e.target.closest('[data-z]')?.dataset.z; if (!z) return;
-    if (z === 'in') zoomAt(W / 2, H / 2, 1.25); else if (z === 'out') zoomAt(W / 2, H / 2, 0.8);
-    else if (z === 'reset') zoomAt(W / 2, H / 2, 1 / E.view.s); else fitContent();
-  });
-  updateUndoBtns();
+    <button class="icon-btn sm" data-z="out" title="${t('Thu nhỏ (−)')}">${ic('minus', 17)}</button>
+    <button class="zl" data-z="reset" title="${t('Về 100% (0)')}">${Math.round(E.view.s * 100)}%</button>
+    <button class="icon-btn sm" data-z="in" title="${t('Phóng to (+)')}">${ic('plus', 17)}</button>
+    <button class="icon-btn sm" data-z="fit" title="${t('Xem toàn bộ nội dung')}">${ic('fit', 17)}</button>`;
+  updateUndoBtns(); paintMiniSwatches();
 }
+$('#toolbar').addEventListener('click', e => {
+  const tb = e.target.closest('[data-tool]'); if (tb) return setTool(tb.dataset.tool);
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  ({ undo, redo, insert: () => insertMenu(a), clear: clearBoard })[a.dataset.act]();
+});
+$('#zoombar').addEventListener('click', e => {
+  const z = e.target.closest('[data-z]')?.dataset.z; if (!z) return;
+  if (z === 'in') zoomAt(W / 2, H / 2, 1.25); else if (z === 'out') zoomAt(W / 2, H / 2, 0.8);
+  else if (z === 'reset') zoomAt(W / 2, H / 2, 1 / E.view.s); else fitContent();
+});
 async function clearBoard() {
   if (!E.items.length) return;
-  if (await confirmBox('Xoá sạch bảng?', 'Mọi nét vẽ, chữ và tài liệu trên bảng này sẽ bị xoá. Bạn vẫn có thể bấm Hoàn tác (Ctrl+Z) ngay sau đó.', 'Xoá sạch')) {
-    commitItems([]); E.sel.clear();
-  }
+  if (await confirmBox(t('Xoá sạch bảng?'), t('Mọi nét vẽ, chữ và tài liệu trên bảng này sẽ bị xoá. Bạn vẫn có thể bấm Hoàn tác (Ctrl+Z) ngay sau đó.'), t('Xoá sạch'))) { commitItems([]); E.sel.clear(); }
 }
-function setTool(t) {
+function setTool(tool) {
   commitTextEdit();
-  if (t !== 'lasso') E.sel.clear();
-  E.tool = t; savePrefs();
-  $$('#toolbar [data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
-  cv.className = 't-' + t; cv.style.cursor = '';
-  renderProps(); requestRender();
+  if (tool !== 'lasso') E.sel.clear();
+  E.tool = tool; savePrefs();
+  $$('#toolbar [data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  cv.className = 't-' + tool; updateCursor(); renderProps(); requestRender();
 }
+function paintMiniSwatches() { $$('.tool .swatch-mini').forEach(s => { s.style.background = s.parentElement.dataset.tool === 'marker' ? E.markerColor : inkColor(E.color); }); }
 function swatchesHTML(list, cur, key) {
-  const custom = !list.includes(cur);
-  return `<div class="swatches">${list.map(c => `<button class="sw ${c === cur ? 'active' : ''}" style="background:${c}" data-color="${c}" data-key="${key}" title="${c}"></button>`).join('')}
-    <label class="sw custom ${custom ? 'active' : ''}" title="Màu tuỳ chọn" ${custom ? `style="background:${cur}"` : ''}><input type="color" value="${cur}" data-key="${key}"></label></div>`;
+  const custom = !list.includes(cur), show = c => key === 'color' ? inkColor(c) : c;
+  return `<div class="swatches">${list.map(c => `<button class="sw ${c === cur ? 'active' : ''}" style="background:${show(c)}" data-color="${c}" data-key="${key}" aria-label="${c}"></button>`).join('')}
+    <label class="sw custom ${custom ? 'active' : ''}" title="${t('Màu tuỳ chọn')}" ${custom ? `style="background:${cur}"` : ''}><input type="color" value="${cur}" data-key="${key}"></label></div>`;
 }
 function sizeHTML(kind) {
-  const [mn, mx] = SIZE_RANGE[kind], v = E.sizes[kind];
-  const d = kind === 'text' ? 0 : clamp(v, 2, 28);
-  return `<div class="size-ctl" title="Độ dày ( [ và ] )">
-    ${kind === 'text' ? `<span class="prop-hint">Cỡ chữ</span>` : `<span class="prev"><span style="width:${d}px;height:${d}px;background:${kind === 'eraser' ? '#CDBFA8' : (kind === 'marker' ? E.markerColor : E.color)}"></span></span>`}
+  const [mn, mx] = SIZE_RANGE[kind], v = E.sizes[kind], d = clamp(v, 2, 28);
+  const col = kind === 'eraser' ? 'var(--line-strong)' : (kind === 'marker' ? E.markerColor : inkColor(E.color));
+  return `<div class="size-ctl" title="${t('Độ dày ( [ và ] )')}">
+    ${kind === 'text' ? `<span class="prop-hint">${t('Cỡ chữ')}</span>` : `<span class="prev"><span style="width:${d}px;height:${d}px;background:${col}"></span></span>`}
     <input type="range" min="${mn}" max="${mx}" value="${v}" data-size="${kind}"><span class="val">${v}</span></div>`;
 }
-const segHTML = (key, opts, cur, icons) => `<div class="seg ${icons ? 'icons' : ''}">${opts.map(([v, l, i]) => `<button data-seg="${key}" data-v="${v}" class="${v === cur ? 'active' : ''}" title="${l}">${i ? ic(i, 18) : ''}${icons ? '' : l}</button>`).join('')}</div>`;
+const segHTML = (key, opts, cur, icons) => `<div class="seg ${icons ? 'icons' : ''}">${opts.map(([v, l, i]) => `<button data-seg="${key}" data-v="${v}" class="${v === cur ? 'active' : ''}" title="${t(l)}">${i ? ic(i, 18) : ''}${icons ? '' : t(l)}</button>`).join('')}</div>`;
 function renderProps() {
-  const p = $('#props'); let h = '';
+  const sep = '<span class="psep"></span>'; let h = '';
   switch (E.tool) {
-    case 'pen': h = swatchesHTML(COLORS, E.color, 'color') + '<span class="psep"></span>' + sizeHTML('pen') + '<span class="psep"></span>' + segHTML('penStyle', [['ink', 'Thanh đậm'], ['even', 'Nét đều']], E.penStyle); break;
-    case 'marker': h = swatchesHTML(MARKERS, E.markerColor, 'markerColor') + '<span class="psep"></span>' + sizeHTML('marker'); break;
-    case 'eraser': h = segHTML('eraserMode', [['part', 'Tẩy từng phần'], ['stroke', 'Tẩy cả nét']], E.eraserMode) + '<span class="psep"></span>' + sizeHTML('eraser'); break;
-    case 'lasso': h = segHTML('lassoMode', [['select', 'Khoanh để chọn'], ['erase', 'Khoanh để xoá']], E.lassoMode) + `<span class="prop-hint">${E.lassoMode === 'erase' ? 'Vẽ vòng quanh phần muốn xoá' : 'Khoanh rồi kéo để di chuyển · bấm vào ảnh để chọn'}</span>`; break;
-    case 'shape': h = segHTML('shape', [['line', 'Đường thẳng', 's_line'], ['arrow', 'Mũi tên', 's_arrow'], ['rect', 'Hình chữ nhật', 's_rect'], ['ellipse', 'Hình tròn/elip', 's_ellipse'], ['triangle', 'Tam giác', 's_triangle']], E.shape, true) + '<span class="psep"></span>' + swatchesHTML(COLORS, E.color, 'color') + '<span class="psep"></span>' + sizeHTML('shape'); break;
-    case 'text': h = swatchesHTML(COLORS, E.color, 'color') + '<span class="psep"></span>' + sizeHTML('text') + `<span class="prop-hint">Bấm vào bảng để gõ · nhấp đúp chữ để sửa</span>`; break;
-    case 'laser': h = `<span class="prop-hint">Bút laser để chỉ cho học sinh — nét tự biến mất sau 1 giây</span>`; break;
-    case 'hand': h = `<span class="prop-hint">Kéo để di chuyển bảng · Ctrl + cuộn (hoặc chụm 2 ngón) để phóng to</span>`; break;
+    case 'pen': h = swatchesHTML(COLORS, E.color, 'color') + sep + sizeHTML('pen') + sep + segHTML('penStyle', [['ink', 'Thanh đậm'], ['even', 'Nét đều']], E.penStyle); break;
+    case 'marker': h = swatchesHTML(MARKERS, E.markerColor, 'markerColor') + sep + sizeHTML('marker'); break;
+    case 'eraser': h = segHTML('eraserMode', [['part', 'Tẩy từng phần'], ['stroke', 'Tẩy cả nét']], E.eraserMode) + sep + sizeHTML('eraser'); break;
+    case 'lasso': h = segHTML('lassoMode', [['select', 'Khoanh để chọn'], ['erase', 'Khoanh để xoá']], E.lassoMode) + `<span class="prop-hint">${t(E.lassoMode === 'erase' ? 'Vẽ vòng quanh phần muốn xoá' : 'Khoanh rồi kéo để di chuyển · bấm vào ảnh để chọn')}</span>`; break;
+    case 'shape': h = segHTML('shape', [['line', 'Đường thẳng', 's_line'], ['arrow', 'Mũi tên', 's_arrow'], ['rect', 'Hình chữ nhật', 's_rect'], ['ellipse', 'Hình tròn/elip', 's_ellipse'], ['triangle', 'Tam giác', 's_triangle']], E.shape, true) + sep + swatchesHTML(COLORS, E.color, 'color') + sep + sizeHTML('shape'); break;
+    case 'text': h = swatchesHTML(COLORS, E.color, 'color') + sep + sizeHTML('text') + `<span class="prop-hint">${t('Bấm vào bảng để gõ · nhấp đúp chữ để sửa')}</span>`; break;
+    case 'laser': h = `<span class="prop-hint">${t('Bút laser để chỉ cho học sinh — nét tự biến mất sau 1 giây')}</span>`; break;
+    case 'hand': h = `<span class="prop-hint">${t('Kéo để di chuyển bảng · Ctrl + cuộn (hoặc chụm 2 ngón) để phóng to')}</span>`; break;
   }
-  p.innerHTML = h;
-  $$('.tool .swatch-mini').forEach(s => { s.style.background = s.parentElement.dataset.tool === 'marker' ? E.markerColor : E.color; });
-  renderSelbar();
+  $('#props').innerHTML = h; paintMiniSwatches(); renderSelbar(); updateCursor();
 }
 $('#props').addEventListener('click', e => {
-  const sw = e.target.closest('[data-color]');
-  if (sw) { E[sw.dataset.key] = sw.dataset.color; savePrefs(); renderProps(); return; }
-  const sg = e.target.closest('[data-seg]');
-  if (sg) { E[sg.dataset.seg] = sg.dataset.v; savePrefs(); renderProps(); }
+  const sw = e.target.closest('[data-color]'); if (sw) { E[sw.dataset.key] = sw.dataset.color; savePrefs(); renderProps(); return; }
+  const sg = e.target.closest('[data-seg]'); if (sg) { E[sg.dataset.seg] = sg.dataset.v; savePrefs(); renderProps(); }
 });
 $('#props').addEventListener('input', e => {
-  const t = e.target;
-  if (t.dataset.size) { E.sizes[t.dataset.size] = +t.value; t.nextElementSibling.textContent = t.value; const pv = t.parentElement.querySelector('.prev span'); if (pv) { const d = clamp(+t.value, 2, 28); pv.style.width = pv.style.height = d + 'px'; } savePrefs(); requestRender(); }
+  const el = e.target; if (!el.dataset.size) return;
+  E.sizes[el.dataset.size] = +el.value; el.nextElementSibling.textContent = el.value;
+  const pv = el.parentElement.querySelector('.prev span'); if (pv) { const d = clamp(+el.value, 2, 28); pv.style.width = pv.style.height = d + 'px'; }
+  savePrefs(); requestRender();
 });
-$('#props').addEventListener('change', e => {
-  const t = e.target; if (t.type === 'color') { E[t.dataset.key] = t.value; savePrefs(); renderProps(); }
-});
+$('#props').addEventListener('change', e => { const el = e.target; if (el.type === 'color') { E[el.dataset.key] = el.value; savePrefs(); renderProps(); } });
 
 /* =====================================================================
    Lưu tự động
@@ -1034,25 +1258,36 @@ async function doSave() {
       if (b) {
         b.updatedAt = Date.now(); b.thumb = makeThumb(); await DB.put('boards', b);
         const card = $(`.board-card[data-board="${id}"]`);
-        if (card) { $('.thumb', card).innerHTML = b.thumb ? `<img src="${b.thumb}" alt="">` : ''; $('.s', card).textContent = 'Sửa lúc ' + fmtTime(b.updatedAt); }
+        if (card) { $('.thumb', card).innerHTML = b.thumb ? `<img src="${b.thumb}" alt="">` : ''; $('.s', card).textContent = t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) }); }
       }
     }
     setStatus(false);
-  } catch (err) { console.error(err); toast('Không lưu được — bộ nhớ trình duyệt có thể đã đầy', true); }
+  } catch (err) { console.error(err); toast(t('Không lưu được — bộ nhớ trình duyệt có thể đã đầy'), true); }
 }
-function setStatus(saving) {
-  const s = $('#saveStatus'); s.classList.toggle('saving', saving);
-  s.innerHTML = `<span class="d"></span><span class="txt">${saving ? 'Đang lưu…' : 'Đã lưu'}</span>`;
+let saving = false;
+function setStatus(sv) {
+  saving = sv; const s = $('#saveStatus'); s.classList.toggle('saving', sv);
+  s.innerHTML = `<span class="d"></span><span class="txt">${t(sv ? 'Đang lưu…' : 'Đã lưu')}</span>`;
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); updateTitle(); });
 window.addEventListener('beforeunload', () => { doSave(); });
+
+/* =====================================================================
+   Tiêu đề tab trình duyệt
+   ===================================================================== */
+function updateTitle() {
+  if (document.hidden) { document.title = t('✏️ Bài giảng đang chờ bạn…') + ' | Vincenink'; return; }
+  if (!$('#welcome').classList.contains('hidden')) { document.title = `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`; return; }
+  const b = S.boards.find(x => x.id === S.boardId);
+  document.title = b ? `${b.title} · ${ownerName(b.studentId)} | Vincenink` : `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`;
+}
 
 /* =====================================================================
    Học sinh & bảng
    ===================================================================== */
-async function createBoard(studentId, open = true) {
-  const d = todayStr(); const n = S.boards.filter(b => b.studentId === studentId && b.date === d).length;
-  const b = { id: uid(), studentId, title: `Buổi học ${shortDate(d)}${n ? ` (${n + 1})` : ''}`, date: d, createdAt: Date.now(), updatedAt: Date.now(), thumb: null };
+async function createBoard(studentId, open = true, date = todayStr(), title) {
+  const n = S.boards.filter(b => b.studentId === studentId && b.date === date).length;
+  const b = { id: uid(), studentId, title: title || (t('Buổi học {d}', { d: shortDate(date) }) + (n ? ` (${n + 1})` : '')), date, createdAt: Date.now(), updatedAt: Date.now(), thumb: null };
   await DB.put('boards', b); await DB.put('boardData', { id: b.id, items: [], bg: E.bg || 'grid', view: { x: 0, y: 0, s: 1 } });
   S.boards.push(b);
   if (open) await openBoard(b.id);
@@ -1071,14 +1306,14 @@ async function openBoard(id) {
 }
 async function duplicateBoard(id) {
   await doSave();
-  const src = S.boards.find(b => b.id === id); const data = await DB.get('boardData', id);
-  const b = { ...src, id: uid(), title: src.title + ' (bản sao)', date: todayStr(), createdAt: Date.now(), updatedAt: Date.now() };
+  const src = S.boards.find(b => b.id === id), data = await DB.get('boardData', id);
+  const b = { ...src, id: uid(), title: src.title + t(' (bản sao)'), date: todayStr(), createdAt: Date.now(), updatedAt: Date.now() };
   await DB.put('boards', b); await DB.put('boardData', { ...data, id: b.id });
-  S.boards.push(b); await openBoard(b.id); renderPanel(); renderSidebar(); toast('Đã nhân bản bảng');
+  S.boards.push(b); await openBoard(b.id); renderPanel(); renderSidebar(); toast(t('Đã nhân bản bảng'));
 }
 async function deleteBoard(id) {
   const b = S.boards.find(x => x.id === id);
-  if (!await confirmBox('Xoá bảng này?', `“${esc(b.title)}” sẽ bị xoá vĩnh viễn và không thể khôi phục.`)) return;
+  if (!await confirmBox(t('Xoá bảng này?'), t('“{t}” sẽ bị xoá vĩnh viễn và không thể khôi phục.', { t: esc(b.title) }), t('Xoá'))) return;
   await DB.del('boards', id); await DB.del('boardData', id);
   S.boards = S.boards.filter(x => x.id !== id);
   if (S.boardId === id) {
@@ -1090,15 +1325,15 @@ async function deleteBoard(id) {
 }
 async function editBoardMeta(id) {
   const b = S.boards.find(x => x.id === id);
-  const r = await formBox('Sửa thông tin bảng', [
-    { name: 'title', label: 'Tên bảng', value: b.title },
-    { name: 'date', label: 'Ngày', type: 'date', value: b.date },
-    { name: 'owner', label: 'Thuộc về', type: 'select', value: b.studentId, options: [['all', 'Lớp chung'], ...S.students.map(s => [s.id, s.name])] },
-  ], 'Lưu');
+  const r = await formBox(t('Sửa thông tin bảng'), [
+    { name: 'title', label: t('Tên bảng'), value: b.title },
+    { name: 'date', label: t('Ngày'), type: 'date', value: b.date },
+    { name: 'owner', label: t('Thuộc về'), type: 'select', value: b.studentId, options: [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])] },
+  ], t('Lưu'));
   if (!r) return;
   b.title = r.title.trim() || b.title; b.date = r.date || b.date; b.studentId = r.owner;
   await DB.put('boards', b);
-  if (b.studentId !== S.studentId && S.boardId === id) { S.studentId = b.studentId; }
+  if (S.boardId === id && b.studentId !== S.studentId) S.studentId = b.studentId;
   renderTopbar(); renderPanel(); renderSidebar();
 }
 const boardsOf = sid => S.boards.filter(b => b.studentId === sid).sort((a, b) => (b.date.localeCompare(a.date)) || (b.updatedAt - a.updatedAt));
@@ -1107,46 +1342,42 @@ const filesOf = sid => S.files.filter(f => f.studentId === sid).sort((a, b) => b
 async function selectStudent(id) {
   S.studentId = id; S.settings.lastStudent = id; saveSettings();
   renderSidebar(); renderPanel();
-  if (S.tab === 'boards' || true) {
-    const cur = S.boards.find(b => b.id === S.boardId);
-    if (!cur || cur.studentId !== id) { const first = boardsOf(id)[0]; if (first) await openBoard(first.id); }
-  }
-  if (innerWidth <= 900) { /* giữ panel mở trên màn nhỏ */ }
+  const cur = S.boards.find(b => b.id === S.boardId);
+  if (!cur || cur.studentId !== id) { const first = boardsOf(id)[0]; if (first) await openBoard(first.id); }
 }
-async function studentModal(st) {
+function studentModal(st) {
   let color = st?.color || STUDENT_COLORS[S.students.length % STUDENT_COLORS.length];
   const body = document.createElement('div');
   body.innerHTML = `
-    <div class="field"><label>Tên học sinh</label><input type="text" name="name" value="${esc(st?.name || '')}" placeholder="VD: Nguyễn Minh An"></div>
-    <div class="field"><label>Lớp / ghi chú ngắn (tuỳ chọn)</label><input type="text" name="grade" value="${esc(st?.grade || '')}" placeholder="VD: Lớp 5 · Toán, Tiếng Việt"></div>
-    <div class="field"><label>Màu nhận diện</label><div class="color-pick">${STUDENT_COLORS.map(c => `<button type="button" data-c="${c}" class="${c === color ? 'active' : ''}" style="background:${c}"></button>`).join('')}</div></div>`;
-  body.querySelector('.color-pick').addEventListener('click', e => {
+    <div class="field"><label>${t('Tên học sinh')}</label><input type="text" name="name" value="${esc(st?.name || '')}" placeholder="${t('VD: Nguyễn Minh An')}"></div>
+    <div class="field"><label>${t('Lớp / ghi chú ngắn (tuỳ chọn)')}</label><input type="text" name="grade" value="${esc(st?.grade || '')}" placeholder="${t('VD: Lớp 5 · Toán, Tiếng Việt')}"></div>
+    <div class="field"><label>${t('Màu nhận diện')}</label><div class="color-pick">${STUDENT_COLORS.map(c => `<button type="button" data-c="${c}" class="${c === color ? 'active' : ''}" style="background:${c}"></button>`).join('')}</div></div>`;
+  $('.color-pick', body).addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return; color = b.dataset.c;
     $$('.color-pick button', body).forEach(x => x.classList.toggle('active', x === b));
   });
-  const actions = [{ label: 'Huỷ' }, {
-    label: st ? 'Lưu' : 'Thêm học sinh', kind: 'primary', onClick: async () => {
+  const actions = [{ label: t('Huỷ') }, {
+    label: st ? t('Lưu') : t('Thêm học sinh'), kind: 'primary', onClick: async () => {
       const name = $('[name=name]', body).value.trim(); if (!name) { $('[name=name]', body).focus(); return false; }
       const grade = $('[name=grade]', body).value.trim();
       if (st) { Object.assign(st, { name, grade, color }); await DB.put('students', st); renderSidebar(); renderPanel(); renderTopbar(); }
       else {
         const ns = { id: uid(), name, grade, color, note: '', createdAt: Date.now() };
         await DB.put('students', ns); S.students.push(ns);
-        await selectStudent(ns.id);
-        await createBoard(ns.id, true);
-        toast(`Đã thêm ${name} và tạo bảng đầu tiên`);
+        await selectStudent(ns.id); await createBoard(ns.id, true);
+        toast(t('Đã thêm {n} và tạo bảng đầu tiên', { n: name }));
       }
     }
   }];
-  if (st) actions.unshift({ label: 'Xoá học sinh', kind: 'ghost danger-text', onClick: async () => { await deleteStudent(st); } });
-  openModal({ title: st ? 'Sửa học sinh' : 'Thêm học sinh', body, actions });
+  if (st) actions.unshift({ label: t('Xoá học sinh'), kind: 'danger-text', onClick: () => deleteStudent(st) });
+  openModal({ title: st ? t('Sửa học sinh') : t('Thêm học sinh'), body, actions });
 }
 async function deleteStudent(st) {
   const nb = S.boards.filter(b => b.studentId === st.id).length, nf = S.files.filter(f => f.studentId === st.id).length;
-  if (!await confirmBox(`Xoá học sinh ${esc(st.name)}?`, `Sẽ xoá cả ${nb} bảng và ${nf} tài liệu của học sinh này trên máy. Tệp đã lưu lên Google Drive vẫn giữ nguyên.`)) return false;
+  if (!await confirmBox(t('Xoá học sinh {n}?', { n: esc(st.name) }), t('Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của học sinh này trên máy.', { b: nb, f: nf }), t('Xoá'))) return false;
   for (const b of S.boards.filter(b => b.studentId === st.id)) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
   for (const f of S.files.filter(f => f.studentId === st.id)) await DB.del('files', f.id);
-  await DB.del('students', st.id);
+  await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id);
   S.boards = S.boards.filter(b => b.studentId !== st.id); S.files = S.files.filter(f => f.studentId !== st.id); S.students = S.students.filter(s => s.id !== st.id);
   if (!S.boards.find(b => b.id === S.boardId)) { S.boardId = null; contentDirty = viewDirty = false; }
   S.studentId = 'all';
@@ -1157,40 +1388,39 @@ async function deleteStudent(st) {
 
 /* ---- Thanh bên ---- */
 function renderSidebar() {
-  const nav = $('#studentNav');
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  nav.innerHTML = `
-    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all">${avatarHTML('all')}<span class="name">Lớp chung</span><span class="count">${cnt('all')}</span></button>
-    <div class="side-label"><span>Học sinh · ${students.length}</span><button id="btnAddStudent" title="Thêm học sinh">${ic('plus', 16)}</button></div>
+  $('#studentNav').innerHTML = `
+    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
+    <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 16)}</button></div>
     ${students.map(s => `<button class="nav-item ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}">${avatarHTML(s.id)}<span class="name">${esc(s.name)}</span><span class="count">${cnt(s.id)}</span></button>`).join('')
-    || `<div class="side-empty">Chưa có học sinh nào.<br>Bấm <b>+</b> để thêm — mỗi em sẽ có bảng, tài liệu và ghi chú riêng.</div>`}`;
+    || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
   if (e.target.closest('#btnAddStudent')) return studentModal(null);
   const it = e.target.closest('[data-student]'); if (it) selectStudent(it.dataset.student);
 });
 
-/* ---- Bảng điều khiển học sinh ---- */
+/* ---- Cột học sinh ---- */
 function renderPanel() {
-  const p = $('#panel'); const sid = S.studentId; const st = studentById(sid);
+  const sid = S.studentId, st = studentById(sid);
   const nb = S.boards.filter(b => b.studentId === sid).length, nf = S.files.filter(f => f.studentId === sid).length;
-  p.innerHTML = `
+  const next = nextLesson(sid);
+  $('#panel').innerHTML = `
     <div class="panel-head">${avatarHTML(sid, 'lg')}
-      <div class="ttl"><h2>${esc(ownerName(sid))}</h2><div class="sub">${st?.grade ? esc(st.grade) + ' · ' : ''}${nb} bảng · ${nf} tài liệu</div></div>
-      ${st ? `<button class="icon-btn" id="btnEditStudent" title="Sửa thông tin học sinh">${ic('edit', 18)}</button>` : ''}
+      <div class="ttl"><h2>${esc(ownerName(sid))}</h2><div class="sub">${st?.grade ? esc(st.grade) + ' · ' : ''}${t('{b} bảng · {f} tài liệu', { b: nb, f: nf })}</div></div>
+      ${st ? `<button class="icon-btn" id="btnEditStudent" title="${t('Sửa thông tin học sinh')}">${ic('edit', 18)}</button>` : ''}
     </div>
-    <div class="tabs">
-      <button class="tab ${S.tab === 'boards' ? 'active' : ''}" data-tab="boards">${ic('board', 16)}Bảng</button>
-      <button class="tab ${S.tab === 'files' ? 'active' : ''}" data-tab="files">${ic('file', 16)}Tài liệu</button>
-      <button class="tab ${S.tab === 'notes' ? 'active' : ''}" data-tab="notes">${ic('note', 16)}Ghi chú</button>
+    ${next ? `<div class="next-lesson">${ic('clock', 15)}${t('Buổi tới: {x}', { x: esc(next) })}</div>` : ''}
+    <div class="tabs" role="tablist">
+      ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['notes', 'note', 'Ghi chú']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
     </div>
     <div class="panel-body" id="panelBody"></div>`;
   const body = $('#panelBody');
-  if (S.tab === 'boards') renderBoardsTab(body); else if (S.tab === 'files') renderFilesTab(body); else renderNotesTab(body);
+  ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, notes: renderNotesTab })[S.tab](body);
 }
 $('#panel').addEventListener('click', e => {
-  const t = e.target.closest('[data-tab]'); if (t) { S.tab = t.dataset.tab; renderPanel(); return; }
+  const tb = e.target.closest('[data-tab]'); if (tb) { S.tab = tb.dataset.tab; renderPanel(); return; }
   if (e.target.closest('#btnEditStudent')) studentModal(studentById(S.studentId));
 });
 
@@ -1200,336 +1430,424 @@ function renderBoardsTab(body) {
   const groups = {}; list.forEach(b => (groups[b.date] = groups[b.date] || []).push(b));
   const today = todayStr();
   body.innerHTML = `
-    <button class="btn primary block" id="btnNewBoard">${ic('plus', 17)}Bảng mới hôm nay</button>
-    <div class="search" style="margin-top:10px">${ic('search', 16)}<input id="boardSearch" placeholder="Tìm bảng theo tên hoặc ngày…" value="${esc(S.search)}"></div>
+    <button class="btn primary block" id="btnNewBoard">${ic('plus', 17)}${t('Bảng mới hôm nay')}</button>
+    <div class="search" style="margin-top:10px">${ic('search', 16)}<input id="boardSearch" placeholder="${t('Tìm bảng theo tên hoặc ngày…')}" value="${esc(S.search)}"></div>
     ${Object.keys(groups).sort().reverse().map(d => `
-      <div class="group-label ${d === today ? 'today' : ''}"><span class="dot"></span>${d === today ? 'Hôm nay · ' : ''}${fmtDateLong(d)}</div>
+      <div class="group-label ${d === today ? 'today' : ''}"><span class="dot"></span>${d === today ? t('Hôm nay · ') : ''}${fmtDateLong(d)}</div>
       ${groups[d].map(b => `
         <div class="board-card ${b.id === S.boardId ? 'active' : ''}" data-board="${b.id}">
           <div class="thumb">${b.thumb ? `<img src="${b.thumb}" alt="">` : ''}</div>
-          <div class="meta"><div class="t">${esc(b.title)}</div><div class="s">Sửa lúc ${fmtTime(b.updatedAt)}</div></div>
-          <button class="icon-btn sm more" data-bmenu="${b.id}" title="Tuỳ chọn">${ic('more', 18)}</button>
+          <div class="meta"><div class="t">${esc(b.title)}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}</div></div>
+          <button class="icon-btn sm more" data-bmenu="${b.id}" title="${t('Tuỳ chọn')}">${ic('more', 18)}</button>
         </div>`).join('')}`).join('')
-    || `<div class="empty"><div class="big">${q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào'}</div>${q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.'}</div>`}`;
+    || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
   $('#btnNewBoard', body).onclick = () => createBoard(S.studentId, true);
   const si = $('#boardSearch', body);
-  si.oninput = () => { S.search = si.value; const pos = si.selectionStart; renderBoardsTab(body); const n = $('#boardSearch', body); n.focus(); n.setSelectionRange(pos, pos); };
+  si.oninput = () => { S.search = si.value; const p = si.selectionStart; renderBoardsTab(body); const n = $('#boardSearch', body); n.focus(); n.setSelectionRange(p, p); };
   body.onclick = e => {
     const m = e.target.closest('[data-bmenu]');
-    if (m) { e.stopPropagation(); const id = m.dataset.bmenu; popMenu(m, [
-      { icon: 'edit', label: 'Đổi tên, ngày, chủ sở hữu', onClick: () => editBoardMeta(id) },
-      { icon: 'copy', label: 'Nhân bản (dùng làm mẫu)', onClick: () => duplicateBoard(id) },
-      '-', { icon: 'trash', label: 'Xoá bảng', danger: true, onClick: () => deleteBoard(id) }]); return; }
+    if (m) {
+      e.stopPropagation(); const id = m.dataset.bmenu;
+      popMenu(m, [{ icon: 'edit', label: t('Đổi tên, ngày, chủ sở hữu'), onClick: () => editBoardMeta(id) },
+        { icon: 'copy', label: t('Nhân bản (dùng làm mẫu)'), onClick: () => duplicateBoard(id) },
+        '-', { icon: 'trash', label: t('Xoá bảng'), danger: true, onClick: () => deleteBoard(id) }]);
+      return;
+    }
     const c = e.target.closest('[data-board]'); if (!c) return;
     if (c.dataset.board !== S.boardId) openBoard(c.dataset.board);
     if (innerWidth <= 900) $('#app').classList.add('focus');
   };
 }
 
+/* ---- Tài liệu ---- */
 const FILE_COLORS = { pdf: '#C0574A', img: '#6F93B8', doc: '#4F78B0', xls: '#5E8B5A', ppt: '#C9824B', vid: '#8E7CB0', aud: '#5FA3A0', other: '#A39684' };
 function fileKind(f) {
-  const t = f.type || '', n = f.name.toLowerCase();
-  if (t === 'application/pdf' || n.endsWith('.pdf')) return ['pdf', 'PDF'];
-  if (t.startsWith('image/')) return ['img', (n.split('.').pop() || 'IMG').slice(0, 4).toUpperCase()];
+  const ty = f.type || '', n = f.name.toLowerCase();
+  if (ty === 'application/pdf' || n.endsWith('.pdf')) return ['pdf', 'PDF'];
+  if (ty.startsWith('image/')) return ['img', (n.split('.').pop() || 'IMG').slice(0, 4).toUpperCase()];
   if (/\.(docx?|odt|rtf|txt)$/.test(n)) return ['doc', 'DOC'];
   if (/\.(xlsx?|ods|csv)$/.test(n)) return ['xls', 'XLS'];
   if (/\.(pptx?|odp|key)$/.test(n)) return ['ppt', 'PPT'];
-  if (t.startsWith('video/')) return ['vid', 'VID'];
-  if (t.startsWith('audio/')) return ['aud', 'MP3'];
+  if (ty.startsWith('video/')) return ['vid', 'VID'];
+  if (ty.startsWith('audio/')) return ['aud', 'MP3'];
   return ['other', (n.split('.').pop() || 'FILE').slice(0, 4).toUpperCase()];
 }
 const canBoard = f => ['pdf', 'img'].includes(fileKind(f)[0]);
 function renderFilesTab(body) {
   const list = filesOf(S.studentId);
   body.innerHTML = `
-    <label class="dropzone" id="dropzone">${ic('upload', 24)}<b>Tải tài liệu lên</b><br>Kéo thả hoặc bấm để chọn tệp<br><span style="font-size:12px">Ảnh và PDF có thể đưa thẳng lên bảng</span></label>
-    <div class="drive-row">
-      <button class="btn outline sm" id="btnDrivePick">${ic('cloudDown', 16)}Lấy từ Drive</button>
-      <button class="btn outline sm" id="btnDriveAll" ${list.some(f => !f.driveId) ? '' : 'disabled'}>${ic('cloudUp', 16)}Lưu hết lên Drive</button>
-    </div>
+    <label class="dropzone" id="dropzone">${ic('upload', 24)}<b>${t('Tải tài liệu lên')}</b><br>${t('Kéo thả hoặc bấm để chọn tệp')}<br><span style="font-size:12px">${t('Ảnh và PDF có thể đưa thẳng lên bảng')}</span></label>
     ${list.map(f => { const [k, lbl] = fileKind(f); return `
       <div class="file-row" data-file="${f.id}">
         <div class="ficon" style="background:${FILE_COLORS[k]}">${lbl}</div>
-        <div class="fmeta"><div class="fname" title="${esc(f.name)}">${esc(f.name)}</div>
-          <div class="fsub"><span>${fmtSize(f.size)} · ${fmtDT(f.createdAt)}</span>${f.driveId ? `<span class="drive-tag" title="Đã lưu trên Google Drive">${ic('cloud', 12)}Drive</span>` : ''}</div></div>
+        <div class="fmeta"><div class="fname" title="${esc(f.name)}">${esc(f.name)}</div><div class="fsub">${fmtSize(f.size)} · ${fmtDT(f.createdAt)}</div></div>
         <div class="factions">
-          ${canBoard(f) ? `<button class="icon-btn sm" data-fact="board" title="Đưa lên bảng">${ic('toBoard', 17)}</button>` : ''}
-          <button class="icon-btn sm" data-fact="menu" title="Tuỳ chọn">${ic('more', 17)}</button>
+          ${canBoard(f) ? `<button class="icon-btn sm" data-fact="board" title="${t('Đưa lên bảng')}">${ic('toBoard', 17)}</button>` : ''}
+          <button class="icon-btn sm" data-fact="menu" title="${t('Tuỳ chọn')}">${ic('more', 17)}</button>
         </div>
       </div>`; }).join('')
-    || `<div class="empty"><div class="big">Chưa có tài liệu</div>Đề bài, phiếu bài tập, ảnh chụp vở… của ${esc(ownerName(S.studentId))} sẽ được lưu ở đây.</div>`}`;
+    || `<div class="empty"><div class="big">${t('Chưa có tài liệu')}</div>${t('Đề bài, phiếu bài tập, ảnh chụp vở… của {n} sẽ được lưu ở đây.', { n: esc(ownerName(S.studentId)) })}</div>`}`;
   const dz = $('#dropzone', body);
   dz.onclick = e => { e.preventDefault(); $('#fileUpload').click(); };
   dz.ondragover = e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); };
   dz.ondragleave = () => dz.classList.remove('over');
   dz.ondrop = e => { e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); addFiles([...e.dataTransfer.files]); };
-  $('#btnDrivePick', body).onclick = drivePickToStudent;
-  $('#btnDriveAll', body).onclick = async () => { for (const f of filesOf(S.studentId).filter(f => !f.driveId)) { if (!await uploadFileToDrive(f, true)) break; } renderPanel(); };
   body.onclick = e => {
-    const row = e.target.closest('[data-file]'); const a = e.target.closest('[data-fact]'); if (!row || !a) return;
+    const row = e.target.closest('[data-file]'), a = e.target.closest('[data-fact]'); if (!row || !a) return;
     const f = S.files.find(x => x.id === row.dataset.file);
     if (a.dataset.fact === 'board') return insertBlob(f.blob, f.name);
     popMenu(a, [
-      ...(canBoard(f) ? [{ icon: 'toBoard', label: 'Đưa lên bảng', onClick: () => insertBlob(f.blob, f.name) }] : []),
-      { icon: 'eye', label: 'Mở xem', onClick: () => { const u = URL.createObjectURL(f.blob); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60000); } },
-      { icon: 'download', label: 'Tải về máy', onClick: () => download(f.blob, f.name) },
-      f.driveId ? { icon: 'external', label: 'Mở trên Google Drive', onClick: () => window.open(f.driveLink || `https://drive.google.com/file/d/${f.driveId}/view`, '_blank') }
-        : { icon: 'cloudUp', label: 'Lưu lên Google Drive', onClick: async () => { await uploadFileToDrive(f); renderPanel(); } },
-      { icon: 'edit', label: 'Đổi tên', onClick: async () => { const r = await formBox('Đổi tên tài liệu', [{ name: 'n', label: 'Tên', value: f.name }], 'Lưu'); if (r && r.n.trim()) { f.name = r.n.trim(); await DB.put('files', f); renderPanel(); } } },
-      '-', { icon: 'trash', label: 'Xoá khỏi máy', danger: true, onClick: async () => {
-        if (!await confirmBox('Xoá tài liệu?', `“${esc(f.name)}” sẽ bị xoá khỏi trình duyệt.${f.driveId ? ' Bản trên Google Drive vẫn giữ nguyên.' : ''}`)) return;
+      ...(canBoard(f) ? [{ icon: 'toBoard', label: t('Đưa lên bảng'), onClick: () => insertBlob(f.blob, f.name) },
+        { icon: 'scan', label: t('Đưa lên bảng (bản quét, làm rõ chữ)'), onClick: () => insertBlob(f.blob, f.name, true) }] : []),
+      { icon: 'eye', label: t('Mở xem'), onClick: () => { const u = URL.createObjectURL(f.blob); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60000); } },
+      { icon: 'download', label: t('Tải về máy'), onClick: () => download(f.blob, f.name) },
+      { icon: 'edit', label: t('Đổi tên'), onClick: async () => { const r = await formBox(t('Đổi tên tài liệu'), [{ name: 'n', label: t('Tên'), value: f.name }], t('Lưu')); if (r && r.n.trim()) { f.name = r.n.trim(); await DB.put('files', f); renderPanel(); } } },
+      '-', { icon: 'trash', label: t('Xoá khỏi máy'), danger: true, onClick: async () => {
+        if (!await confirmBox(t('Xoá tài liệu?'), t('“{n}” sẽ bị xoá khỏi trình duyệt.', { n: esc(f.name) }), t('Xoá'))) return;
         await DB.del('files', f.id); S.files = S.files.filter(x => x.id !== f.id); renderPanel(); } },
     ]);
   };
 }
-async function addFiles(files, studentId = S.studentId, meta = {}) {
+async function addFiles(files, studentId = S.studentId) {
   let n = 0;
   for (const file of files) {
-    const f = { id: uid(), studentId, name: file.name || 'tai-lieu', type: file.type || '', size: file.size, blob: file, createdAt: Date.now(), ...meta };
-    try { await DB.put('files', f); S.files.push(f); n++; } catch (err) { toast('Không lưu được ' + f.name, true); }
+    const f = { id: uid(), studentId, name: file.name || 'tai-lieu', type: file.type || '', size: file.size, blob: file, createdAt: Date.now() };
+    try { await DB.put('files', f); S.files.push(f); n++; } catch (err) { toast(t('Không lưu được {n}', { n: f.name }), true); }
   }
-  if (n) { S.tab = 'files'; renderPanel(); toast(`Đã lưu ${n} tài liệu cho ${ownerName(studentId)}`); }
+  if (n) { S.tab = 'files'; renderPanel(); toast(t('Đã lưu {c} tài liệu cho {n}', { c: n, n: ownerName(studentId) })); }
 }
+
+/* ---- Ghi chú ---- */
 function renderNotesTab(body) {
   const st = studentById(S.studentId);
-  body.innerHTML = `<textarea class="note-area" id="noteArea" placeholder="${st ? `Ghi chú về ${esc(st.name)}: tiến độ, điểm cần lưu ý, bài tập về nhà…` : 'Ghi chú chung cho cả lớp: lịch học, nội dung tuần này…'}">${esc(st ? st.note || '' : S.settings.classNote || '')}</textarea>
-    <div class="hint">Ghi chú tự lưu khi bạn gõ.</div>`;
-  let t; $('#noteArea', body).oninput = e => {
-    clearTimeout(t); const v = e.target.value;
-    t = setTimeout(() => { if (st) { st.note = v; DB.put('students', st); } else { S.settings.classNote = v; saveSettings(); } }, 500);
+  body.innerHTML = `<textarea class="note-area" id="noteArea" placeholder="${st ? t('Ghi chú về {n}: tiến độ, điểm cần lưu ý, bài tập về nhà…', { n: esc(st.name) }) : t('Ghi chú chung cho cả lớp: nội dung tuần này, nhắc nhở…')}">${esc(st ? st.note || '' : S.settings.classNote || '')}</textarea>
+    <div class="hint">${t('Ghi chú tự lưu khi bạn gõ.')}</div>`;
+  let tm; $('#noteArea', body).oninput = e => {
+    clearTimeout(tm); const v = e.target.value;
+    tm = setTimeout(() => { if (st) { st.note = v; DB.put('students', st); } else { S.settings.classNote = v; saveSettings(); } }, 500);
   };
 }
 
-/* ---- Thanh trên ---- */
+/* =====================================================================
+   Lịch học: cố định hằng tuần + buổi riêng + ghi chú theo tuần
+   ===================================================================== */
+function sched(sid) {
+  let s = S.sched.get(sid);
+  if (!s) { s = { id: sid, fixed: [], sessions: [], skips: [], weekNotes: {} }; S.sched.set(sid, s); }
+  return s;
+}
+const saveSched = sid => DB.put('schedule', sched(sid)).catch(() => {});
+function weekOccurrences(sid, ws) {
+  const days = [];
+  const owners = sid === 'all' ? ['all', ...S.students.map(s => s.id)] : [sid];
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i), ds = dstr(d), list = [];
+    for (const o of owners) {
+      const sc = S.sched.get(o); if (!sc) continue;
+      sc.fixed.filter(f => f.dow === i && (!f.from || f.from <= ds)).forEach(f => list.push({ kind: 'fixed', owner: o, ref: f, date: ds, start: f.start, end: f.end, subject: f.subject, note: f.note, off: sc.skips.includes(f.id + '@' + ds) }));
+      sc.sessions.filter(x => x.date === ds).forEach(x => list.push({ kind: 'once', owner: o, ref: x, date: ds, start: x.start, end: x.end, subject: x.subject, note: x.note, off: false }));
+    }
+    list.sort((a, b) => a.start.localeCompare(b.start));
+    days.push({ date: ds, d, list });
+  }
+  return days;
+}
+function nextLesson(sid) {
+  const now = new Date(), nowS = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  for (let w = 0; w < 3; w++) {
+    for (const day of weekOccurrences(sid, addDays(weekStart(now), w * 7))) {
+      if (day.date < nowS) continue;
+      const o = day.list.find(x => !x.off && (day.date > nowS || x.end > hm));
+      if (o) {
+        const who = sid === 'all' && o.owner !== 'all' ? ` · ${ownerName(o.owner)}` : '';
+        const when = day.date === nowS ? t('Hôm nay · ').replace(' · ', '') : `${WD[LANG][dow(day.d)]} ${shortDate(day.date)}`;
+        return `${when}, ${o.start}${o.subject ? ' – ' + o.subject : ''}${who}`;
+      }
+    }
+  }
+  return '';
+}
+function renderSchedTab(body) {
+  const sid = S.studentId, ws = S.week, we = addDays(ws, 6), today = todayStr();
+  const isThis = dstr(ws) === dstr(weekStart(new Date()));
+  const sc = sched(sid), wk = dstr(ws);
+  const days = weekOccurrences(sid, ws);
+  const sessHTML = o => `
+    <div class="sess ${o.off ? 'off' : ''}" data-owner="${o.owner}" data-kind="${o.kind}" data-ref="${o.ref.id}" data-date="${o.date}" style="border-left-color:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
+      ${sid === 'all' && o.owner !== 'all' ? avatarHTML(o.owner) : ''}
+      <div class="st">${o.start}<br><span class="muted" style="font-weight:500">${o.end}</span></div>
+      <div class="sm"><div class="sj">${esc(o.subject || t('Buổi học'))}${sid === 'all' && o.owner !== 'all' ? ` · ${esc(ownerName(o.owner))}` : ''}</div>
+        ${o.note ? `<div class="sn">${esc(o.note)}</div>` : ''}
+        <span class="tag">${o.off ? ic('ban', 11) + t('Đã nghỉ') : o.kind === 'fixed' ? ic('repeat', 11) + t('Cố định') : ic('calendar', 11) + t('Một buổi')}</span></div>
+    </div>`;
+  body.innerHTML = `
+    <div class="week-nav">
+      <button class="icon-btn sm" data-w="-1" title="${t('Tuần trước')}">${ic('left', 18)}</button>
+      <div class="wl">${shortDate(dstr(ws))} – ${shortDate(dstr(we))}/${we.getFullYear()}<small>${isThis ? t('Tuần này') : '&nbsp;'}</small></div>
+      <button class="icon-btn sm" data-w="1" title="${t('Tuần sau')}">${ic('right', 18)}</button>
+      ${isThis ? '' : `<button class="btn ghost sm" data-w="0">${t('Tuần này')}</button>`}
+    </div>
+    ${days.map(day => `
+      <div class="day ${day.date === today ? 'today' : ''}">
+        <div class="day-h"><span>${WD[LANG][dow(day.d)]} · ${shortDate(day.date)}</span><button data-addday="${day.date}" title="${t('Thêm buổi vào ngày này')}">${ic('plus', 14)}</button></div>
+        ${day.list.map(sessHTML).join('') || `<div class="day-empty">${t('Trống')}</div>`}
+      </div>`).join('')}
+    <button class="btn soft block" id="btnAddSess" style="margin-top:8px">${ic('plus', 16)}${t('Thêm buổi học')}</button>
+    <div class="sec-h">${t('Ghi chú tuần này')}</div>
+    <textarea class="week-note" id="weekNote" placeholder="${t('Nội dung dạy, bài về nhà, nhắc phụ huynh…')}">${esc(sc.weekNotes[wk] || '')}</textarea>
+    <div class="sec-h">${t('Lịch cố định hằng tuần')}</div>
+    ${sc.fixed.length ? [...sc.fixed].sort((a, b) => a.dow - b.dow || a.start.localeCompare(b.start)).map(f => `
+      <div class="fixed-row"><span class="fd">${WD[LANG][f.dow]}</span><span class="ft">${f.start}–${f.end}</span><span class="fj">${esc(f.subject || '')}</span>
+        <button class="icon-btn sm" data-fedit="${f.id}" title="${t('Sửa')}">${ic('edit', 15)}</button></div>`).join('')
+      : `<div class="hint">${t('Chưa có lịch cố định. Thêm một buổi “Cố định hằng tuần” để nó tự lặp lại mỗi tuần.')}</div>`}`;
+  body.onclick = e => {
+    const w = e.target.closest('[data-w]');
+    if (w) { const v = +w.dataset.w; S.week = v === 0 ? weekStart(new Date()) : addDays(S.week, v * 7); renderSchedTab(body); return; }
+    const ad = e.target.closest('[data-addday]'); if (ad) return sessionModal(sid === 'all' ? 'all' : sid, null, ad.dataset.addday);
+    if (e.target.closest('#btnAddSess')) return sessionModal(sid === 'all' ? 'all' : sid, null, null);
+    const fe = e.target.closest('[data-fedit]'); if (fe) return sessionModal(sid, { kind: 'fixed', ref: sc.fixed.find(f => f.id === fe.dataset.fedit) });
+    const se = e.target.closest('.sess'); if (se) sessionMenu(se);
+  };
+  let tm; $('#weekNote', body).oninput = e => {
+    clearTimeout(tm); const v = e.target.value;
+    tm = setTimeout(() => { if (v) sc.weekNotes[wk] = v; else delete sc.weekNotes[wk]; saveSched(sid); }, 500);
+  };
+}
+function sessionMenu(el) {
+  const owner = el.dataset.owner, kind = el.dataset.kind, date = el.dataset.date, sc = sched(owner);
+  const ref = kind === 'fixed' ? sc.fixed.find(f => f.id === el.dataset.ref) : sc.sessions.find(x => x.id === el.dataset.ref);
+  if (!ref) return;
+  const skipKey = ref.id + '@' + date, off = sc.skips.includes(skipKey);
+  const after = () => { saveSched(owner); renderPanel(); };
+  popMenu(el, [
+    { icon: 'board', label: t('Mở bảng cho buổi này'), onClick: () => openLessonBoard(owner, date, ref.subject) },
+    ...(S.studentId === 'all' && owner !== 'all' ? [{ icon: 'user', label: t('Mở trang học sinh'), onClick: () => { S.tab = 'sched'; selectStudent(owner); } }] : []),
+    { icon: 'edit', label: t('Sửa'), onClick: () => sessionModal(owner, { kind, ref }) },
+    ...(kind === 'fixed' ? [{ icon: off ? 'repeat' : 'ban', label: t(off ? 'Học lại buổi này' : 'Nghỉ buổi này'), onClick: () => { if (off) sc.skips = sc.skips.filter(k => k !== skipKey); else sc.skips.push(skipKey); after(); } }] : []),
+    '-',
+    kind === 'fixed'
+      ? { icon: 'trash', label: t('Xoá lịch cố định'), danger: true, onClick: async () => { if (!await confirmBox(t('Xoá lịch cố định?'), t('Buổi “{s}” sẽ không còn lặp lại mỗi tuần.', { s: esc(`${WD[LANG][ref.dow]} ${ref.start} ${ref.subject || ''}`.trim()) }), t('Xoá'))) return; sc.fixed = sc.fixed.filter(f => f !== ref); sc.skips = sc.skips.filter(k => !k.startsWith(ref.id + '@')); after(); } }
+      : { icon: 'trash', label: t('Xoá buổi này'), danger: true, onClick: () => { sc.sessions = sc.sessions.filter(x => x !== ref); after(); } },
+  ]);
+}
+async function openLessonBoard(owner, date, subject) {
+  const ex = S.boards.find(b => b.studentId === owner && b.date === date);
+  if (S.studentId !== owner) { S.studentId = owner; renderSidebar(); }
+  if (ex) await openBoard(ex.id);
+  else await createBoard(owner, true, date, subject ? `${subject} · ${shortDate(date)}` : undefined);
+  S.tab = 'boards'; renderPanel();
+}
+function sessionModal(owner, existing, presetDate) {
+  const isEdit = !!existing, ref = existing?.ref || {};
+  let kind = existing?.kind || 'fixed';
+  const pd = presetDate ? parseD(presetDate) : null;
+  const body = document.createElement('div');
+  const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])];
+  body.innerHTML = `
+    ${!isEdit && S.studentId === 'all' ? `<div class="field"><label>${t('Áp dụng cho')}</label><select name="owner">${ownerOpts.map(([v, l]) => `<option value="${v}" ${v === owner ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>` : ''}
+    ${isEdit ? '' : `<div class="field"><label>${t('Loại lịch')}</label><div class="radio-cards">
+      <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><b>${t('Cố định hằng tuần')}</b><span>${t('Lặp lại vào cùng thứ, cùng giờ')}</span></label>
+      <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><b>${t('Chỉ một buổi')}</b><span>${t('Học bù, học thêm, đổi lịch…')}</span></label></div></div>`}
+    <div class="field f-dow"><label>${t('Thứ')}</label><select name="dow">${WD[LANG].map((d, i) => `<option value="${i}" ${(ref.dow ?? (pd ? dow(pd) : 0)) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+    <div class="field f-date"><label>${t('Ngày')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
+    <div class="row2">
+      <div class="field"><label>${t('Bắt đầu')}</label><input type="time" name="start" value="${ref.start || '18:00'}"></div>
+      <div class="field"><label>${t('Kết thúc')}</label><input type="time" name="end" value="${ref.end || '19:30'}"></div>
+    </div>
+    <div class="field"><label>${t('Môn / nội dung')}</label><input type="text" name="subject" value="${esc(ref.subject || '')}" placeholder="${t('VD: Toán – phân số')}"></div>
+    <div class="field"><label>${t('Ghi chú (tuỳ chọn)')}</label><input type="text" name="note" value="${esc(ref.note || '')}"></div>`;
+  const sync = () => { $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once'); };
+  body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } });
+  sync();
+  openModal({
+    title: isEdit ? t('Sửa buổi học') : t('Thêm buổi học'), body, width: 460,
+    actions: [{ label: t('Huỷ') }, {
+      label: t('Lưu'), kind: 'primary', onClick: () => {
+        const v = n => $(`[name=${n}]`, body)?.value;
+        const start = v('start'), end = v('end');
+        if (!start || !end || end <= start) { toast(t('Giờ kết thúc phải sau giờ bắt đầu'), true); return false; }
+        const own = v('owner') || owner, sc = sched(own);
+        const data = { start, end, subject: v('subject').trim(), note: v('note').trim() };
+        if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: +v('dow') } : { date: v('date') });
+        else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: +v('dow'), ...data });
+        else sc.sessions.push({ id: uid(), date: v('date'), ...data });
+        if (kind === 'once' && !isEdit) S.week = weekStart(parseD(v('date')));
+        saveSched(own); renderPanel();
+      }
+    }]
+  });
+}
+
+/* =====================================================================
+   Hồ sơ giáo viên
+   ===================================================================== */
+const profile = () => S.settings.profile || (S.settings.profile = {});
+function profileAvatarHTML(cls = '') {
+  const p = profile();
+  return p.avatar ? `<span class="avatar ${cls}"><img src="${p.avatar}" alt=""></span>` : `<span class="avatar ${cls}">${p.name ? esc(p.name.trim().split(/\s+/).pop()[0].toUpperCase()) : ic('user', 18)}</span>`;
+}
+function renderProfileCard() {
+  const p = profile();
+  $('#profileCard').innerHTML = `${profileAvatarHTML()}<div><div class="pn">${esc(p.name || t('Hồ sơ của bạn'))}</div><div class="pr">${esc(p.role || (p.name ? t('Giáo viên') : t('Thêm thông tin cá nhân')))}</div></div>`;
+}
+async function resizeAvatar(file) {
+  const img = await loadImg(await blobToDataURL(file)), s = Math.min(img.naturalWidth, img.naturalHeight);
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  c.getContext('2d').drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 256, 256);
+  return c.toDataURL('image/jpeg', 0.88);
+}
+function profileModal() {
+  const p = { ...profile() }, body = document.createElement('div');
+  const f = (n, l, ph = '', type = 'text') => `<div class="field"><label>${t(l)}</label><input type="${type}" name="${n}" value="${esc(p[n] || '')}" placeholder="${ph ? t(ph) : ''}"></div>`;
+  body.innerHTML = `
+    <div class="avatar-edit">
+      <div class="big-av" id="bigAv" title="${t('Chọn ảnh đại diện')}"></div>
+      <div class="av-actions"><button class="btn outline sm" id="avPick">${ic('camera', 16)}${t('Đổi ảnh')}</button><button class="btn ghost sm" id="avDel">${t('Xoá ảnh')}</button></div>
+    </div>
+    ${f('name', 'Họ và tên')}
+    ${f('role', 'Vai trò', 'VD: Giáo viên Toán, Gia sư Tiếng Anh')}
+    ${f('school', 'Trường / trung tâm')}
+    <div class="row2">${f('email', 'Email', '', 'email')}${f('phone', 'Số điện thoại', '', 'tel')}</div>
+    <div class="field"><label>${t('Giới thiệu ngắn')}</label><textarea name="bio" placeholder="${t('Kinh nghiệm, phương pháp dạy, môn phụ trách…')}">${esc(p.bio || '')}</textarea></div>
+    <div class="hint">${t('Thông tin chỉ lưu trên máy này và được dùng để ghi tên bạn lên tệp PDF xuất ra.')}</div>`;
+  const paint = () => { const name = $('[name=name]', body).value.trim(); $('#bigAv', body).innerHTML = p.avatar ? `<img src="${p.avatar}" alt="">` : (name ? esc(name.split(/\s+/).pop()[0].toUpperCase()) : ic('user', 34)); $('#avDel', body).classList.toggle('hidden', !p.avatar); };
+  const pick = () => { const inp = $('#fileAvatar'); inp.onchange = async () => { const file = inp.files[0]; inp.value = ''; if (!file) return; try { p.avatar = await resizeAvatar(file); paint(); } catch (e) { toast(t('Không đọc được ảnh này'), true); } }; inp.click(); };
+  $('#bigAv', body).onclick = pick; $('#avPick', body).onclick = pick;
+  $('#avDel', body).onclick = () => { delete p.avatar; paint(); };
+  $('[name=name]', body).oninput = paint; paint();
+  openModal({
+    title: t('Hồ sơ của bạn'), body, width: 500, actions: [{ label: t('Huỷ') }, {
+      label: t('Lưu'), kind: 'primary', onClick: () => {
+        ['name', 'role', 'school', 'email', 'phone', 'bio'].forEach(k => { p[k] = $(`[name=${k}]`, body).value.trim(); });
+        S.settings.profile = p; saveSettings(); renderProfileCard(); toast(t('Đã lưu hồ sơ'));
+      }
+    }]
+  });
+}
+
+/* =====================================================================
+   Sáng / tối
+   ===================================================================== */
+function applyTheme() {
+  const th = resolvedTheme(); document.documentElement.dataset.theme = th;
+  const icon = th === 'dark' ? ic('sun', 19) : ic('moon', 19);
+  $('#btnTheme').innerHTML = icon; $('#btnTheme2').innerHTML = icon;
+  RT = THEMES[th]; renderProps(); paintMiniSwatches(); requestRender(true);
+}
+function setTheme(v) { themePref = v; ls.set('vincenink.theme', v); applyTheme(); }
+const toggleTheme = () => setTheme(resolvedTheme() === 'dark' ? 'light' : 'dark');
+mq.addEventListener?.('change', () => { if (themePref === 'system') applyTheme(); });
+
+/* =====================================================================
+   Thanh trên
+   ===================================================================== */
 function renderTopbar() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b) return;
   $('#ownerChip').innerHTML = `${avatarHTML(b.studentId)}<span>${esc(ownerName(b.studentId))}</span>`;
   $('#boardTitle').value = b.title; $('#boardDate').value = b.date; $('#bgSelect').value = E.bg;
-  document.title = `${b.title} · Vincenink`;
+  updateTitle();
 }
 function bindTopbar() {
-  $('#bgSelect').innerHTML = BGS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join('');
   $('#bgSelect').onchange = e => { E.bg = e.target.value; requestRender(true); scheduleSave(true); };
   const title = $('#boardTitle');
   title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; b.title = title.value.trim() || b.title; title.value = b.title; await DB.put('boards', b); renderPanel(); renderTopbar(); };
   title.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') title.blur(); };
   $('#boardDate').onchange = async e => { const b = S.boards.find(x => x.id === S.boardId); if (!b || !e.target.value) return; b.date = e.target.value; await DB.put('boards', b); renderPanel(); };
-  $('#ownerChip').onclick = () => { const b = S.boards.find(x => x.id === S.boardId); if (b) { $('#app').classList.remove('focus'); selectStudent(b.studentId); } };
+  $('#ownerChip').onclick = () => { const b = S.boards.find(x => x.id === S.boardId); if (b) { $('#app').classList.remove('focus'); setTimeout(resize, 0); selectStudent(b.studentId); } };
   $('#btnFocus').onclick = toggleFocus;
   $('#btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); };
-  $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast('Bảng đang trống'); download(blob, safeName($('#boardTitle').value) + '.png'); };
-  $('#btnDriveSave').onclick = saveBoardToDrive;
+  $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); };
+  $('#btnPdf').onclick = exportPdfDialog;
   $('#btnSettings').onclick = settingsModal;
+  $('#btnTheme').onclick = toggleTheme; $('#btnTheme2').onclick = toggleTheme;
+  $('#btnAbout').onclick = () => showWelcome(true);
+  $('#profileCard').onclick = profileModal;
+  $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
+  $('#btnStart').onclick = () => showWelcome(false);
 }
 function toggleFocus() { $('#app').classList.toggle('focus'); setTimeout(resize, 0); }
-
-/* =====================================================================
-   Google Drive
-   ===================================================================== */
-const Drive = {
-  token: null, exp: 0,
-  ready() { return !!S.settings.clientId; },
-  async ensureToken(force) {
-    if (!force && this.token && Date.now() < this.exp) return this.token;
-    await loadScript('https://accounts.google.com/gsi/client');
-    return new Promise((res, rej) => {
-      const tc = google.accounts.oauth2.initTokenClient({
-        client_id: S.settings.clientId.trim(),
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        callback: r => { if (r.error) rej(new Error(r.error_description || r.error)); else { this.token = r.access_token; this.exp = Date.now() + (r.expires_in - 60) * 1000; res(this.token); } },
-        error_callback: e => rej(new Error(e.message || e.type || 'Đăng nhập Google bị huỷ')),
-      });
-      tc.requestAccessToken({ prompt: this.token ? '' : 'consent' });
-    });
-  },
-  async fetch(url, opts = {}, retry = true) {
-    await this.ensureToken();
-    const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + this.token } });
-    if (r.status === 401 && retry) { this.token = null; return this.fetch(url, opts, false); }
-    if (!r.ok) { let m = r.status + ''; try { m = (await r.json()).error.message; } catch (e) { /* */ } throw new Error(m); }
-    return r;
-  },
-  async folder(name, parent) {
-    const qn = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const q = `name='${qn}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${parent || 'root'}' in parents`;
-    const r = await (await this.fetch('https://www.googleapis.com/drive/v3/files?fields=files(id,name)&q=' + encodeURIComponent(q))).json();
-    if (r.files && r.files.length) return r.files[0].id;
-    const c = await (await this.fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: parent ? [parent] : [] }),
-    })).json();
-    return c.id;
-  },
-  async studentFolder(sid, sub) {
-    const root = await this.folder('Vincenink');
-    let f = await this.folder(ownerName(sid), root);
-    if (sub) f = await this.folder(sub, f);
-    return f;
-  },
-  async upload(blob, name, parent) {
-    const fd = new FormData();
-    fd.append('metadata', new Blob([JSON.stringify({ name, parents: [parent] })], { type: 'application/json' }));
-    fd.append('file', blob, name);
-    return (await this.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', { method: 'POST', body: fd })).json();
-  },
-  async pick() {
-    if (!S.settings.apiKey) throw new Error('Cần nhập API key trong Cài đặt để mở trình chọn tệp Drive');
-    await this.ensureToken();
-    await loadScript('https://apis.google.com/js/api.js');
-    await new Promise(r => gapi.load('picker', r));
-    return new Promise(res => {
-      const view = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(false);
-      new google.picker.PickerBuilder().addView(view)
-        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-        .setOAuthToken(this.token).setDeveloperKey(S.settings.apiKey.trim())
-        .setAppId(S.settings.clientId.split('-')[0]).setLocale('vi')
-        .setCallback(d => { if (d.action === google.picker.Action.PICKED) res(d.docs); else if (d.action === google.picker.Action.CANCEL) res([]); })
-        .build().setVisible(true);
-    });
-  },
-  async downloadFile(doc) {
-    if ((doc.mimeType || '').startsWith('application/vnd.google-apps.')) {
-      const r = await this.fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}/export?mimeType=application/pdf`);
-      return { blob: await r.blob(), name: doc.name.replace(/\.pdf$/i, '') + '.pdf', type: 'application/pdf' };
-    }
-    const r = await this.fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`);
-    return { blob: await r.blob(), name: doc.name, type: doc.mimeType };
-  },
-};
-function needDrive() {
-  if (Drive.ready()) return true;
-  toast('Hãy kết nối Google Drive trong Cài đặt trước', true); settingsModal(); return false;
+function showWelcome(on) {
+  $('#welcome').classList.toggle('hidden', !on);
+  if (!on) ls.set('vincenink.seen', '1');
+  updateTitle();
 }
-function driveErr(err) { console.error(err); toast('Google Drive: ' + (err.message || err), true); }
-async function uploadFileToDrive(f, quiet) {
-  if (!needDrive()) return false;
-  try {
-    if (!quiet) toast('Đang lưu lên Drive…');
-    const folder = await Drive.studentFolder(f.studentId, 'Tài liệu');
-    const r = await Drive.upload(f.blob, f.name, folder);
-    f.driveId = r.id; f.driveLink = r.webViewLink; await DB.put('files', f);
-    toast(`Đã lưu “${f.name}” vào Drive › Vincenink › ${ownerName(f.studentId)}`);
-    return true;
-  } catch (err) { driveErr(err); return false; }
-}
-async function drivePickToStudent() {
-  if (!needDrive()) return;
-  try {
-    const docs = await Drive.pick(); if (!docs.length) return;
-    toast(`Đang tải ${docs.length} tệp từ Drive…`);
-    for (const d of docs) {
-      if (d.mimeType === 'application/vnd.google-apps.folder') continue;
-      const { blob, name, type } = await Drive.downloadFile(d);
-      const file = new File([blob], name, { type: type || blob.type });
-      await addFiles([file], S.studentId, { driveId: d.id, driveLink: d.url });
-    }
-  } catch (err) { driveErr(err); }
-}
-async function saveBoardToDrive() {
-  if (!needDrive()) return;
-  const blob = await renderBoardPNG(); if (!blob) return toast('Bảng đang trống');
-  const b = S.boards.find(x => x.id === S.boardId);
-  try {
-    toast('Đang lưu ảnh bảng lên Drive…');
-    const folder = await Drive.studentFolder(b.studentId, 'Bảng');
-    await Drive.upload(blob, `${b.date} - ${safeName(b.title)}.png`, folder);
-    toast(`Đã lưu vào Drive › Vincenink › ${ownerName(b.studentId)} › Bảng`);
-  } catch (err) { driveErr(err); }
-}
+$('#welcome').addEventListener('pointerdown', e => { if (e.target.id === 'welcome') showWelcome(false); });
 
 /* =====================================================================
    Sao lưu / khôi phục
    ===================================================================== */
 async function buildBackup() {
   await doSave();
-  const boardData = await DB.all('boardData');
-  const files = [];
+  const boardData = await DB.all('boardData'), files = [];
   for (const f of S.files) { const { blob, ...rest } = f; files.push({ ...rest, data: await blobToDataURL(blob) }); }
-  return new Blob([JSON.stringify({ app: 'vincenink', version: 1, exportedAt: Date.now(), students: S.students, boards: S.boards, boardData, files, classNote: S.settings.classNote })], { type: 'application/json' });
+  return new Blob([JSON.stringify({ app: 'vincenink', version: 2, exportedAt: Date.now(), students: S.students, boards: S.boards, boardData, files, schedule: [...S.sched.values()], classNote: S.settings.classNote, profile: S.settings.profile })], { type: 'application/json' });
 }
-async function exportBackup() { toast('Đang tạo bản sao lưu…'); download(await buildBackup(), `vincenink-saoluu-${todayStr()}.json`); }
-async function backupToDrive() {
-  if (!needDrive()) return;
-  try { toast('Đang sao lưu lên Drive…'); const root = await Drive.folder('Vincenink'); const f = await Drive.folder('Sao lưu', root);
-    await Drive.upload(await buildBackup(), `vincenink-saoluu-${todayStr()}-${fmtTime(Date.now()).replace(':', 'h')}.json`, f);
-    toast('Đã sao lưu vào Drive › Vincenink › Sao lưu');
-  } catch (err) { driveErr(err); }
-}
+async function exportBackup() { toast(t('Đang tạo bản sao lưu…')); download(await buildBackup(), `vincenink-saoluu-${todayStr()}.json`); }
 async function importBackup(file) {
   try {
     const data = JSON.parse(await file.text());
-    if (data.app !== 'vincenink') throw new Error('Tệp không phải bản sao lưu Vincenink');
-    if (!await confirmBox('Khôi phục bản sao lưu?', `Dữ liệu hiện tại trên máy sẽ được <b>thay thế</b> bằng bản sao lưu ngày ${fmtDT(data.exportedAt)} (${data.students.length} học sinh, ${data.boards.length} bảng, ${data.files.length} tài liệu).`, 'Khôi phục', false)) return;
-    for (const s of ['students', 'boards', 'boardData', 'files']) await DB.clear(s);
+    if (data.app !== 'vincenink') throw new Error(t('Tệp không phải bản sao lưu Vincenink'));
+    if (!await confirmBox(t('Khôi phục bản sao lưu?'), t('Dữ liệu hiện tại trên máy sẽ được <b>thay thế</b> bằng bản sao lưu ngày {d} ({s} học sinh, {b} bảng, {f} tài liệu).', { d: fmtDT(data.exportedAt), s: data.students.length, b: data.boards.length, f: data.files.length }), t('Khôi phục'), false)) return;
+    for (const s of ['students', 'boards', 'boardData', 'files', 'schedule']) await DB.clear(s);
     for (const s of data.students) await DB.put('students', s);
     for (const b of data.boards) await DB.put('boards', b);
     for (const d of data.boardData) await DB.put('boardData', d);
-    for (const f of data.files) { const { data: u, ...rest } = f; await DB.put('files', { ...rest, blob: await dataURLToBlob(u) }); }
-    S.settings.classNote = data.classNote || ''; S.settings.lastBoard = null; S.settings.lastStudent = 'all'; await saveSettings();
+    for (const s of data.schedule || []) await DB.put('schedule', s);
+    for (const f of data.files) { const { data: u, driveId, driveLink, ...rest } = f; await DB.put('files', { ...rest, blob: await dataURLToBlob(u) }); }
+    S.settings.classNote = data.classNote || ''; if (data.profile) S.settings.profile = data.profile;
+    S.settings.lastBoard = null; S.settings.lastStudent = 'all'; await saveSettings();
     contentDirty = viewDirty = false; location.reload();
-  } catch (err) { toast('Không khôi phục được: ' + err.message, true); }
+  } catch (err) { toast(t('Không khôi phục được: {m}', { m: err.message }), true); }
 }
 
 /* =====================================================================
    Cài đặt
    ===================================================================== */
 function settingsModal() {
-  const s = S.settings; const origin = location.origin;
-  const body = document.createElement('div');
+  const s = S.settings, body = document.createElement('div');
+  const seg = (name, opts, cur) => `<div class="seg" data-segname="${name}">${opts.map(([v, l]) => `<button data-v="${v}" class="${v === cur ? 'active' : ''}">${t(l)}</button>`).join('')}</div>`;
   body.innerHTML = `
+    <h4 style="margin:0 0 10px">${t('Giao diện')}</h4>
+    <div class="set-row"><span>${t('Ngôn ngữ')}</span>${seg('lang', [['vi', 'Tiếng Việt'], ['en', 'English']], LANG)}</div>
+    <div class="set-row"><span>${t('Chế độ màu')}</span>${seg('theme', [['light', 'Sáng'], ['dark', 'Tối'], ['system', 'Theo máy']], themePref)}</div>
     <label class="switch"><input type="checkbox" id="setPen" ${s.penOnly ? 'checked' : ''}><span class="knob"></span>
-      <span class="lbl">Chỉ viết bằng bút cảm ứng<small>Dành cho iPad/máy tính bảng: Apple Pencil để viết, ngón tay chỉ để kéo và phóng to — tránh lỡ tay chạm lòng bàn tay vào bảng.</small></span></label>
-
+      <span class="lbl">${t('Chỉ viết bằng bút cảm ứng')}<small>${t('Dành cho iPad/máy tính bảng: Apple Pencil để viết, ngón tay chỉ để kéo và phóng to — tránh lỡ tay chạm lòng bàn tay vào bảng.')}</small></span></label>
     <div class="set-section">
-      <h4>Kết nối Google Drive</h4>
-      <p class="muted" style="font-size:13px">Để lưu tài liệu và bảng lên Drive của bạn. Chỉ cần làm một lần (khoảng 5 phút):</p>
-      <ol class="steps">
-        <li>Vào <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a>, tạo dự án mới.</li>
-        <li>Bật <b>Google Drive API</b> và <b>Google Picker API</b>.</li>
-        <li>Mục <b>OAuth consent screen</b>: chọn External, thêm email của bạn vào Test users.</li>
-        <li>Mục <b>Credentials</b> → tạo <b>OAuth client ID</b> loại Web, thêm <i>Authorized JavaScript origins</i>: <code>${esc(origin.startsWith('http') ? origin : 'http://localhost:8080')}</code></li>
-        <li>Tạo thêm một <b>API key</b>, rồi dán cả hai vào đây.</li>
-      </ol>
-      ${origin.startsWith('http') ? '' : `<p class="hint" style="color:var(--danger)">Bạn đang mở trang trực tiếp từ tệp. Google Drive chỉ chạy khi mở qua tệp <b>Mo-Vincenink.command</b> (địa chỉ http://localhost:8080).</p>`}
-      <div class="field"><label>OAuth Client ID</label><input type="text" id="setCid" value="${esc(s.clientId)}" placeholder="xxxxxxxx.apps.googleusercontent.com"></div>
-      <div class="field"><label>API key (cho trình chọn tệp)</label><input type="password" id="setKey" value="${esc(s.apiKey)}" placeholder="AIza…"></div>
-      <button class="btn soft sm" id="setTest">${ic('cloud', 16)}Lưu &amp; thử kết nối</button>
-    </div>
-
-    <div class="set-section">
-      <h4>Sao lưu dữ liệu</h4>
-      <p class="muted" style="font-size:13px">Dữ liệu được lưu ngay trong trình duyệt trên máy này. Thỉnh thoảng hãy sao lưu để không mất bài giảng.</p>
+      <h4>${t('Sao lưu dữ liệu')}</h4>
+      <p class="muted" style="font-size:13px">${t('Dữ liệu được lưu ngay trong trình duyệt trên máy này. Thỉnh thoảng hãy tải bản sao lưu để không mất bài giảng.')}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn outline sm" id="setExport">${ic('download', 16)}Tải bản sao lưu</button>
-        <button class="btn outline sm" id="setImport">${ic('upload', 16)}Khôi phục từ tệp</button>
-        <button class="btn outline sm" id="setDrive">${ic('cloudUp', 16)}Sao lưu lên Drive</button>
+        <button class="btn outline sm" id="setExport">${ic('download', 16)}${t('Tải bản sao lưu')}</button>
+        <button class="btn outline sm" id="setImport">${ic('upload', 16)}${t('Khôi phục từ tệp')}</button>
+        <button class="btn ghost sm" id="setAbout">${ic('info', 16)}${t('Mở trang giới thiệu')}</button>
       </div>
     </div>
-
     <div class="set-section">
-      <h4>Phím tắt</h4>
+      <h4>${t('Phím tắt')}</h4>
       <div class="kbd-grid">
-        <span><kbd>P</kbd> <kbd>M</kbd> <kbd>E</kbd></span><span>Bút · Dạ quang · Tẩy</span>
-        <span><kbd>L</kbd> <kbd>S</kbd> <kbd>T</kbd> <kbd>K</kbd></span><span>Khoanh vùng · Hình · Chữ · Laser</span>
-        <span><kbd>Space</kbd> + kéo</span><span>Di chuyển bảng</span>
-        <span><kbd>Ctrl</kbd> + cuộn</span><span>Phóng to / thu nhỏ</span>
-        <span><kbd>[</kbd> <kbd>]</kbd></span><span>Giảm / tăng độ dày</span>
-        <span><kbd>1</kbd> … <kbd>8</kbd></span><span>Chọn nhanh màu</span>
-        <span><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>⇧</kbd> <kbd>Z</kbd></span><span>Hoàn tác / Làm lại</span>
-        <span><kbd>Delete</kbd> · <kbd>Ctrl</kbd> <kbd>D</kbd></span><span>Xoá / nhân bản vùng chọn</span>
-        <span><kbd>F</kbd></span><span>Ẩn/hiện thanh bên</span>
+        <span><kbd>P</kbd> <kbd>M</kbd> <kbd>E</kbd></span><span>${t('Bút · Dạ quang · Tẩy')}</span>
+        <span><kbd>L</kbd> <kbd>S</kbd> <kbd>T</kbd> <kbd>K</kbd></span><span>${t('Khoanh vùng · Hình · Chữ · Laser')}</span>
+        <span><kbd>Space</kbd> + ↔</span><span>${t('Di chuyển bảng')}</span>
+        <span><kbd>Ctrl</kbd> + ⇅</span><span>${t('Phóng to / thu nhỏ')}</span>
+        <span><kbd>[</kbd> <kbd>]</kbd></span><span>${t('Giảm / tăng độ dày')}</span>
+        <span><kbd>1</kbd> … <kbd>8</kbd></span><span>${t('Chọn nhanh màu')}</span>
+        <span><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>⇧</kbd> <kbd>Z</kbd></span><span>${t('Hoàn tác / Làm lại')}</span>
+        <span><kbd>Delete</kbd> · <kbd>Ctrl</kbd> <kbd>D</kbd></span><span>${t('Xoá / nhân bản vùng chọn')}</span>
+        <span><kbd>I</kbd></span><span>${t('Chèn ảnh / PDF')}</span>
+        <span><kbd>F</kbd></span><span>${t('Ẩn/hiện thanh bên')}</span>
       </div>
     </div>`;
-  const saveDriveFields = () => { s.clientId = $('#setCid', body).value.trim(); s.apiKey = $('#setKey', body).value.trim(); saveSettings(); };
+  body.addEventListener('click', e => {
+    const b = e.target.closest('[data-segname] button'); if (!b) return;
+    const name = b.parentElement.dataset.segname;
+    $$('button', b.parentElement).forEach(x => x.classList.toggle('active', x === b));
+    if (name === 'lang') { setLang(b.dataset.v); m.close(); settingsModal(); } else setTheme(b.dataset.v);
+  });
   $('#setPen', body).onchange = e => { s.penOnly = e.target.checked; saveSettings(); };
-  $('#setTest', body).onclick = async () => {
-    saveDriveFields(); if (!s.clientId) return toast('Hãy nhập Client ID', true);
-    try { Drive.token = null; await Drive.ensureToken(true); await Drive.folder('Vincenink'); toast('Kết nối Google Drive thành công ✓'); } catch (err) { driveErr(err); }
-  };
   $('#setExport', body).onclick = exportBackup;
   $('#setImport', body).onclick = () => $('#fileImport').click();
-  $('#setDrive', body).onclick = () => { saveDriveFields(); backupToDrive(); };
-  openModal({ title: 'Cài đặt & sao lưu', body, width: 560, actions: [{ label: 'Xong', kind: 'primary', onClick: saveDriveFields }], onClose: saveDriveFields });
+  const m = openModal({ title: t('Cài đặt & sao lưu'), body, width: 540, actions: [{ label: t('Xong'), kind: 'primary' }] });
+  $('#setAbout', body).onclick = () => { m.close(); showWelcome(true); };
 }
 
 /* =====================================================================
@@ -1537,13 +1855,12 @@ function settingsModal() {
    ===================================================================== */
 function openModal({ title, body, actions = [], width = 440, onClose }) {
   const back = document.createElement('div'); back.className = 'modal-back';
-  back.innerHTML = `<div class="modal" style="width:min(${width}px,calc(100vw - 32px))"><div class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn sm" data-close>${ic('x', 18)}</button></div><div class="modal-body"></div><div class="modal-foot"></div></div>`;
+  back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" style="width:min(${width}px,calc(100vw - 32px))"><div class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn sm" data-close aria-label="Close">${ic('x', 18)}</button></div><div class="modal-body"></div><div class="modal-foot"></div></div>`;
   const bodyEl = $('.modal-body', back); if (typeof body === 'string') bodyEl.innerHTML = body; else bodyEl.append(body);
   const foot = $('.modal-foot', back); let closed = false;
   const close = () => { if (closed) return; closed = true; back.remove(); document.removeEventListener('keydown', onKey, true); onClose && onClose(); };
   actions.forEach(a => {
     const b = document.createElement('button'); b.className = 'btn ' + (a.kind || 'ghost'); b.textContent = a.label;
-    if (a.kind && a.kind.includes('danger-text')) { b.style.color = 'var(--danger)'; b.style.marginRight = 'auto'; }
     b.onclick = async () => { const r = a.onClick ? await a.onClick(back) : undefined; if (r !== false) close(); };
     foot.append(b);
   });
@@ -1552,59 +1869,62 @@ function openModal({ title, body, actions = [], width = 440, onClose }) {
   $('[data-close]', back).onclick = close;
   const onKey = e => {
     if (e.key === 'Escape') { e.stopPropagation(); close(); }
-    else if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') { e.preventDefault(); foot.querySelector('.btn.primary, .btn.danger:not(.ghost)')?.click(); }
+    else if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !['checkbox', 'radio'].includes(e.target.type)) { e.preventDefault(); foot.querySelector('.btn.primary, .btn.danger')?.click(); }
   };
   document.addEventListener('keydown', onKey, true);
   $('#modalRoot').append(back);
   setTimeout(() => back.querySelector('.modal-body input[type=text], .modal-body input[type=number]')?.focus(), 30);
   return { el: back, close };
 }
-function confirmBox(title, msg, ok = 'Xoá', danger = true) {
+function confirmBox(title, msg, ok, danger = true) {
   return new Promise(res => {
     let done = false;
-    openModal({ title, body: `<p class="muted">${msg}</p>`, actions: [{ label: 'Huỷ' }, { label: ok, kind: danger ? 'danger' : 'primary', onClick: () => { done = true; res(true); } }], onClose: () => { if (!done) res(false); } });
+    openModal({ title, body: `<p class="muted">${msg}</p>`, actions: [{ label: t('Huỷ') }, { label: ok || t('Xoá'), kind: danger ? 'danger' : 'primary', onClick: () => { done = true; res(true); } }], onClose: () => { if (!done) res(false); } });
   });
 }
-function formBox(title, fields, ok = 'Lưu', intro = '', row = false) {
+function formBox(title, fields, ok, intro = '', row = false) {
   return new Promise(res => {
     let done = false; const body = document.createElement('div');
     const fh = f => `<div class="field"><label>${esc(f.label)}</label>${f.type === 'select'
       ? `<select name="${f.name}">${f.options.map(([v, l]) => `<option value="${esc(v)}" ${v === f.value ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`
       : `<input type="${f.type || 'text'}" name="${f.name}" value="${esc(f.value ?? '')}" ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}>`}</div>`;
     body.innerHTML = intro + (row ? `<div class="row2">${fields.map(fh).join('')}</div>` : fields.map(fh).join(''));
-    openModal({ title, body, actions: [{ label: 'Huỷ' }, { label: ok, kind: 'primary', onClick: () => { const o = {}; fields.forEach(f => o[f.name] = $(`[name="${f.name}"]`, body).value); done = true; res(o); } }], onClose: () => { if (!done) res(null); } });
+    openModal({ title, body, actions: [{ label: t('Huỷ') }, { label: ok || t('Lưu'), kind: 'primary', onClick: () => { const o = {}; fields.forEach(f => o[f.name] = $(`[name="${f.name}"]`, body).value); done = true; res(o); } }], onClose: () => { if (!done) res(null); } });
   });
 }
 let menuEl = null;
 function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', outsideMenu, true); } }
 function outsideMenu(e) { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }
 function popMenu(anchor, items) {
-  closeMenu(); const m = document.createElement('div'); m.className = 'popmenu';
+  closeMenu(); const m = document.createElement('div'); m.className = 'popmenu'; m.setAttribute('role', 'menu');
   items.forEach(it => {
     if (it === '-') { m.insertAdjacentHTML('beforeend', '<div class="sep"></div>'); return; }
     const b = document.createElement('button'); if (it.danger) b.className = 'danger';
-    b.innerHTML = ic(it.icon, 17) + esc(it.label); b.onclick = () => { closeMenu(); it.onClick(); }; m.append(b);
+    b.innerHTML = ic(it.icon, 17) + `<span>${esc(it.label)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span>`;
+    b.onclick = () => { closeMenu(); it.onClick(); }; m.append(b);
   });
+  if (items.some(i => i.sub)) m.style.maxWidth = '320px';
   document.body.append(m); menuEl = m;
   const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
   m.style.left = clamp(r.right - mw, 8, innerWidth - mw - 8) + 'px';
-  m.style.top = (r.bottom + mh + 8 > innerHeight ? r.top - mh - 4 : r.bottom + 4) + 'px';
+  m.style.top = (r.bottom + mh + 8 > innerHeight ? Math.max(8, r.top - mh - 4) : r.bottom + 4) + 'px';
   setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
 }
 function toast(msg, err) {
-  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  const el = document.createElement('div'); el.className = 'toast' + (err ? ' err' : ''); el.textContent = msg;
   const box = $('#toasts'); while (box.children.length > 2) box.firstChild.remove();
-  box.append(t); setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = 0; setTimeout(() => t.remove(), 300); }, err ? 5000 : 2600);
+  box.append(el); setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = 0; setTimeout(() => el.remove(), 300); }, err ? 5000 : 2600);
 }
 
 /* =====================================================================
    Bàn phím, dán, kéo thả
    ===================================================================== */
 const isTyping = () => { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable); };
+const blocked = () => $('#modalRoot').children.length || !$('#welcome').classList.contains('hidden') || isTyping();
 document.addEventListener('keydown', e => {
-  if ($('#modalRoot').children.length || isTyping()) return;
+  if (blocked()) return;
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
-  if (e.code === 'Space') { if (!spaceDown) { spaceDown = true; cv.classList.add('t-hand'); } e.preventDefault(); return; }
+  if (e.code === 'Space') { if (!spaceDown) { spaceDown = true; updateCursor(); } e.preventDefault(); return; }
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { e.preventDefault(); redo(); return; }
   if (mod && k === 'a') { e.preventDefault(); selectAll(); return; }
@@ -1616,25 +1936,27 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { E.sel.clear(); closeMenu(); requestRender(); return; }
   const map = { h: 'hand', p: 'pen', m: 'marker', e: 'eraser', l: 'lasso', s: 'shape', t: 'text', k: 'laser' };
   if (map[k]) { setTool(map[k]); return; }
-  if (k === 'i') { $('#fileInsert').click(); return; }
+  if (k === 'i') { insertMenu($('#toolbar [data-act=insert]')); return; }
   if (k === 'f') { toggleFocus(); return; }
   if (k === '0') { zoomAt(W / 2, H / 2, 1 / E.view.s); return; }
   if (k === '+' || k === '=') { zoomAt(W / 2, H / 2, 1.25); return; }
   if (k === '-') { zoomAt(W / 2, H / 2, 0.8); return; }
   if (k === '[' || k === ']') {
     const kind = { pen: 'pen', marker: 'marker', eraser: 'eraser', shape: 'shape', text: 'text' }[E.tool]; if (!kind) return;
-    const [mn, mx] = SIZE_RANGE[kind]; const step = Math.max(1, Math.round(E.sizes[kind] * 0.15));
+    const [mn, mx] = SIZE_RANGE[kind], step = Math.max(1, Math.round(E.sizes[kind] * 0.15));
     E.sizes[kind] = clamp(E.sizes[kind] + (k === ']' ? step : -step), mn, mx); savePrefs(); renderProps(); requestRender(); return;
   }
-  if (/^[1-8]$/.test(k)) { if (E.tool === 'marker') { const c = MARKERS[+k - 1]; if (c) E.markerColor = c; } else { E.color = COLORS[+k - 1]; if (!['pen', 'shape', 'text'].includes(E.tool)) setTool('pen'); } savePrefs(); renderProps(); }
+  if (/^[1-8]$/.test(k)) {
+    if (E.tool === 'marker') { const c = MARKERS[+k - 1]; if (c) E.markerColor = c; }
+    else { E.color = COLORS[+k - 1]; if (!['pen', 'shape', 'text'].includes(E.tool)) setTool('pen'); }
+    savePrefs(); renderProps();
+  }
 });
-document.addEventListener('keyup', e => { if (e.code === 'Space') { spaceDown = false; cv.classList.remove('t-hand'); cv.className = 't-' + E.tool; } });
+document.addEventListener('keyup', e => { if (e.code === 'Space') { spaceDown = false; updateCursor(); } });
 window.addEventListener('blur', () => { spaceDown = false; });
-
 document.addEventListener('paste', e => {
-  if (isTyping() || $('#modalRoot').children.length) return;
-  const files = [...(e.clipboardData?.files || [])];
-  const f = files.find(x => x.type.startsWith('image/') || x.type === 'application/pdf');
+  if (blocked()) return;
+  const f = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith('image/') || x.type === 'application/pdf');
   if (f) { e.preventDefault(); insertBlob(f, f.name); }
 });
 let dragDepth = 0;
@@ -1645,29 +1967,33 @@ wrap.addEventListener('drop', async e => {
   e.preventDefault(); dragDepth = 0; wrap.classList.remove('dragover');
   for (const f of [...e.dataTransfer.files]) await insertBlob(f, f.name);
 });
-$('#fileInsert').onchange = async e => { for (const f of [...e.target.files]) await insertBlob(f, f.name); e.target.value = ''; };
-$('#fileUpload').onchange = async e => { await addFiles([...e.target.files]); e.target.value = ''; };
-$('#fileImport').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) { $$('.modal-back').forEach(m => m.remove()); importBackup(f); } };
+const onFiles = (id, fn) => { $(id).onchange = async e => { const files = [...e.target.files]; e.target.value = ''; for (const f of files) await fn(f); }; };
+onFiles('#fileInsert', f => insertBlob(f, f.name));
+onFiles('#fileScan', f => insertBlob(f, f.name, true));
+onFiles('#fileCamera', f => insertBlob(f, f.name, true));
+$('#fileUpload').onchange = async e => { const files = [...e.target.files]; e.target.value = ''; await addFiles(files); };
+$('#fileImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) { $$('.modal-back').forEach(m => m.remove()); importBackup(f); } };
 
 /* =====================================================================
    Khởi động
    ===================================================================== */
 async function init() {
   $$('[data-icon]').forEach(el => el.insertAdjacentHTML('afterbegin', ic(el.dataset.icon, el.classList.contains('icon-btn') ? 19 : 16)));
-  loadPrefs();
-  try { await DB.open(); } catch (err) { toast('Trình duyệt không cho lưu dữ liệu (IndexedDB). Hãy mở bằng Chrome/Safari bản mới.', true); return; }
-  const [st, bo, fi, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.get('settings', 'main')]);
-  S.students = st; S.boards = bo; S.files = fi; if (se) S.settings = { ...S.settings, ...se };
+  loadPrefs(); applyStaticI18n();
+  try { await DB.open(); } catch (err) { toast(t('Trình duyệt không cho lưu dữ liệu (IndexedDB). Hãy mở bằng Chrome/Safari bản mới.'), true); return; }
+  const [st, bo, fi, sc, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.all('schedule'), DB.get('settings', 'main')]);
+  S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
+  if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
   S.studentId = (S.settings.lastStudent === 'all' || studentById(S.settings.lastStudent)) ? S.settings.lastStudent : 'all';
-  buildToolbar(); bindTopbar(); setTool(E.tool);
-  renderSidebar(); renderPanel();
+  renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool);
+  renderSidebar(); renderPanel(); renderProfileCard();
   new ResizeObserver(resize).observe(wrap); resize();
   let b = S.boards.find(x => x.id === S.settings.lastBoard) || boardsOf(S.studentId)[0];
   if (!b) b = await createBoard(S.studentId, false);
   if (b.studentId !== S.studentId) { S.studentId = b.studentId; renderSidebar(); }
   await openBoard(b.id); renderPanel();
   if (innerWidth <= 900) $('#app').classList.add('focus');
-  if (S.settings.clientId && location.origin.startsWith('http')) loadScript('https://accounts.google.com/gsi/client').catch(() => {});
+  if (!ls.get('vincenink.seen', '')) showWelcome(true);
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
