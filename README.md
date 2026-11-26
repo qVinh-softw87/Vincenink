@@ -14,6 +14,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
 - **Bút thanh đậm**: viết chậm thì nét đậm, viết nhanh thì nét thanh; với Apple Pencil/bút cảm ứng thì theo lực nhấn. Có thể chuyển sang nét đều.
 - **Nhiều màu**: 8 màu có sẵn, bảng chọn màu tuỳ ý, bút dạ quang trong suốt.
 - **Con trỏ hình bút**: khi viết, con trỏ chuột là cây bút với ngòi mang đúng màu đang chọn.
+- **Bút mặc định**: nét đều, cỡ vừa. Mực đen trên nền sáng, hiện trắng trên nền tối.
 - **Tẩy**: tẩy từng phần hoặc tẩy cả nét. Tẩy không xoá ảnh/PDF.
 - **Khoanh vùng**:
   - *Khoanh để chọn*: di chuyển, phóng to/thu nhỏ, nhân bản, đổi màu.
@@ -37,14 +38,17 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
   - **Lịch**: lịch học của học sinh.
   - **Ghi chú**: tiến độ, bài về nhà.
 - **Lịch học**:
-  - Lịch *cố định hằng tuần* và các buổi *riêng lẻ* (học bù, đổi lịch).
+  - Nút **Ghi lịch học** rõ ràng; chọn *Cố định hằng tuần* (luôn lặp lại) hoặc *Chỉ một buổi*.
+  - **Đổi lịch chỉ tuần này**: dời giờ/ngày của một buổi cố định trong riêng một tuần, các tuần khác vẫn giữ nguyên.
   - *Ghi chú cho từng tuần*.
   - Đánh dấu *nghỉ buổi này*, mở nhanh bảng của buổi học, nhắc *buổi tới*.
   - Mục *Lớp chung* gộp lịch của tất cả học sinh.
 - **Hồ sơ giáo viên**: ảnh đại diện, họ tên, vai trò, trường, liên hệ, giới thiệu. Chưa cần đăng nhập.
 
 **Giao diện**
-- **Tiếng Việt / English**, chế độ **sáng / tối / theo máy**.
+- **Tiếng Việt / English**. Danh sách **chế độ màu**: *Theo hệ thống* (mặc định), *Sáng (be)*, *Tối*, *Bảng phấn xanh*.
+- **Bút mặc định**: nét đều, cỡ vừa, mực đen; ở nền tối/bảng phấn tự hiện màu trắng.
+- **Trang giới thiệu** hiện mỗi lần vào trang.
 - Tiêu đề tab thay đổi theo bảng đang dạy.
 - Tự động lưu, hoàn tác/làm lại, thu phóng, kéo bảng vô hạn, chụm 2 ngón, chế độ *chỉ viết bằng bút* cho iPad.
 - Sao lưu và khôi phục bằng tệp JSON.

@@ -42,13 +42,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=3">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
     try {
       var t = localStorage.getItem('vincenink.theme') || 'system';
-      if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      if (['light', 'dark', 'chalk'].indexOf(t) < 0) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       document.documentElement.dataset.theme = t;
     } catch (e) {}
   })();
@@ -140,7 +140,6 @@
       <button class="profile-card" id="profileCard"></button>
       <div class="foot-row">
         <button class="icon-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"></button>
-        <button class="icon-btn" id="btnTheme" data-i18n-title="Chế độ sáng / tối" title="Chế độ sáng / tối"></button>
         <button class="icon-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"></button>
         <span class="spacer"></span>
         <div class="seg lang-seg" id="langSeg">
@@ -163,8 +162,9 @@
       <label class="bg-pick" data-icon="grid" data-i18n-title="Nền bảng" title="Nền bảng"><select id="bgSelect" aria-label="Nền bảng"></select></label>
       <button class="btn ghost sm" id="btnExport" data-icon="image" data-i18n-title="Tải bảng thành ảnh PNG" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
       <button class="btn ghost sm" id="btnPdf" data-icon="pdf" data-i18n-title="Tải bảng thành PDF (màu hoặc bản quét)" title="Tải bảng thành PDF"><span>PDF</span></button>
-      <button class="icon-btn" id="btnTheme2" data-i18n-title="Chế độ sáng / tối" title="Chế độ sáng / tối"></button>
+      <label class="bg-pick theme-pick" data-icon="palette" data-i18n-title="Chế độ màu" title="Chế độ màu"><select id="themeSelect" aria-label="Chế độ màu"></select></label>
       <button class="icon-btn" id="btnFull" data-icon="maximize" data-i18n-title="Toàn màn hình" title="Toàn màn hình"></button>
+      <button class="top-avatar" id="topProfile" data-i18n-title="Hồ sơ của bạn" title="Hồ sơ của bạn"></button>
     </header>
 
     <div id="canvasWrap">
@@ -246,6 +246,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js" defer></script>
+<script src="app.js?v=3" defer></script>
 </body>
 </html>

@@ -12,7 +12,7 @@
 ## Bố cục
 
 - **Cột trái**: *Lớp chung* và danh sách học sinh.
-  Bên dưới là **hồ sơ của bạn** (bấm vào để sửa ảnh đại diện và thông tin), nút **cài đặt**, nút **sáng/tối**, nút **giới thiệu** và nút chuyển **VI/EN**.
+  Bên dưới là **hồ sơ của bạn** (bấm vào để tải ảnh đại diện và sửa thông tin; ảnh đại diện cũng hiện ở góc phải thanh trên), nút **cài đặt**, nút **giới thiệu** và nút chuyển **VI/EN**.
 - **Cột giữa**: thông tin học sinh đang chọn, nhắc **buổi tới**, và 4 thẻ:
   - **Bảng**: các bảng theo ngày. Bấm *Bảng mới hôm nay* để tạo bảng mới; dấu ⋯ để đổi tên, đổi ngày, nhân bản hoặc xoá.
   - **Tài liệu**: tải tệp lên cho học sinh. Ảnh và PDF đưa thẳng lên bảng được, kể cả dạng *bản quét*.
@@ -54,12 +54,13 @@ Bạn cũng có thể kéo thả tệp vào bảng hoặc dán bằng `Ctrl/⌘ 
 
 Trong thẻ **Lịch** của mỗi học sinh:
 - Dùng mũi tên ‹ › để chuyển tuần.
-- Bấm **Thêm buổi học** (hoặc dấu + cạnh từng ngày) để thêm buổi, chọn một trong hai loại:
+- Bấm nút **Ghi lịch học** ở đầu thẻ. Với ngày còn trống, bấm “Trống · ghi lịch cho ngày này”; ngày đã có buổi thì có nút **+ Thêm**. Chọn một trong hai loại:
   - **Cố định hằng tuần**: tự lặp lại cùng thứ, cùng giờ.
   - **Chỉ một buổi**: học bù, học thêm, đổi lịch.
 - Bấm vào một buổi để:
   - **Mở bảng cho buổi này**: mở bảng của ngày đó, hoặc tạo mới nếu chưa có.
-  - **Sửa** buổi học.
+  - **Đổi giờ / ngày chỉ tuần này**: lịch cố định vẫn giữ nguyên cho các tuần khác. Buổi đã đổi có viền vàng và nhãn “Đổi lịch tuần này”; muốn bỏ thay đổi thì chọn **Trả về lịch cố định**.
+  - **Sửa lịch cố định (mọi tuần)**.
   - **Nghỉ buổi này**: chỉ áp dụng cho tuần đó.
   - **Xoá**.
 - **Ghi chú tuần này**: ghi nội dung dạy, bài về nhà cho riêng tuần đang xem.
@@ -68,6 +69,6 @@ Trong thẻ **Lịch** của mỗi học sinh:
 ## Cài đặt
 
 - Ngôn ngữ Tiếng Việt / English.
-- Chế độ màu Sáng / Tối / Theo máy.
+- Chế độ màu (cũng có ở thanh trên): Theo hệ thống, Sáng (be), Tối, Bảng phấn xanh.
 - **Chỉ viết bằng bút cảm ứng** (cho iPad): ngón tay chỉ dùng kéo và phóng to.
 - Tải bản sao lưu hoặc khôi phục dữ liệu.

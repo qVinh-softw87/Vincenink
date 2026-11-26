@@ -47,7 +47,7 @@ const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v === n
 let LANG = (() => {
   const q = new URLSearchParams(location.search).get('lang');
   if (q === 'en' || q === 'vi') return q;
-  return ls.get('vincenink.lang', (navigator.language || 'vi').toLowerCase().startsWith('vi') ? 'vi' : 'en');
+  return ls.get('vincenink.lang', 'vi');
 })();
 const EN = {
   'Bảng dạy học': 'Teaching board',
@@ -141,6 +141,48 @@ const EN = {
   'Chưa có lịch.': 'Nothing scheduled.',
   '✏️ Bài giảng đang chờ bạn…': '✏️ Your lesson is waiting…', 'Bảng trắng dạy học trực tuyến': 'Online teaching whiteboard',
   'Trình duyệt không cho lưu dữ liệu (IndexedDB). Hãy mở bằng Chrome/Safari bản mới.': 'This browser cannot store data (IndexedDB). Please use a recent Chrome or Safari.',
+  'Vincenink vừa được cập nhật ở tab khác — hãy tải lại trang này.': 'Vincenink was updated in another tab — please reload this page.',
+  'Đang chờ tab Vincenink cũ đóng lại… Hãy đóng các tab Vincenink khác rồi tải lại trang.': 'Waiting for an older Vincenink tab to close… Close other Vincenink tabs, then reload.',
+  'Không khởi động được Vincenink: {m}. Hãy tải lại trang.': 'Vincenink could not start: {m}. Please reload the page.',
+  'Theo hệ thống': 'System',
+  'Sáng (be)': 'Light (beige)',
+  'Bảng phấn xanh': 'Green chalkboard',
+  'Hôm nay': 'Today',
+  'Đổi lịch tuần này': 'Changed this week',
+  'Bấm để sửa, đổi lịch tuần này, mở bảng…': 'Click to edit, change this week, open board…',
+  'từ {d}': 'from {d}',
+  'Ghi lịch học': 'Add to schedule',
+  'Đổi tuần này': 'This week only',
+  'Nghỉ': 'Cancelled',
+  'Về tuần này': 'Back to this week',
+  'Thêm': 'Add',
+  'ghi lịch cho ngày này': 'add a lesson this day',
+  'Chú thích tuần này': 'Notes for this week',
+  'Lịch cố định của từng học sinh nằm trong trang của học sinh đó; tuần ở trên đã gộp lịch của cả lớp.': 'Each student’s weekly schedule lives on their page; the week above combines the whole class.',
+  'Sửa lịch cố định (mọi tuần)': 'Edit weekly schedule (all weeks)',
+  'Chưa có lịch cố định. Bấm “Ghi lịch học” và chọn “Cố định hằng tuần” để buổi học tự lặp lại mỗi tuần.': 'No weekly schedule yet. Click “Add to schedule” and choose “Every week” so the lesson repeats automatically.',
+  'Sửa buổi này': 'Edit this lesson',
+  'Sửa thay đổi của tuần này': 'Edit this week’s change',
+  'Đổi giờ / ngày chỉ tuần này': 'Change time / day for this week only',
+  'Các tuần khác vẫn giữ lịch cố định': 'Other weeks keep the weekly schedule',
+  'Trả về lịch cố định': 'Restore weekly schedule',
+  'Nghỉ buổi này (chỉ tuần này)': 'Cancel this lesson (this week only)',
+  'Lịch cố định: {x}': 'Weekly schedule: {x}',
+  'Thay đổi dưới đây <b>chỉ áp dụng tuần {a} – {b}</b>. Các tuần khác vẫn học như lịch cố định.': 'The change below <b>only applies to the week {a} – {b}</b>. Other weeks follow the weekly schedule.',
+  'Học vào ngày': 'Day',
+  'Chú thích': 'Note',
+  'VD: Dời lịch vì học sinh đi thi': 'e.g. Moved because of an exam',
+  'Đổi lịch chỉ tuần này': 'Change this week only',
+  'Lưu cho tuần này': 'Save for this week',
+  'Đã đổi lịch cho riêng tuần này': 'Changed for this week only',
+  'Lịch của': 'Schedule for',
+  'Bạn đang sửa <b>lịch cố định</b>: thay đổi áp dụng cho mọi tuần. Muốn đổi riêng một tuần, hãy bấm vào buổi học trong tuần đó và chọn “Đổi giờ / ngày chỉ tuần này”.': 'You are editing the <b>weekly schedule</b>: changes apply to every week. To change a single week, click the lesson in that week and choose “Change time / day for this week only”.',
+  'Kiểu lịch': 'Type',
+  'Luôn lặp lại cùng thứ, cùng giờ. Tuần nào cần đổi thì đổi riêng tuần đó.': 'Always repeats on the same day and time. Need a change? Change just that week.',
+  'Học bù, học thêm, buổi kiểm tra…': 'Make-up, extra lesson, test…',
+  'VD: Mang vở ô li, ôn bài 5': 'e.g. Bring notebook, review unit 5',
+  'Sửa lịch cố định': 'Edit weekly lesson',
+  'Hồ sơ của bạn · đổi ảnh đại diện': 'Your profile · change photo',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -163,7 +205,7 @@ function applyStaticI18n() {
 }
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
-  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); updateTitle();
+  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeSelect(); updateTitle();
   $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join(''); $('#bgSelect').value = E.bg;
 }
 
@@ -215,6 +257,7 @@ const ICONS = {
   user: '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
   s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
@@ -235,14 +278,16 @@ const TOOLS = [
 const THEMES = {
   light: { paper: '#FFFCF6', line: 'rgba(140,105,60,0.13)', strong: 'rgba(140,105,60,0.27)', dot: 'rgba(140,105,60,0.38)', margin: 'rgba(196,92,80,0.28)', ph: '#EFE6D8', sel: '#A86B3C', dark: false },
   dark: { paper: '#1F1C18', line: 'rgba(230,205,170,0.08)', strong: 'rgba(230,205,170,0.17)', dot: 'rgba(230,205,170,0.24)', margin: 'rgba(230,120,100,0.3)', ph: '#2E2923', sel: '#D79A63', dark: true },
+  chalk: { paper: '#233B31', line: 'rgba(235,245,230,0.09)', strong: 'rgba(235,245,230,0.19)', dot: 'rgba(235,245,230,0.26)', margin: 'rgba(250,150,130,0.35)', ph: '#2D473C', sel: '#E8C07A', dark: true },
 };
+const THEME_OPTS = [['system', 'Theo hệ thống'], ['light', 'Sáng (be)'], ['dark', 'Tối'], ['chalk', 'Bảng phấn xanh']];
 // Màu mực tối được làm sáng khi hiển thị trên nền tối (dữ liệu gốc giữ nguyên để in/xuất)
 const DARK_INK = { '#2F2A25': '#EEE6D9', '#1F4E8C': '#79A7E6', '#7B4FA0': '#B88CDD', '#2E7D4F': '#62C08A', '#C0392B': '#F0705F', '#5B8DB8': '#8FB9E0' };
 let RT = THEMES.light;
 const inkColor = c => (RT.dark && DARK_INK[c]) || c;
 let themePref = ls.get('vincenink.theme', 'system');
 const mq = matchMedia('(prefers-color-scheme: dark)');
-const resolvedTheme = () => themePref === 'system' ? (mq.matches ? 'dark' : 'light') : themePref;
+const resolvedTheme = () => THEMES[themePref] ? themePref : (mq.matches ? 'dark' : 'light');
 
 /* ---------------- Cơ sở dữ liệu (IndexedDB) ---------------- */
 const DB = {
@@ -254,8 +299,14 @@ const DB = {
         const d = r.result;
         ['students', 'boards', 'boardData', 'files', 'settings', 'schedule'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); });
       };
-      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onsuccess = () => {
+        this.db = r.result;
+        // Khi có bản mới cần nâng cấp dữ liệu ở tab khác: tự đóng để không chặn tab mới
+        this.db.onversionchange = () => { this.db.close(); toast(t('Vincenink vừa được cập nhật ở tab khác — hãy tải lại trang này.'), true); };
+        res();
+      };
       r.onerror = () => rej(r.error);
+      r.onblocked = () => toast(t('Đang chờ tab Vincenink cũ đóng lại… Hãy đóng các tab Vincenink khác rồi tải lại trang.'), true);
     });
   },
   req(store, mode, fn) {
@@ -279,13 +330,19 @@ const S = {
 };
 const E = {
   items: [], bg: 'grid', view: { x: 0, y: 0, s: 1 },
-  tool: 'pen', color: COLORS[0], markerColor: MARKERS[0], penStyle: 'ink', eraserMode: 'part', lassoMode: 'select', shape: 'rect',
-  sizes: { pen: 5, marker: 18, eraser: 30, shape: 3, text: 28 },
+  tool: 'pen', color: COLORS[0], markerColor: MARKERS[0], penStyle: 'even', eraserMode: 'part', lassoMode: 'select', shape: 'rect',
+  sizes: { pen: 4, marker: 18, eraser: 30, shape: 3, text: 28 },
   undo: [], redo: [], sel: new Set(), cur: null, drag: null, laser: [], hover: null, editing: null,
 };
 const PREF_KEYS = ['tool', 'color', 'markerColor', 'penStyle', 'eraserMode', 'lassoMode', 'shape', 'sizes'];
 function loadPrefs() {
-  try { const p = JSON.parse(ls.get('vincenink.prefs', '{}')); PREF_KEYS.forEach(k => { if (p[k] !== undefined) E[k] = k === 'sizes' ? { ...E.sizes, ...p[k] } : p[k]; }); } catch (e) { /* */ }
+  try {
+    const p = JSON.parse(ls.get('vincenink.prefs', '{}'));
+    if (ls.get('vincenink.prefsv', '') !== '3') { // bản mới: về mặc định bút nét đều, cỡ vừa, mực đen (tối thì trắng)
+      delete p.penStyle; delete p.color; if (p.sizes) delete p.sizes.pen; ls.set('vincenink.prefsv', '3');
+    }
+    PREF_KEYS.forEach(k => { if (p[k] !== undefined) E[k] = k === 'sizes' ? { ...E.sizes, ...p[k] } : p[k]; });
+  } catch (e) { /* */ }
   if (E.tool === 'laser' || E.tool === 'hand') E.tool = 'pen';
 }
 function savePrefs() { const p = {}; PREF_KEYS.forEach(k => p[k] = E[k]); ls.set('vincenink.prefs', JSON.stringify(p)); }
@@ -1529,27 +1586,38 @@ function renderNotesTab(body) {
 }
 
 /* =====================================================================
-   Lịch học: cố định hằng tuần + buổi riêng + ghi chú theo tuần
+   Lịch học
+   - Cố định hằng tuần: luôn lặp lại.
+   - Đổi lịch chỉ tuần này: ghi đè một buổi cố định trong đúng 1 tuần.
+   - Một buổi: học bù / học thêm.
    ===================================================================== */
 function sched(sid) {
   let s = S.sched.get(sid);
-  if (!s) { s = { id: sid, fixed: [], sessions: [], skips: [], weekNotes: {} }; S.sched.set(sid, s); }
+  if (!s) { s = { id: sid, fixed: [], sessions: [], skips: [], weekNotes: {}, overrides: {} }; S.sched.set(sid, s); }
+  if (!s.overrides) s.overrides = {};
   return s;
 }
 const saveSched = sid => DB.put('schedule', sched(sid)).catch(() => {});
+const fixedLabel = f => `${WD[LANG][f.dow]} ${f.start}–${f.end}`;
 function weekOccurrences(sid, ws) {
-  const days = [];
   const owners = sid === 'all' ? ['all', ...S.students.map(s => s.id)] : [sid];
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(ws, i), ds = dstr(d), list = [];
-    for (const o of owners) {
-      const sc = S.sched.get(o); if (!sc) continue;
-      sc.fixed.filter(f => f.dow === i && (!f.from || f.from <= ds)).forEach(f => list.push({ kind: 'fixed', owner: o, ref: f, date: ds, start: f.start, end: f.end, subject: f.subject, note: f.note, off: sc.skips.includes(f.id + '@' + ds) }));
-      sc.sessions.filter(x => x.date === ds).forEach(x => list.push({ kind: 'once', owner: o, ref: x, date: ds, start: x.start, end: x.end, subject: x.subject, note: x.note, off: false }));
+  const days = []; for (let i = 0; i < 7; i++) { const d = addDays(ws, i); days.push({ date: dstr(d), d, list: [] }); }
+  const byDate = Object.fromEntries(days.map(x => [x.date, x]));
+  for (const o of owners) {
+    const sc = S.sched.get(o); if (!sc) continue;
+    const ov = sc.overrides || {};
+    for (const day of days) {
+      for (const f of sc.fixed.filter(f => f.dow === dow(day.d) && (!f.from || f.from <= day.date))) {
+        const key = f.id + '@' + day.date;
+        if (sc.skips.includes(key)) { day.list.push({ kind: 'fixed', owner: o, ref: f, date: day.date, orig: day.date, start: f.start, end: f.end, subject: f.subject, note: f.note, off: true }); continue; }
+        const m = ov[key];
+        if (m) { const target = byDate[m.date] || day; target.list.push({ kind: 'moved', owner: o, ref: f, date: target.date, orig: day.date, start: m.start, end: m.end, subject: m.subject, note: m.note, off: false }); }
+        else day.list.push({ kind: 'fixed', owner: o, ref: f, date: day.date, orig: day.date, start: f.start, end: f.end, subject: f.subject, note: f.note, off: false });
+      }
+      sc.sessions.filter(x => x.date === day.date).forEach(x => day.list.push({ kind: 'once', owner: o, ref: x, date: day.date, orig: day.date, start: x.start, end: x.end, subject: x.subject, note: x.note, off: false }));
     }
-    list.sort((a, b) => a.start.localeCompare(b.start));
-    days.push({ date: ds, d, list });
   }
+  days.forEach(d => d.list.sort((a, b) => a.start.localeCompare(b.start)));
   return days;
 }
 function nextLesson(sid) {
@@ -1560,51 +1628,59 @@ function nextLesson(sid) {
       const o = day.list.find(x => !x.off && (day.date > nowS || x.end > hm));
       if (o) {
         const who = sid === 'all' && o.owner !== 'all' ? ` · ${ownerName(o.owner)}` : '';
-        const when = day.date === nowS ? t('Hôm nay · ').replace(' · ', '') : `${WD[LANG][dow(day.d)]} ${shortDate(day.date)}`;
+        const when = day.date === nowS ? t('Hôm nay') : `${WD[LANG][dow(day.d)]} ${shortDate(day.date)}`;
         return `${when}, ${o.start}${o.subject ? ' – ' + o.subject : ''}${who}`;
       }
     }
   }
   return '';
 }
+const KIND_TAG = {
+  fixed: () => ic('repeat', 11) + t('Cố định'),
+  moved: () => ic('edit', 11) + t('Đổi lịch tuần này'),
+  once: () => ic('calendar', 11) + t('Một buổi'),
+  off: () => ic('ban', 11) + t('Đã nghỉ'),
+};
 function renderSchedTab(body) {
   const sid = S.studentId, ws = S.week, we = addDays(ws, 6), today = todayStr();
   const isThis = dstr(ws) === dstr(weekStart(new Date()));
-  const sc = sched(sid), wk = dstr(ws);
-  const days = weekOccurrences(sid, ws);
+  const sc = sched(sid), wk = dstr(ws), days = weekOccurrences(sid, ws);
   const sessHTML = o => `
-    <div class="sess ${o.off ? 'off' : ''}" data-owner="${o.owner}" data-kind="${o.kind}" data-ref="${o.ref.id}" data-date="${o.date}" style="border-left-color:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
+    <div class="sess ${o.off ? 'off' : ''} ${o.kind === 'moved' ? 'moved' : ''}" data-owner="${o.owner}" data-kind="${o.kind}" data-ref="${o.ref.id}" data-orig="${o.orig}" style="border-left-color:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}" title="${t('Bấm để sửa, đổi lịch tuần này, mở bảng…')}">
       ${sid === 'all' && o.owner !== 'all' ? avatarHTML(o.owner) : ''}
       <div class="st">${o.start}<br><span class="muted" style="font-weight:500">${o.end}</span></div>
       <div class="sm"><div class="sj">${esc(o.subject || t('Buổi học'))}${sid === 'all' && o.owner !== 'all' ? ` · ${esc(ownerName(o.owner))}` : ''}</div>
         ${o.note ? `<div class="sn">${esc(o.note)}</div>` : ''}
-        <span class="tag">${o.off ? ic('ban', 11) + t('Đã nghỉ') : o.kind === 'fixed' ? ic('repeat', 11) + t('Cố định') : ic('calendar', 11) + t('Một buổi')}</span></div>
+        <span class="tag ${o.kind === 'moved' ? 'warn' : ''}">${KIND_TAG[o.off ? 'off' : o.kind]()}${o.kind === 'moved' && o.orig !== o.date ? ' · ' + t('từ {d}', { d: `${WDS[LANG][dow(parseD(o.orig))]} ${shortDate(o.orig)}` }) : ''}</span></div>
+      ${ic('more', 16)}
     </div>`;
   body.innerHTML = `
+    <button class="btn primary block" id="btnAddSess">${ic('calendar', 17)}${t('Ghi lịch học')}</button>
+    <div class="legend"><span>${ic('repeat', 12)}${t('Cố định')}</span><span class="warn">${ic('edit', 12)}${t('Đổi tuần này')}</span><span>${ic('calendar', 12)}${t('Một buổi')}</span><span>${ic('ban', 12)}${t('Nghỉ')}</span></div>
     <div class="week-nav">
       <button class="icon-btn sm" data-w="-1" title="${t('Tuần trước')}">${ic('left', 18)}</button>
-      <div class="wl">${shortDate(dstr(ws))} – ${shortDate(dstr(we))}/${we.getFullYear()}<small>${isThis ? t('Tuần này') : '&nbsp;'}</small></div>
+      <div class="wl">${shortDate(dstr(ws))} – ${shortDate(dstr(we))}/${we.getFullYear()}<small>${isThis ? t('Tuần này') : `<a href="#" data-w="0">${t('Về tuần này')}</a>`}</small></div>
       <button class="icon-btn sm" data-w="1" title="${t('Tuần sau')}">${ic('right', 18)}</button>
-      ${isThis ? '' : `<button class="btn ghost sm" data-w="0">${t('Tuần này')}</button>`}
     </div>
     ${days.map(day => `
       <div class="day ${day.date === today ? 'today' : ''}">
-        <div class="day-h"><span>${WD[LANG][dow(day.d)]} · ${shortDate(day.date)}</span><button data-addday="${day.date}" title="${t('Thêm buổi vào ngày này')}">${ic('plus', 14)}</button></div>
-        ${day.list.map(sessHTML).join('') || `<div class="day-empty">${t('Trống')}</div>`}
+        <div class="day-h"><span>${WD[LANG][dow(day.d)]} · ${shortDate(day.date)}${day.date === today ? ` · ${t('Hôm nay')}` : ''}</span>
+          ${day.list.length ? `<button class="add-link" data-addday="${day.date}">${ic('plus', 13)}${t('Thêm')}</button>` : ''}</div>
+        ${day.list.map(sessHTML).join('') || `<button class="day-empty" data-addday="${day.date}">${t('Trống')} · <u>${t('ghi lịch cho ngày này')}</u></button>`}
       </div>`).join('')}
-    <button class="btn soft block" id="btnAddSess" style="margin-top:8px">${ic('plus', 16)}${t('Thêm buổi học')}</button>
-    <div class="sec-h">${t('Ghi chú tuần này')}</div>
+    <div class="sec-h">${ic('note', 15)}${t('Chú thích tuần này')}</div>
     <textarea class="week-note" id="weekNote" placeholder="${t('Nội dung dạy, bài về nhà, nhắc phụ huynh…')}">${esc(sc.weekNotes[wk] || '')}</textarea>
-    <div class="sec-h">${t('Lịch cố định hằng tuần')}</div>
+    <div class="sec-h">${ic('repeat', 15)}${t('Lịch cố định hằng tuần')}</div>
+    ${sid === 'all' && !sc.fixed.length ? `<div class="hint">${t('Lịch cố định của từng học sinh nằm trong trang của học sinh đó; tuần ở trên đã gộp lịch của cả lớp.')}</div>` : ''}
     ${sc.fixed.length ? [...sc.fixed].sort((a, b) => a.dow - b.dow || a.start.localeCompare(b.start)).map(f => `
       <div class="fixed-row"><span class="fd">${WD[LANG][f.dow]}</span><span class="ft">${f.start}–${f.end}</span><span class="fj">${esc(f.subject || '')}</span>
-        <button class="icon-btn sm" data-fedit="${f.id}" title="${t('Sửa')}">${ic('edit', 15)}</button></div>`).join('')
-      : `<div class="hint">${t('Chưa có lịch cố định. Thêm một buổi “Cố định hằng tuần” để nó tự lặp lại mỗi tuần.')}</div>`}`;
+        <button class="icon-btn sm" data-fedit="${f.id}" title="${t('Sửa lịch cố định (mọi tuần)')}">${ic('edit', 15)}</button></div>`).join('')
+      : (sid === 'all' ? '' : `<div class="hint">${t('Chưa có lịch cố định. Bấm “Ghi lịch học” và chọn “Cố định hằng tuần” để buổi học tự lặp lại mỗi tuần.')}</div>`)}`;
   body.onclick = e => {
     const w = e.target.closest('[data-w]');
-    if (w) { const v = +w.dataset.w; S.week = v === 0 ? weekStart(new Date()) : addDays(S.week, v * 7); renderSchedTab(body); return; }
-    const ad = e.target.closest('[data-addday]'); if (ad) return sessionModal(sid === 'all' ? 'all' : sid, null, ad.dataset.addday);
-    if (e.target.closest('#btnAddSess')) return sessionModal(sid === 'all' ? 'all' : sid, null, null);
+    if (w) { e.preventDefault(); const v = +w.dataset.w; S.week = v === 0 ? weekStart(new Date()) : addDays(S.week, v * 7); renderSchedTab(body); return; }
+    const ad = e.target.closest('[data-addday]'); if (ad) return sessionModal(sid, null, ad.dataset.addday);
+    if (e.target.closest('#btnAddSess')) return sessionModal(sid, null, null);
     const fe = e.target.closest('[data-fedit]'); if (fe) return sessionModal(sid, { kind: 'fixed', ref: sc.fixed.find(f => f.id === fe.dataset.fedit) });
     const se = e.target.closest('.sess'); if (se) sessionMenu(se);
   };
@@ -1614,21 +1690,28 @@ function renderSchedTab(body) {
   };
 }
 function sessionMenu(el) {
-  const owner = el.dataset.owner, kind = el.dataset.kind, date = el.dataset.date, sc = sched(owner);
-  const ref = kind === 'fixed' ? sc.fixed.find(f => f.id === el.dataset.ref) : sc.sessions.find(x => x.id === el.dataset.ref);
+  const owner = el.dataset.owner, kind = el.dataset.kind, orig = el.dataset.orig, sc = sched(owner);
+  const ref = kind === 'once' ? sc.sessions.find(x => x.id === el.dataset.ref) : sc.fixed.find(f => f.id === el.dataset.ref);
   if (!ref) return;
-  const skipKey = ref.id + '@' + date, off = sc.skips.includes(skipKey);
+  const key = ref.id + '@' + orig, off = sc.skips.includes(key), moved = !!sc.overrides[key];
+  const shownDate = moved ? sc.overrides[key].date : orig;
   const after = () => { saveSched(owner); renderPanel(); };
-  popMenu(el, [
-    { icon: 'board', label: t('Mở bảng cho buổi này'), onClick: () => openLessonBoard(owner, date, ref.subject) },
-    ...(S.studentId === 'all' && owner !== 'all' ? [{ icon: 'user', label: t('Mở trang học sinh'), onClick: () => { S.tab = 'sched'; selectStudent(owner); } }] : []),
-    { icon: 'edit', label: t('Sửa'), onClick: () => sessionModal(owner, { kind, ref }) },
-    ...(kind === 'fixed' ? [{ icon: off ? 'repeat' : 'ban', label: t(off ? 'Học lại buổi này' : 'Nghỉ buổi này'), onClick: () => { if (off) sc.skips = sc.skips.filter(k => k !== skipKey); else sc.skips.push(skipKey); after(); } }] : []),
-    '-',
-    kind === 'fixed'
-      ? { icon: 'trash', label: t('Xoá lịch cố định'), danger: true, onClick: async () => { if (!await confirmBox(t('Xoá lịch cố định?'), t('Buổi “{s}” sẽ không còn lặp lại mỗi tuần.', { s: esc(`${WD[LANG][ref.dow]} ${ref.start} ${ref.subject || ''}`.trim()) }), t('Xoá'))) return; sc.fixed = sc.fixed.filter(f => f !== ref); sc.skips = sc.skips.filter(k => !k.startsWith(ref.id + '@')); after(); } }
-      : { icon: 'trash', label: t('Xoá buổi này'), danger: true, onClick: () => { sc.sessions = sc.sessions.filter(x => x !== ref); after(); } },
-  ]);
+  const items = [{ icon: 'board', label: t('Mở bảng cho buổi này'), onClick: () => openLessonBoard(owner, shownDate, moved ? sc.overrides[key].subject : ref.subject) }];
+  if (S.studentId === 'all' && owner !== 'all') items.push({ icon: 'user', label: t('Mở trang học sinh'), onClick: () => { S.tab = 'sched'; selectStudent(owner); } });
+  if (kind === 'once') {
+    items.push({ icon: 'edit', label: t('Sửa buổi này'), onClick: () => sessionModal(owner, { kind, ref }) }, '-',
+      { icon: 'trash', label: t('Xoá buổi này'), danger: true, onClick: () => { sc.sessions = sc.sessions.filter(x => x !== ref); after(); } });
+  } else {
+    if (!off) items.push({ icon: 'clock', label: t(moved ? 'Sửa thay đổi của tuần này' : 'Đổi giờ / ngày chỉ tuần này'), sub: t('Các tuần khác vẫn giữ lịch cố định'), onClick: () => overrideModal(owner, ref, orig) });
+    if (moved) items.push({ icon: 'repeat', label: t('Trả về lịch cố định'), onClick: () => { delete sc.overrides[key]; after(); } });
+    items.push({ icon: off ? 'repeat' : 'ban', label: t(off ? 'Học lại buổi này' : 'Nghỉ buổi này (chỉ tuần này)'), onClick: () => { if (off) sc.skips = sc.skips.filter(k => k !== key); else { sc.skips.push(key); delete sc.overrides[key]; } after(); } });
+    items.push({ icon: 'edit', label: t('Sửa lịch cố định (mọi tuần)'), onClick: () => sessionModal(owner, { kind: 'fixed', ref }) }, '-',
+      { icon: 'trash', label: t('Xoá lịch cố định'), danger: true, onClick: async () => {
+        if (!await confirmBox(t('Xoá lịch cố định?'), t('Buổi “{s}” sẽ không còn lặp lại mỗi tuần.', { s: esc(`${fixedLabel(ref)} ${ref.subject || ''}`.trim()) }), t('Xoá'))) return;
+        sc.fixed = sc.fixed.filter(f => f !== ref); sc.skips = sc.skips.filter(k => !k.startsWith(ref.id + '@'));
+        Object.keys(sc.overrides).forEach(k => { if (k.startsWith(ref.id + '@')) delete sc.overrides[k]; }); after(); } });
+  }
+  popMenu(el, items);
 }
 async function openLessonBoard(owner, date, subject) {
   const ex = S.boards.find(b => b.studentId === owner && b.date === date);
@@ -1637,17 +1720,45 @@ async function openLessonBoard(owner, date, subject) {
   else await createBoard(owner, true, date, subject ? `${subject} · ${shortDate(date)}` : undefined);
   S.tab = 'boards'; renderPanel();
 }
+// Đổi một buổi cố định chỉ trong tuần chứa ngày gốc
+function overrideModal(owner, f, orig) {
+  const sc = sched(owner), key = f.id + '@' + orig, cur = sc.overrides[key] || { date: orig, start: f.start, end: f.end, subject: f.subject, note: f.note };
+  const ws = weekStart(parseD(orig)), body = document.createElement('div');
+  body.innerHTML = `
+    <div class="info-box">${ic('repeat', 15)}<div>${t('Lịch cố định: {x}', { x: `<b>${fixedLabel(f)}</b>${f.subject ? ' · ' + esc(f.subject) : ''}` })}<br>
+      ${t('Thay đổi dưới đây <b>chỉ áp dụng tuần {a} – {b}</b>. Các tuần khác vẫn học như lịch cố định.', { a: shortDate(dstr(ws)), b: shortDate(dstr(addDays(ws, 6))) })}</div></div>
+    <div class="field"><label>${t('Học vào ngày')}</label><select name="date">${[0, 1, 2, 3, 4, 5, 6].map(i => { const d = dstr(addDays(ws, i)); return `<option value="${d}" ${d === cur.date ? 'selected' : ''}>${WD[LANG][i]} · ${shortDate(d)}</option>`; }).join('')}</select></div>
+    <div class="row2">
+      <div class="field"><label>${t('Bắt đầu')}</label><input type="time" name="start" value="${cur.start}"></div>
+      <div class="field"><label>${t('Kết thúc')}</label><input type="time" name="end" value="${cur.end}"></div>
+    </div>
+    <div class="field"><label>${t('Môn / nội dung')}</label><input type="text" name="subject" value="${esc(cur.subject || '')}"></div>
+    <div class="field"><label>${t('Chú thích')}</label><input type="text" name="note" value="${esc(cur.note || '')}" placeholder="${t('VD: Dời lịch vì học sinh đi thi')}"></div>`;
+  openModal({
+    title: t('Đổi lịch chỉ tuần này'), body, width: 470,
+    actions: [{ label: t('Huỷ') }, {
+      label: t('Lưu cho tuần này'), kind: 'primary', onClick: () => {
+        const v = n => $(`[name=${n}]`, body).value;
+        if (!v('start') || !v('end') || v('end') <= v('start')) { toast(t('Giờ kết thúc phải sau giờ bắt đầu'), true); return false; }
+        const m = { date: v('date'), start: v('start'), end: v('end'), subject: v('subject').trim(), note: v('note').trim() };
+        const same = m.date === orig && m.start === f.start && m.end === f.end && m.subject === (f.subject || '') && m.note === (f.note || '');
+        if (same) delete sc.overrides[key]; else sc.overrides[key] = m;
+        saveSched(owner); renderPanel(); toast(t('Đã đổi lịch cho riêng tuần này'));
+      }
+    }]
+  });
+}
 function sessionModal(owner, existing, presetDate) {
   const isEdit = !!existing, ref = existing?.ref || {};
   let kind = existing?.kind || 'fixed';
-  const pd = presetDate ? parseD(presetDate) : null;
-  const body = document.createElement('div');
+  const pd = presetDate ? parseD(presetDate) : null, body = document.createElement('div');
   const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])];
   body.innerHTML = `
-    ${!isEdit && S.studentId === 'all' ? `<div class="field"><label>${t('Áp dụng cho')}</label><select name="owner">${ownerOpts.map(([v, l]) => `<option value="${v}" ${v === owner ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>` : ''}
-    ${isEdit ? '' : `<div class="field"><label>${t('Loại lịch')}</label><div class="radio-cards">
-      <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><b>${t('Cố định hằng tuần')}</b><span>${t('Lặp lại vào cùng thứ, cùng giờ')}</span></label>
-      <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><b>${t('Chỉ một buổi')}</b><span>${t('Học bù, học thêm, đổi lịch…')}</span></label></div></div>`}
+    ${!isEdit && owner === 'all' && S.students.length ? `<div class="field"><label>${t('Lịch của')}</label><select name="owner">${ownerOpts.map(([v, l]) => `<option value="${v}" ${v === owner ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>` : ''}
+    ${isEdit ? (kind === 'fixed' ? `<div class="info-box">${ic('repeat', 15)}<div>${t('Bạn đang sửa <b>lịch cố định</b>: thay đổi áp dụng cho mọi tuần. Muốn đổi riêng một tuần, hãy bấm vào buổi học trong tuần đó và chọn “Đổi giờ / ngày chỉ tuần này”.')}</div></div>` : '')
+    : `<div class="field"><label>${t('Kiểu lịch')}</label><div class="radio-cards">
+      <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><b>${ic('repeat', 14)} ${t('Cố định hằng tuần')}</b><span>${t('Luôn lặp lại cùng thứ, cùng giờ. Tuần nào cần đổi thì đổi riêng tuần đó.')}</span></label>
+      <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><b>${ic('calendar', 14)} ${t('Chỉ một buổi')}</b><span>${t('Học bù, học thêm, buổi kiểm tra…')}</span></label></div></div>`}
     <div class="field f-dow"><label>${t('Thứ')}</label><select name="dow">${WD[LANG].map((d, i) => `<option value="${i}" ${(ref.dow ?? (pd ? dow(pd) : 0)) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
     <div class="field f-date"><label>${t('Ngày')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
     <div class="row2">
@@ -1655,12 +1766,12 @@ function sessionModal(owner, existing, presetDate) {
       <div class="field"><label>${t('Kết thúc')}</label><input type="time" name="end" value="${ref.end || '19:30'}"></div>
     </div>
     <div class="field"><label>${t('Môn / nội dung')}</label><input type="text" name="subject" value="${esc(ref.subject || '')}" placeholder="${t('VD: Toán – phân số')}"></div>
-    <div class="field"><label>${t('Ghi chú (tuỳ chọn)')}</label><input type="text" name="note" value="${esc(ref.note || '')}"></div>`;
+    <div class="field"><label>${t('Chú thích')}</label><input type="text" name="note" value="${esc(ref.note || '')}" placeholder="${t('VD: Mang vở ô li, ôn bài 5')}"></div>`;
   const sync = () => { $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once'); };
   body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } });
   sync();
   openModal({
-    title: isEdit ? t('Sửa buổi học') : t('Thêm buổi học'), body, width: 460,
+    title: isEdit ? t(kind === 'fixed' ? 'Sửa lịch cố định' : 'Sửa buổi học') : t('Ghi lịch học'), body, width: 480,
     actions: [{ label: t('Huỷ') }, {
       label: t('Lưu'), kind: 'primary', onClick: () => {
         const v = n => $(`[name=${n}]`, body)?.value;
@@ -1670,8 +1781,7 @@ function sessionModal(owner, existing, presetDate) {
         const data = { start, end, subject: v('subject').trim(), note: v('note').trim() };
         if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: +v('dow') } : { date: v('date') });
         else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: +v('dow'), ...data });
-        else sc.sessions.push({ id: uid(), date: v('date'), ...data });
-        if (kind === 'once' && !isEdit) S.week = weekStart(parseD(v('date')));
+        else { sc.sessions.push({ id: uid(), date: v('date'), ...data }); S.week = weekStart(parseD(v('date'))); }
         saveSched(own); renderPanel();
       }
     }]
@@ -1688,6 +1798,8 @@ function profileAvatarHTML(cls = '') {
 }
 function renderProfileCard() {
   const p = profile();
+  $('#topProfile').innerHTML = profileAvatarHTML('round');
+  $('#topProfile').title = p.name || t('Hồ sơ của bạn');
   $('#profileCard').innerHTML = `${profileAvatarHTML()}<div><div class="pn">${esc(p.name || t('Hồ sơ của bạn'))}</div><div class="pr">${esc(p.role || (p.name ? t('Giáo viên') : t('Thêm thông tin cá nhân')))}</div></div>`;
 }
 async function resizeAvatar(file) {
@@ -1728,14 +1840,16 @@ function profileModal() {
 /* =====================================================================
    Sáng / tối
    ===================================================================== */
+function renderThemeSelect() {
+  $('#themeSelect').innerHTML = THEME_OPTS.map(([v, l]) => `<option value="${v}">${t(l)}</option>`).join('');
+  $('#themeSelect').value = THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
+}
 function applyTheme() {
   const th = resolvedTheme(); document.documentElement.dataset.theme = th;
-  const icon = th === 'dark' ? ic('sun', 19) : ic('moon', 19);
-  $('#btnTheme').innerHTML = icon; $('#btnTheme2').innerHTML = icon;
+  $('#themeSelect').value = THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
   RT = THEMES[th]; renderProps(); paintMiniSwatches(); requestRender(true);
 }
 function setTheme(v) { themePref = v; ls.set('vincenink.theme', v); applyTheme(); }
-const toggleTheme = () => setTheme(resolvedTheme() === 'dark' ? 'light' : 'dark');
 mq.addEventListener?.('change', () => { if (themePref === 'system') applyTheme(); });
 
 /* =====================================================================
@@ -1760,7 +1874,8 @@ function bindTopbar() {
   $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); };
   $('#btnPdf').onclick = exportPdfDialog;
   $('#btnSettings').onclick = settingsModal;
-  $('#btnTheme').onclick = toggleTheme; $('#btnTheme2').onclick = toggleTheme;
+  $('#themeSelect').onchange = e => setTheme(e.target.value);
+  $('#topProfile').onclick = profileModal;
   $('#btnAbout').onclick = () => showWelcome(true);
   $('#profileCard').onclick = profileModal;
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
@@ -1810,7 +1925,7 @@ function settingsModal() {
   body.innerHTML = `
     <h4 style="margin:0 0 10px">${t('Giao diện')}</h4>
     <div class="set-row"><span>${t('Ngôn ngữ')}</span>${seg('lang', [['vi', 'Tiếng Việt'], ['en', 'English']], LANG)}</div>
-    <div class="set-row"><span>${t('Chế độ màu')}</span>${seg('theme', [['light', 'Sáng'], ['dark', 'Tối'], ['system', 'Theo máy']], themePref)}</div>
+    <div class="set-row"><span>${t('Chế độ màu')}</span><select class="set-select" id="setTheme">${THEME_OPTS.map(([v, l]) => `<option value="${v}" ${v === themePref ? 'selected' : ''}>${t(l)}</option>`).join('')}</select></div>
     <label class="switch"><input type="checkbox" id="setPen" ${s.penOnly ? 'checked' : ''}><span class="knob"></span>
       <span class="lbl">${t('Chỉ viết bằng bút cảm ứng')}<small>${t('Dành cho iPad/máy tính bảng: Apple Pencil để viết, ngón tay chỉ để kéo và phóng to — tránh lỡ tay chạm lòng bàn tay vào bảng.')}</small></span></label>
     <div class="set-section">
@@ -1844,6 +1959,7 @@ function settingsModal() {
     if (name === 'lang') { setLang(b.dataset.v); m.close(); settingsModal(); } else setTheme(b.dataset.v);
   });
   $('#setPen', body).onchange = e => { s.penOnly = e.target.checked; saveSettings(); };
+  $('#setTheme', body).onchange = e => setTheme(e.target.value);
   $('#setExport', body).onclick = exportBackup;
   $('#setImport', body).onclick = () => $('#fileImport').click();
   const m = openModal({ title: t('Cài đặt & sao lưu'), body, width: 540, actions: [{ label: t('Xong'), kind: 'primary' }] });
@@ -1985,7 +2101,7 @@ async function init() {
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
   if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
   S.studentId = (S.settings.lastStudent === 'all' || studentById(S.settings.lastStudent)) ? S.settings.lastStudent : 'all';
-  renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool);
+  renderToolbar(); bindTopbar(); renderThemeSelect(); applyTheme(); setTool(E.tool);
   renderSidebar(); renderPanel(); renderProfileCard();
   new ResizeObserver(resize).observe(wrap); resize();
   let b = S.boards.find(x => x.id === S.settings.lastBoard) || boardsOf(S.studentId)[0];
@@ -1993,8 +2109,11 @@ async function init() {
   if (b.studentId !== S.studentId) { S.studentId = b.studentId; renderSidebar(); }
   await openBoard(b.id); renderPanel();
   if (innerWidth <= 900) $('#app').classList.add('focus');
-  if (!ls.get('vincenink.seen', '')) showWelcome(true);
+  showWelcome(true); // luôn giới thiệu khi vào trang
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
-init();
+init().catch(err => {
+  console.error(err);
+  toast(t('Không khởi động được Vincenink: {m}. Hãy tải lại trang.', { m: err && err.message || err }), true);
+});
