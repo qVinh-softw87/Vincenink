@@ -20,7 +20,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
   - *Khoanh để chọn*: di chuyển, phóng to/thu nhỏ, nhân bản, đổi màu.
   - *Khoanh để xoá*: xoá mọi thứ nằm trong vòng khoanh.
 - **Hình, chữ, laser**: thêm hình và chữ lên bảng; bút laser để chỉ, nét tự mờ.
-- **Nền bảng**: trơn, ô vuông, **ô li** như vở học sinh, dòng kẻ, chấm; chọn trong bảng có hình xem trước từng kiểu.
+- **Nền bảng**: trơn, ô vuông, **ô li** như vở học sinh, dòng kẻ, chấm.
 
 **Tài liệu**
 - **Chèn ảnh và PDF**: mỗi trang PDF thành một ảnh để viết đè lên.
