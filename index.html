@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%23A86B3C%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2219%22 font-family=%22sans-serif%22 font-weight=%22700%22 fill=%22%23FFF8EE%22 text-anchor=%22middle%22%3EV%3C/text%3E%3C/svg%3E">
+<title>Vincenink — Bảng dạy học</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="logo">V</div>
+      <div>
+        <div class="brand-name">Vincenink</div>
+        <div class="brand-sub">Bảng dạy học</div>
+      </div>
+    </div>
+    <nav id="studentNav"></nav>
+    <div class="side-foot">
+      <button class="side-btn" id="btnSettings" data-icon="settings"><span>Cài đặt &amp; sao lưu</span></button>
+    </div>
+  </aside>
+
+  <section id="panel"></section>
+
+  <main id="stage">
+    <header id="topbar">
+      <button class="icon-btn" id="btnFocus" data-icon="sidebar" title="Ẩn/hiện thanh bên (F)"></button>
+      <button id="ownerChip" class="owner-chip"></button>
+      <input id="boardTitle" class="title-input" maxlength="80" placeholder="Tên bảng" spellcheck="false">
+      <label class="date-pill" title="Ngày của bảng" data-icon="calendar"><input type="date" id="boardDate"></label>
+      <span id="saveStatus" class="status"></span>
+      <div class="spacer"></div>
+      <label class="bg-pick" title="Nền bảng" data-icon="grid"><select id="bgSelect"></select></label>
+      <button class="btn ghost sm" id="btnExport" data-icon="download" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
+      <button class="btn ghost sm" id="btnDriveSave" data-icon="cloud" title="Lưu ảnh bảng lên Google Drive"><span>Drive</span></button>
+      <button class="icon-btn" id="btnFull" data-icon="maximize" title="Toàn màn hình"></button>
+    </header>
+
+    <div id="canvasWrap">
+      <canvas id="board"></canvas>
+      <div id="selbar" class="floating hidden"></div>
+      <div id="props" class="floating"></div>
+      <div id="toolbar" class="floating"></div>
+      <div id="zoombar" class="floating"></div>
+      <div id="dropHint"><div>Thả ảnh hoặc PDF vào đây để đưa lên bảng</div></div>
+    </div>
+  </main>
+</div>
+
+<input type="file" id="fileInsert" accept="image/*,application/pdf" hidden multiple>
+<input type="file" id="fileUpload" hidden multiple>
+<input type="file" id="fileImport" accept="application/json,.json" hidden>
+<div id="modalRoot"></div>
+<div id="toasts"></div>
+<script src="app.js"></script>
+</body>
+</html>
