@@ -195,6 +195,11 @@ const EN = {
   'Nền be dịu mắt': 'Soft beige paper',
   'Đỡ chói buổi tối': 'Easy on the eyes at night',
   'Như bảng lớp học': 'Like a classroom board',
+  'Giấy trơn, không kẻ': 'Blank paper',
+  'Vẽ hình, làm toán': 'Drawing and maths',
+  'Luyện chữ như vở ô li': 'Handwriting practice (Vietnamese ô li)',
+  'Viết đoạn văn, chính tả': 'Paragraphs and dictation',
+  'Vẽ đồ thị, sơ đồ': 'Graphs and diagrams',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -218,7 +223,7 @@ function applyStaticI18n() {
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
   applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle();
-  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join(''); $('#bgSelect').value = E.bg;
+  renderBgUI();
 }
 
 /* ---------------- Biểu tượng ---------------- */
@@ -1886,9 +1891,6 @@ function themePreview(v) {
 const themeNow = () => THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
 function renderThemeUI() {
   const cur = themeNow(), label = t(THEME_OPTS.find(o => o[0] === cur)[1]);
-  $('#sideTheme').innerHTML = `
-    <div class="tbx-h"><span>${ic('palette', 14)}${t('Giao diện')}</span><b>${esc(label)}</b></div>
-    <div class="tbx-row">${THEME_OPTS.map(([v, l]) => `<button class="tbx-chip ${v === cur ? 'active' : ''}" data-theme-v="${v}" title="${t(l)}" aria-label="${t(l)}">${themePreview(v)}</button>`).join('')}</div>`;
   $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span>${ic('down', 13)}`;
 }
 function themePopover(anchor) {
@@ -1901,6 +1903,31 @@ function themePopover(anchor) {
   document.body.append(m); menuEl = m;
   const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
   m.style.left = clamp(r.right - mw, 8, innerWidth - mw - 8) + 'px'; m.style.top = r.bottom + 6 + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
+}
+/* ---- Bộ chọn nền bảng: thẻ xem trước ---- */
+const BG_DESC = { plain: 'Giấy trơn, không kẻ', grid: 'Vẽ hình, làm toán', oli: 'Luyện chữ như vở ô li', lines: 'Viết đoạn văn, chính tả', dots: 'Vẽ đồ thị, sơ đồ' };
+function renderBgUI() {
+  const b = $('#btnBgPick'); if (!b) return;
+  const name = t((BGS.find(x => x[0] === E.bg) || BGS[1])[1]);
+  b.innerHTML = `<span class="bgp bgp-${E.bg}"></span><span class="bg-name">${esc(name)}</span>${ic('down', 13)}`;
+}
+function bgPopover(anchor) {
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'popmenu bg-pop'; m.setAttribute('role', 'menu');
+  m.innerHTML = `<div class="tpop-h">${t('Nền bảng')}</div>${BGS.map(([v, n]) => `
+    <button class="bgp-row ${v === E.bg ? 'active' : ''}" data-bg="${v}" role="menuitemradio" aria-checked="${v === E.bg}">
+      <span class="bgp bgp-${v}"></span>
+      <span class="bgp-t"><b>${t(n)}</b><small>${t(BG_DESC[v])}</small></span>
+      ${v === E.bg ? ic('check', 16) : ''}
+    </button>`).join('')}`;
+  m.addEventListener('click', e => {
+    const b = e.target.closest('[data-bg]'); if (!b) return;
+    E.bg = b.dataset.bg; renderBgUI(); requestRender(true); scheduleSave(true); closeMenu();
+  });
+  document.body.append(m); menuEl = m;
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
+  m.style.left = clamp(r.left, 8, innerWidth - mw - 8) + 'px'; m.style.top = r.bottom + 6 + 'px';
   setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
 }
 function applyTheme() {
@@ -1918,12 +1945,11 @@ function renderTopbar() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b) return;
   $('#ownerChip').innerHTML = `${avatarHTML(b.studentId)}<span>${esc(ownerName(b.studentId))}</span>`;
   $('#ownerChip').title = t('Mở trang của {n}', { n: ownerName(b.studentId) });
-  $('#boardTitle').value = b.title; $('#boardDate').value = b.date; $('#bgSelect').value = E.bg;
+  $('#boardTitle').value = b.title; $('#boardDate').value = b.date; renderBgUI();
   updateTitle();
 }
 function bindTopbar() {
-  $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join('');
-  $('#bgSelect').onchange = e => { E.bg = e.target.value; requestRender(true); scheduleSave(true); };
+  $('#btnBgPick').onclick = e => bgPopover(e.currentTarget);
   const title = $('#boardTitle');
   title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; b.title = title.value.trim() || b.title; title.value = b.title; await DB.put('boards', b); renderPanel(); renderTopbar(); };
   title.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') title.blur(); };
@@ -1935,7 +1961,6 @@ function bindTopbar() {
   $('#btnPdf').onclick = exportPdfDialog;
   $('#btnSettings').onclick = settingsModal;
   $('#btnThemePick').onclick = e => themePopover(e.currentTarget);
-  $('#sideTheme').onclick = e => { const b = e.target.closest('[data-theme-v]'); if (b) setTheme(b.dataset.themeV); };
   $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };

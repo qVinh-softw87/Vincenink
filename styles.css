@@ -678,3 +678,73 @@ body.resizing, body.resizing * { cursor: col-resize !important; user-select: non
 .meta-owner { flex-shrink: 0; }
 .meta-owner span:last-child { max-width: 120px; }
 .meta-date { min-width: 0; flex-shrink: 1; }
+
+/* =================== v6: chọn nền có xem trước, chữ trang trí ở chân thanh bên =================== */
+:root, [data-theme="light"] { --pat: rgba(140,105,60,.22); --pat-s: rgba(140,105,60,.42); --pat-m: rgba(196,92,80,.5); }
+[data-theme="dark"] { --pat: rgba(230,205,170,.16); --pat-s: rgba(230,205,170,.32); --pat-m: rgba(240,130,110,.55); }
+[data-theme="chalk"] { --pat: rgba(235,245,230,.18); --pat-s: rgba(235,245,230,.36); --pat-m: rgba(250,150,130,.6); }
+.bgp {
+  display: inline-block; flex-shrink: 0; width: 24px; height: 18px; border-radius: 5px; background-color: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.bgp-grid { background-image: linear-gradient(var(--pat) 1px, transparent 1px), linear-gradient(90deg, var(--pat) 1px, transparent 1px); background-size: 6px 6px; }
+.bgp-oli { background-image: linear-gradient(var(--pat-s) 1px, transparent 1px), linear-gradient(90deg, var(--pat-s) 1px, transparent 1px), linear-gradient(var(--pat) 1px, transparent 1px); background-size: 12px 12px, 12px 12px, 3px 3px; }
+.bgp-lines { background-image: linear-gradient(90deg, transparent 7px, var(--pat-m) 7px, var(--pat-m) 8px, transparent 8px), linear-gradient(var(--pat) 1px, transparent 1px); background-size: 100% 100%, 100% 6px; }
+.bgp-dots { background-image: radial-gradient(circle, var(--pat-s) 0.9px, transparent 1.3px); background-size: 6px 6px; }
+#btnBgPick > .i:last-child { color: var(--muted); }
+.bg-pop { width: 300px; padding: 12px; }
+.popmenu .bgp-row {
+  display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 12px; border: 1.5px solid transparent; margin-bottom: 2px;
+}
+.popmenu .bgp-row:hover { background: var(--hover); }
+.popmenu .bgp-row.active { border-color: var(--accent); background: var(--accent-soft); }
+.bgp-row .bgp { width: 62px; height: 42px; border-radius: 8px; }
+.bgp-row .bgp-grid { background-size: 9px 9px; }
+.bgp-row .bgp-oli { background-size: 16px 16px, 16px 16px, 4px 4px; }
+.bgp-row .bgp-lines { background-image: linear-gradient(90deg, transparent 12px, var(--pat-m) 12px, var(--pat-m) 13px, transparent 13px), linear-gradient(var(--pat) 1px, transparent 1px); background-size: 100% 100%, 100% 9px; }
+.bgp-row .bgp-dots { background-size: 8px 8px; }
+.bgp-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.bgp-t b { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.bgp-t small { font-size: 11.5px; color: var(--muted); }
+.bgp-row > .i { color: var(--accent-ink); }
+@media (max-width: 1240px) { #btnBgPick .bg-name { display: none; } }
+
+/* Chữ trang trí nằm dưới các nút ở chân thanh bên */
+#sidebar { overflow: hidden; }
+.side-mark {
+  position: absolute; left: 0; right: 0; bottom: 6px; z-index: 0; pointer-events: none; user-select: none;
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif; font-style: italic; font-weight: 700;
+  font-size: calc(var(--sbw, 232px) * .245); line-height: 1; letter-spacing: -.02em; text-align: center; white-space: nowrap;
+  background: linear-gradient(100deg, var(--accent) 10%, color-mix(in srgb, var(--accent-ink) 60%, transparent) 55%, transparent 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .22;
+  transform: translateY(18%);
+}
+.side-mark::before {
+  content: ""; position: absolute; left: 14%; right: 14%; top: -14px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: .5;
+}
+.side-foot { position: relative; z-index: 1; border-top: 0; padding-top: 0; padding-bottom: 10px; }
+#studentNav { position: relative; z-index: 1; margin-bottom: 70px; }
+.brand { position: relative; z-index: 1; }
+.lang-seg { background: color-mix(in srgb, var(--bg) 70%, transparent); }
+#app.rail .side-mark { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 40px; left: 50%; right: auto; bottom: 90px; margin-left: -20px; }
+#app.rail .side-mark::before { display: none; }
+#app.rail #studentNav { margin-bottom: 0; }
+
+/* Viền focus theo màu chủ đạo thay vì xanh mặc định */
+button:focus { outline: none; }
+button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.side-mark {
+  bottom: 12px; transform: none; font-size: calc(var(--sbw, 232px) * .27); line-height: 1.15; padding: 0 6px;
+  background: linear-gradient(100deg, var(--accent) 0%, var(--accent-ink) 50%, color-mix(in srgb, var(--accent) 55%, transparent) 100%);
+  -webkit-background-clip: text; background-clip: text; opacity: .2;
+}
+[data-theme="dark"] .side-mark, [data-theme="chalk"] .side-mark { opacity: .26; }
+.side-mark::before { top: -10px; left: 22%; right: 22%; opacity: .35; }
+.side-foot { padding-bottom: 30px; }
+.foot-row { padding: 4px; border-radius: 12px; background: color-mix(in srgb, var(--bg) 55%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+#studentNav { margin-bottom: 96px; }
+.side-mark { font-size: calc(var(--sbw, 232px) * .235); bottom: 8px; opacity: .24; }
+[data-theme="dark"] .side-mark, [data-theme="chalk"] .side-mark { opacity: .32; }
+.side-foot { padding-bottom: 40px; }
+#studentNav { margin-bottom: 104px; }
