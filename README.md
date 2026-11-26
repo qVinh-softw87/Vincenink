@@ -28,7 +28,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
 - **Chụp bằng camera**: chụp tài liệu ngay từ điện thoại/iPad, ảnh được làm rõ tự động.
 - **Xuất PNG và PDF**:
   - PDF *màu* hoặc PDF *bản quét* (đen trắng, nền trắng, nhẹ, in rõ).
-  - Chọn khổ A4 dọc hoặc ngang; chia nhiều trang hoặc gộp vừa 1 trang.
+  - Chọn khổ A4 dọc hoặc ngang; mặc định gộp vừa 1 trang, hoặc chia nhiều trang.
   - Có thể kèm tiêu đề: tên bảng, học sinh, ngày, giáo viên.
 
 **Quản lý học sinh**

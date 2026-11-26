@@ -208,6 +208,7 @@ const EN = {
   '{b} bảng': '{b} boards',
   'Cố định hằng tuần hoặc một buổi': 'Weekly or one-off',
   'Xem lịch học': 'View schedule',
+  'Về Vincenink': 'About Vincenink',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1192,7 +1193,7 @@ async function exportPdfDialog() {
     </div></div>
     <div class="row2">
       <div class="field"><label>${t('Khổ giấy')}</label><select name="orient"><option value="auto">${t('Tự động')}</option><option value="p">${t('A4 dọc')}</option><option value="l">${t('A4 ngang')}</option></select></div>
-      <div class="field"><label>${t('Chia trang')}</label><select name="layout"><option value="split">${t('Chia thành nhiều trang A4')}</option><option value="fit">${t('Gộp vừa 1 trang')}</option></select></div>
+      <div class="field"><label>${t('Chia trang')}</label><select name="layout"><option value="fit" selected>${t('Gộp vừa 1 trang')}</option><option value="split">${t('Chia thành nhiều trang A4')}</option></select></div>
     </div>
     <label class="check"><input type="checkbox" name="bg"> ${t('In kèm nền ô/kẻ')}</label>
     <label class="check"><input type="checkbox" name="header" checked> ${t('Thêm tiêu đề (tên bảng, học sinh, ngày, giáo viên)')}</label>`;

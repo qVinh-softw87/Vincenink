@@ -808,3 +808,23 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .op-item .avatar { width: 24px; height: 24px; border-radius: 50%; font-size: 11px; }
 .op-item:hover { border-color: var(--accent); }
 .op-item:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+
+/* =================== v9: hàng nút chân thanh bên =================== */
+.foot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0; }
+.foot-row .foot-btn {
+  justify-content: center; gap: 6px; padding: 8px 6px; border-radius: 11px; font-size: 12.5px; font-weight: 600;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink-soft); white-space: nowrap; min-width: 0;
+}
+.foot-row .foot-btn span { overflow: hidden; text-overflow: ellipsis; }
+.foot-row .foot-btn .i { width: 15px; height: 15px; color: var(--accent-ink); }
+.foot-row .foot-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+#app.rail .foot-row { grid-template-columns: 1fr; }
+#app.rail .foot-row .foot-btn { padding: 8px 0; }
+.foot-row { grid-template-columns: auto 1fr; }
+.foot-row .foot-btn { padding: 8px 10px; gap: 5px; font-size: 12.5px; }
+.foot-row { grid-template-columns: 1fr; gap: 4px; }
+.foot-row .foot-btn { justify-content: flex-start; padding: 8px 10px; gap: 9px; font-size: 13px; }
+.foot-row .foot-btn .fb-go { margin-left: auto; font-style: normal; font-size: 16px; line-height: 1; color: var(--muted); transition: transform .15s; }
+.foot-row .foot-btn:hover .fb-go { transform: translateX(2px); color: var(--accent-ink); }
+#app.rail .foot-row .foot-btn { justify-content: center; }
+#app.rail .foot-row .foot-btn span, #app.rail .fb-go { display: none; }
