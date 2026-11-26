@@ -42,13 +42,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=5">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
     try {
-      var t = localStorage.getItem('vincenink.theme') || 'system';
-      if (['light', 'dark', 'chalk'].indexOf(t) < 0) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      // Mỗi lần vào trang: luôn theo chế độ sáng/tối của hệ thống
+      var t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       document.documentElement.dataset.theme = t;
     } catch (e) {}
   })();
@@ -130,23 +130,24 @@
   <aside id="sidebar" aria-label="Học sinh">
     <div class="brand">
       <img class="logo" src="assets/logo.png" alt="Vincenink" width="38" height="38">
-      <div>
+      <div class="brand-text">
         <div class="brand-name">Vincenink</div>
         <div class="brand-sub" data-i18n="Bảng dạy học">Bảng dạy học</div>
       </div>
     </div>
     <nav id="studentNav"></nav>
     <div class="side-foot">
-      <button class="profile-card" id="profileCard"></button>
+      <div class="theme-box" id="sideTheme"></div>
       <div class="foot-row">
-        <button class="icon-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"></button>
-        <button class="icon-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"></button>
+        <button class="foot-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"><span data-i18n="Cài đặt">Cài đặt</span></button>
+        <button class="icon-btn sm" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"></button>
         <span class="spacer"></span>
         <div class="seg lang-seg" id="langSeg">
           <button data-lang="vi">VI</button><button data-lang="en">EN</button>
         </div>
       </div>
     </div>
+    <div class="resizer" data-resize="sidebar" data-i18n-title="Kéo để đổi độ rộng · nhấp đúp để về mặc định" title="Kéo để đổi độ rộng · nhấp đúp để về mặc định"></div>
   </aside>
 
   <section id="panel"></section>
@@ -154,17 +155,27 @@
   <main id="stage">
     <header id="topbar">
       <button class="icon-btn" id="btnFocus" data-icon="sidebar" data-i18n-title="Ẩn/hiện thanh bên (F)" title="Ẩn/hiện thanh bên (F)"></button>
-      <button id="ownerChip" class="owner-chip"></button>
-      <input id="boardTitle" class="title-input" maxlength="80" spellcheck="false" data-i18n-ph="Tên bảng" placeholder="Tên bảng" aria-label="Tên bảng">
-      <label class="date-pill" data-icon="calendar" data-i18n-title="Ngày của bảng" title="Ngày của bảng"><input type="date" id="boardDate"></label>
-      <span id="saveStatus" class="status" aria-live="polite"></span>
+      <div class="tb-title">
+        <input id="boardTitle" class="title-input" maxlength="80" spellcheck="false" data-i18n-ph="Tên bảng" placeholder="Tên bảng" aria-label="Tên bảng">
+        <div class="tb-meta">
+          <button id="ownerChip" class="meta-owner"></button>
+          <span class="meta-dot"></span>
+          <label class="meta-date" data-i18n-title="Ngày của bảng" title="Ngày của bảng"><input type="date" id="boardDate"></label>
+          <span class="meta-dot"></span>
+          <span id="saveStatus" class="status" aria-live="polite"></span>
+        </div>
+      </div>
       <div class="spacer"></div>
-      <label class="bg-pick" data-icon="grid" data-i18n-title="Nền bảng" title="Nền bảng"><select id="bgSelect" aria-label="Nền bảng"></select></label>
-      <button class="btn ghost sm" id="btnExport" data-icon="image" data-i18n-title="Tải bảng thành ảnh PNG" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
-      <button class="btn ghost sm" id="btnPdf" data-icon="pdf" data-i18n-title="Tải bảng thành PDF (màu hoặc bản quét)" title="Tải bảng thành PDF"><span>PDF</span></button>
-      <label class="bg-pick theme-pick" data-icon="palette" data-i18n-title="Chế độ màu" title="Chế độ màu"><select id="themeSelect" aria-label="Chế độ màu"></select></label>
-      <button class="icon-btn" id="btnFull" data-icon="maximize" data-i18n-title="Toàn màn hình" title="Toàn màn hình"></button>
-      <button class="top-avatar" id="topProfile" data-i18n-title="Hồ sơ của bạn" title="Hồ sơ của bạn"></button>
+      <div class="tb-group" role="group">
+        <label class="tb-item tb-select" data-icon="grid" data-i18n-title="Nền bảng" title="Nền bảng"><select id="bgSelect" aria-label="Nền bảng"></select></label>
+        <span class="tb-div"></span>
+        <button class="tb-item" id="btnExport" data-icon="image" data-i18n-title="Tải bảng thành ảnh PNG" title="Tải bảng thành ảnh PNG"><span>PNG</span></button>
+        <button class="tb-item" id="btnPdf" data-icon="pdf" data-i18n-title="Tải bảng thành PDF (màu hoặc bản quét)" title="Tải bảng thành PDF"><span>PDF</span></button>
+        <span class="tb-div"></span>
+        <button class="tb-item" id="btnThemePick" aria-haspopup="menu" data-i18n-title="Chế độ màu" title="Chế độ màu"></button>
+        <button class="tb-item tb-icon" id="btnFull" data-icon="maximize" data-i18n-title="Toàn màn hình" title="Toàn màn hình"></button>
+      </div>
+      <button class="top-profile" id="topProfile" aria-haspopup="menu"></button>
     </header>
 
     <div id="canvasWrap">
@@ -246,6 +257,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=3" defer></script>
+<script src="app.js?v=5" defer></script>
 </body>
 </html>

@@ -12,13 +12,18 @@
 ## Bố cục
 
 - **Cột trái**: *Lớp chung* và danh sách học sinh.
-  Bên dưới là **hồ sơ của bạn** (bấm vào để tải ảnh đại diện và sửa thông tin; ảnh đại diện cũng hiện ở góc phải thanh trên), nút **cài đặt**, nút **giới thiệu** và nút chuyển **VI/EN**.
+  Bên dưới là danh sách **chế độ màu** (mỗi lần vào trang luôn *Theo hệ thống*), nút **cài đặt**, nút **giới thiệu** và nút chuyển **VI/EN**.
 - **Cột giữa**: thông tin học sinh đang chọn, nhắc **buổi tới**, và 4 thẻ:
   - **Bảng**: các bảng theo ngày. Bấm *Bảng mới hôm nay* để tạo bảng mới; dấu ⋯ để đổi tên, đổi ngày, nhân bản hoặc xoá.
   - **Tài liệu**: tải tệp lên cho học sinh. Ảnh và PDF đưa thẳng lên bảng được, kể cả dạng *bản quét*.
   - **Lịch**: lịch học theo tuần (xem phần bên dưới).
   - **Ghi chú**: tiến độ, điểm cần lưu ý; tự lưu khi gõ.
-- **Bảng vẽ**: thanh công cụ ở dưới cùng, thanh tuỳ chỉnh (màu, độ dày) ngay phía trên.
+- **Góc phải thanh trên**: ảnh đại diện của bạn. Bấm vào để mở menu: hồ sơ cá nhân, tải ảnh đại diện, cài đặt, giới thiệu.
+- **Bảng vẽ**: ảnh và PDF luôn nằm dưới, nét viết và chữ luôn nằm trên để viết đè lên tài liệu. thanh công cụ ở dưới cùng, thanh tuỳ chỉnh (màu, độ dày) ngay phía trên.
+
+## Đổi độ rộng các cột
+
+Đưa chuột vào mép phải của thanh bên hoặc cột học sinh (hiện vạch màu), rồi kéo ra/kéo vào. Kéo thanh bên hẹp hẳn thì nó thu thành dải biểu tượng. Nhấp đúp vào mép để về độ rộng mặc định. Trên màn hình nhỏ hơn 1180px, thanh bên tự thu gọn.
 
 ## Công cụ vẽ
 

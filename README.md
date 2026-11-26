@@ -43,13 +43,14 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
   - *Ghi chú cho từng tuần*.
   - Đánh dấu *nghỉ buổi này*, mở nhanh bảng của buổi học, nhắc *buổi tới*.
   - Mục *Lớp chung* gộp lịch của tất cả học sinh.
-- **Hồ sơ giáo viên**: ảnh đại diện, họ tên, vai trò, trường, liên hệ, giới thiệu. Chưa cần đăng nhập.
+- **Hồ sơ giáo viên** (góc phải thanh trên): ảnh đại diện, họ tên, vai trò, trường, liên hệ, giới thiệu. Chưa cần đăng nhập.
 
 **Giao diện**
-- **Tiếng Việt / English**. Danh sách **chế độ màu**: *Theo hệ thống* (mặc định), *Sáng (be)*, *Tối*, *Bảng phấn xanh*.
+- **Tiếng Việt / English**. Bộ chọn **chế độ màu** có thẻ xem trước (ở thanh trên và góc dưới thanh bên): *Theo hệ thống* (luôn là mặc định mỗi lần vào trang), *Sáng (be)*, *Tối*, *Bảng phấn xanh*.
 - **Bút mặc định**: nét đều, cỡ vừa, mực đen; ở nền tối/bảng phấn tự hiện màu trắng.
 - **Trang giới thiệu** hiện mỗi lần vào trang.
 - Tiêu đề tab thay đổi theo bảng đang dạy.
+- **Kéo mép** thanh bên và cột học sinh để đổi độ rộng; kéo hẹp hẳn thì thanh bên thu thành dải biểu tượng; nhấp đúp mép để về mặc định.
 - Tự động lưu, hoàn tác/làm lại, thu phóng, kéo bảng vô hạn, chụm 2 ngón, chế độ *chỉ viết bằng bút* cho iPad.
 - Sao lưu và khôi phục bằng tệp JSON.
 

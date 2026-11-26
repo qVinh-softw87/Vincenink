@@ -183,6 +183,18 @@ const EN = {
   'VD: Mang vở ô li, ôn bài 5': 'e.g. Bring notebook, review unit 5',
   'Sửa lịch cố định': 'Edit weekly lesson',
   'Hồ sơ của bạn · đổi ảnh đại diện': 'Your profile · change photo',
+  'Hồ sơ': 'Profile',
+  'Thêm ảnh đại diện và thông tin cá nhân': 'Add a photo and your details',
+  'Đổi ảnh đại diện': 'Change photo',
+  'Tải ảnh đại diện': 'Upload a photo',
+  'Giao diện': 'Appearance',
+  'Cài đặt': 'Settings',
+  'Kéo để đổi độ rộng · nhấp đúp để về mặc định': 'Drag to resize · double-click to reset',
+  'Mở trang của {n}': 'Open {n}',
+  'Tự đổi sáng/tối theo máy': 'Follows your device',
+  'Nền be dịu mắt': 'Soft beige paper',
+  'Đỡ chói buổi tối': 'Easy on the eyes at night',
+  'Như bảng lớp học': 'Like a classroom board',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -205,7 +217,7 @@ function applyStaticI18n() {
 }
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
-  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeSelect(); updateTitle();
+  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle();
   $('#bgSelect').innerHTML = BGS.map(([v, n]) => `<option value="${v}">${t(n)}</option>`).join(''); $('#bgSelect').value = E.bg;
 }
 
@@ -258,6 +270,7 @@ const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
   s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
@@ -285,7 +298,7 @@ const THEME_OPTS = [['system', 'Theo hệ thống'], ['light', 'Sáng (be)'], ['
 const DARK_INK = { '#2F2A25': '#EEE6D9', '#1F4E8C': '#79A7E6', '#7B4FA0': '#B88CDD', '#2E7D4F': '#62C08A', '#C0392B': '#F0705F', '#5B8DB8': '#8FB9E0' };
 let RT = THEMES.light;
 const inkColor = c => (RT.dark && DARK_INK[c]) || c;
-let themePref = ls.get('vincenink.theme', 'system');
+let themePref = 'system'; // luôn theo hệ thống khi vào trang; đổi trong phiên thì giữ đến khi tải lại
 const mq = matchMedia('(prefers-color-scheme: dark)');
 const resolvedTheme = () => THEMES[themePref] ? themePref : (mq.matches ? 'dark' : 'light');
 
@@ -523,7 +536,10 @@ function drawScene(c, w, h, view, k, opts = {}) {
   if (opts.bg !== false) drawBg(c, w, h, view, typeof opts.bg === 'string' ? opts.bg : E.bg);
   c.setTransform(k * view.s, 0, 0, k * view.s, k * view.x, k * view.y);
   const vx = -view.x / view.s, vy = -view.y / view.s, vw = w / view.s, vh = h / view.s;
-  for (const it of (opts.items || E.items)) {
+  // Ảnh/PDF luôn nằm dưới, nét viết và chữ luôn nằm trên để viết đè lên tài liệu
+  const list = opts.items || E.items;
+  for (const pass of [true, false]) for (const it of list) {
+    if ((it.type === 'image') !== pass) continue;
     const b = bbox(it);
     if (b.x > vx + vw || b.y > vy + vh || b.x + b.w < vx || b.y + b.h < vy) continue;
     drawItem(c, it);
@@ -906,7 +922,8 @@ function lassoUp(d) {
   const poly = d.pts, b = unionBounds([{ type: 'stroke', size: 0, pts: poly.map(q => [q[0], q[1], 0]) }]);
   if (!b || (b.w * E.view.s < 6 && b.h * E.view.s < 6)) {
     const [x, y] = poly[0];
-    const hit = [...E.items].reverse().find(it => hitItem(it, x, y, 6 / E.view.s));
+    const rev = [...E.items].reverse(), tol = 6 / E.view.s;
+    const hit = rev.find(it => it.type !== 'image' && hitItem(it, x, y, tol)) || rev.find(it => it.type === 'image' && hitItem(it, x, y, tol));
     if (hit) E.sel = new Set([hit]);
     requestRender(); return;
   }
@@ -1448,9 +1465,9 @@ function renderSidebar() {
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
-    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
+    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span><span class="count">${cnt('all')}</span></button>
     <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 16)}</button></div>
-    ${students.map(s => `<button class="nav-item ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}">${avatarHTML(s.id)}<span class="name">${esc(s.name)}</span><span class="count">${cnt(s.id)}</span></button>`).join('')
+    ${students.map(s => `<button class="nav-item ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name">${esc(s.name)}</span><span class="count">${cnt(s.id)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
@@ -1472,7 +1489,8 @@ function renderPanel() {
     <div class="tabs" role="tablist">
       ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['notes', 'note', 'Ghi chú']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
     </div>
-    <div class="panel-body" id="panelBody"></div>`;
+    <div class="panel-body" id="panelBody"></div>
+    <div class="resizer" data-resize="panel" title="${t('Kéo để đổi độ rộng · nhấp đúp để về mặc định')}"></div>`;
   const body = $('#panelBody');
   ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, notes: renderNotesTab })[S.tab](body);
 }
@@ -1798,9 +1816,19 @@ function profileAvatarHTML(cls = '') {
 }
 function renderProfileCard() {
   const p = profile();
-  $('#topProfile').innerHTML = profileAvatarHTML('round');
-  $('#topProfile').title = p.name || t('Hồ sơ của bạn');
-  $('#profileCard').innerHTML = `${profileAvatarHTML()}<div><div class="pn">${esc(p.name || t('Hồ sơ của bạn'))}</div><div class="pr">${esc(p.role || (p.name ? t('Giáo viên') : t('Thêm thông tin cá nhân')))}</div></div>`;
+  const first = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  $('#topProfile').innerHTML = `${profileAvatarHTML('round')}<span class="tp-name">${esc(first || t('Hồ sơ'))}</span>${ic('down', 14)}`;
+  $('#topProfile').title = p.name ? `${p.name}${p.role ? ' · ' + p.role : ''}` : t('Hồ sơ của bạn');
+}
+function profileMenu() {
+  const p = profile();
+  popMenu($('#topProfile'), [
+    { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
+    { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
+    '-',
+    { icon: 'settings', label: t('Cài đặt & sao lưu'), onClick: settingsModal },
+    { icon: 'info', label: t('Giới thiệu Vincenink'), onClick: () => showWelcome(true) },
+  ]);
 }
 async function resizeAvatar(file) {
   const img = await loadImg(await blobToDataURL(file)), s = Math.min(img.naturalWidth, img.naturalHeight);
@@ -1840,16 +1868,47 @@ function profileModal() {
 /* =====================================================================
    Sáng / tối
    ===================================================================== */
-function renderThemeSelect() {
-  $('#themeSelect').innerHTML = THEME_OPTS.map(([v, l]) => `<option value="${v}">${t(l)}</option>`).join('');
-  $('#themeSelect').value = THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
+/* ---- Bộ chọn chế độ màu: thẻ xem trước ---- */
+const THEME_LOOK = {
+  light: { paper: '#FFFCF6', line: 'rgba(140,105,60,.16)', ink: '#2F2A25', ui: '#F3ECE0' },
+  dark: { paper: '#1F1C18', line: 'rgba(230,205,170,.12)', ink: '#EEE6D9', ui: '#1A1714' },
+  chalk: { paper: '#233B31', line: 'rgba(235,245,230,.14)', ink: '#EEF2E8', ui: '#17251F' },
+};
+function themePreview(v) {
+  const sq = c => `<svg viewBox="0 0 40 20" preserveAspectRatio="none" aria-hidden="true"><path d="M5 13c4-8 8-8 10-2s6 6 9-1 7-6 11 1" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+  if (v === 'system') {
+    const L = THEME_LOOK.light, D = THEME_LOOK.dark;
+    return `<span class="tp-prev tp-split"><span style="--p:${L.paper};--l:${L.line}">${sq(L.ink)}</span><span style="--p:${D.paper};--l:${D.line}">${sq(D.ink)}</span></span>`;
+  }
+  const k = THEME_LOOK[v];
+  return `<span class="tp-prev" style="--p:${k.paper};--l:${k.line}">${sq(k.ink)}</span>`;
+}
+const themeNow = () => THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
+function renderThemeUI() {
+  const cur = themeNow(), label = t(THEME_OPTS.find(o => o[0] === cur)[1]);
+  $('#sideTheme').innerHTML = `
+    <div class="tbx-h"><span>${ic('palette', 14)}${t('Giao diện')}</span><b>${esc(label)}</b></div>
+    <div class="tbx-row">${THEME_OPTS.map(([v, l]) => `<button class="tbx-chip ${v === cur ? 'active' : ''}" data-theme-v="${v}" title="${t(l)}" aria-label="${t(l)}">${themePreview(v)}</button>`).join('')}</div>`;
+  $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span>${ic('down', 13)}`;
+}
+function themePopover(anchor) {
+  closeMenu(); const cur = themeNow();
+  const m = document.createElement('div'); m.className = 'popmenu theme-pop'; m.setAttribute('role', 'menu');
+  m.innerHTML = `<div class="tpop-h">${t('Chế độ màu')}</div><div class="tpop-grid">${THEME_OPTS.map(([v, l]) => `
+    <button class="tpop-card ${v === cur ? 'active' : ''}" data-theme-v="${v}">${themePreview(v)}<span class="tpop-l">${t(l)}${v === cur ? ic('check', 14) : ''}</span>
+    <small>${t({ system: 'Tự đổi sáng/tối theo máy', light: 'Nền be dịu mắt', dark: 'Đỡ chói buổi tối', chalk: 'Như bảng lớp học' }[v])}</small></button>`).join('')}</div>`;
+  m.addEventListener('click', e => { const b = e.target.closest('[data-theme-v]'); if (b) { setTheme(b.dataset.themeV); closeMenu(); } });
+  document.body.append(m); menuEl = m;
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
+  m.style.left = clamp(r.right - mw, 8, innerWidth - mw - 8) + 'px'; m.style.top = r.bottom + 6 + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outsideMenu, true), 0);
 }
 function applyTheme() {
   const th = resolvedTheme(); document.documentElement.dataset.theme = th;
-  $('#themeSelect').value = THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
+  renderThemeUI();
   RT = THEMES[th]; renderProps(); paintMiniSwatches(); requestRender(true);
 }
-function setTheme(v) { themePref = v; ls.set('vincenink.theme', v); applyTheme(); }
+function setTheme(v) { themePref = v; applyTheme(); }
 mq.addEventListener?.('change', () => { if (themePref === 'system') applyTheme(); });
 
 /* =====================================================================
@@ -1858,6 +1917,7 @@ mq.addEventListener?.('change', () => { if (themePref === 'system') applyTheme()
 function renderTopbar() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b) return;
   $('#ownerChip').innerHTML = `${avatarHTML(b.studentId)}<span>${esc(ownerName(b.studentId))}</span>`;
+  $('#ownerChip').title = t('Mở trang của {n}', { n: ownerName(b.studentId) });
   $('#boardTitle').value = b.title; $('#boardDate').value = b.date; $('#bgSelect').value = E.bg;
   updateTitle();
 }
@@ -1874,12 +1934,42 @@ function bindTopbar() {
   $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); };
   $('#btnPdf').onclick = exportPdfDialog;
   $('#btnSettings').onclick = settingsModal;
-  $('#themeSelect').onchange = e => setTheme(e.target.value);
-  $('#topProfile').onclick = profileModal;
+  $('#btnThemePick').onclick = e => themePopover(e.currentTarget);
+  $('#sideTheme').onclick = e => { const b = e.target.closest('[data-theme-v]'); if (b) setTheme(b.dataset.themeV); };
+  $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
-  $('#profileCard').onclick = profileModal;
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
   $('#btnStart').onclick = () => showWelcome(false);
+}
+/* ---- Kéo đổi độ rộng thanh bên & cột học sinh ---- */
+const SIZES = { sidebar: { def: 232, min: 190, max: 360, rail: 76 }, panel: { def: 304, min: 250, max: 560 } };
+function applyWidths() {
+  const app = $('#app'), sb = +ls.get('vincenink.w.sidebar', SIZES.sidebar.def), pn = +ls.get('vincenink.w.panel', SIZES.panel.def);
+  // Màn hình vừa (≤1180px): tự thu thanh bên thành dải biểu tượng để bảng đủ rộng
+  const rail = sb <= SIZES.sidebar.rail || (innerWidth <= 1180 && innerWidth > 900);
+  app.classList.toggle('rail', rail);
+  app.style.setProperty('--sbw', (rail ? SIZES.sidebar.rail : clamp(sb, SIZES.sidebar.min, SIZES.sidebar.max)) + 'px');
+  app.style.setProperty('--pw', clamp(pn, SIZES.panel.min, SIZES.panel.max) + 'px');
+}
+function initResizers() {
+  applyWidths();
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(applyWidths, 80); });
+  document.addEventListener('pointerdown', e => {
+    const h = e.target.closest('.resizer'); if (!h || e.button !== 0) return;
+    e.preventDefault(); const which = h.dataset.resize, el = which === 'sidebar' ? $('#sidebar') : $('#panel');
+    const left = el.getBoundingClientRect().left; document.body.classList.add('resizing'); h.classList.add('drag');
+    const move = ev => {
+      let w = ev.clientX - left; const cfg = SIZES[which];
+      if (which === 'sidebar' && w < (cfg.min + cfg.rail) / 2) w = cfg.rail; else w = clamp(w, cfg.min, cfg.max);
+      ls.set('vincenink.w.' + which, String(Math.round(w))); applyWidths();
+    };
+    const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); h.classList.remove('drag'); resize(); };
+    document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+  });
+  document.addEventListener('dblclick', e => {
+    const h = e.target.closest('.resizer'); if (!h) return;
+    ls.set('vincenink.w.' + h.dataset.resize, String(SIZES[h.dataset.resize].def)); applyWidths(); resize();
+  });
 }
 function toggleFocus() { $('#app').classList.toggle('focus'); setTimeout(resize, 0); }
 function showWelcome(on) {
@@ -2101,7 +2191,7 @@ async function init() {
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
   if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
   S.studentId = (S.settings.lastStudent === 'all' || studentById(S.settings.lastStudent)) ? S.settings.lastStudent : 'all';
-  renderToolbar(); bindTopbar(); renderThemeSelect(); applyTheme(); setTool(E.tool);
+  renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool); initResizers();
   renderSidebar(); renderPanel(); renderProfileCard();
   new ResizeObserver(resize).observe(wrap); resize();
   let b = S.boards.find(x => x.id === S.settings.lastBoard) || boardsOf(S.studentId)[0];
