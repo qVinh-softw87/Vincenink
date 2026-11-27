@@ -89,19 +89,18 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 ## Lời chào, thời tiết & tâm trạng
 
 - Mỗi lần mở app, Vincenink nhắn cho bạn một **chuỗi tin nhắn** thân mật như bạn thân/người thương (xưng "tớ – cậu"). Lời chào nhắc tên thành phố, thời tiết và loại ngày (ngày thường, cuối tuần, ngày lễ, Ngày Nhà giáo…), đoán tâm trạng của bạn và nhắc lịch dạy. Bạn có thể **nhắn lại** ngay trong cửa sổ chào; có AI thì AI trả lời, không có AI thì app tự đáp.
-- **Vị trí** được lấy theo thứ tự:
-  1. Thành phố bạn nhập trong *Hồ sơ*.
-  2. GPS của trình duyệt (lần đầu app sẽ hỏi quyền; cũng có nút **Vị trí chính xác**).
-  3. Ước tính theo IP: trên Vercel dùng `api/geo.js`, nơi khác dùng BigDataCloud.
+- **Vị trí** tự lấy, không cần nhập: ưu tiên GPS của trình duyệt (lần đầu app hỏi quyền; có nút **Vị trí chính xác**). Nếu chưa cho phép thì ước tính theo IP: trên Vercel qua `api/geo.js`, nơi khác qua BigDataCloud. Vị trí GPS được làm mới sau mỗi 20 phút.
 - Tên khu vực lấy từ BigDataCloud (miễn phí, không cần khoá).
-- **Thời tiết 3 ngày** lấy từ [Open-Meteo](https://open-meteo.com) (miễn phí, không cần khoá) và được lưu tạm 1 giờ.
+- **Thời tiết 3 ngày** lấy từ [Open-Meteo](https://open-meteo.com) (miễn phí, không cần khoá) và được lưu tạm 30 phút.
 
 ## Học phí
 
 - Thẻ **Học phí** của mỗi học sinh:
   - Nhập **học phí mỗi buổi**; số buổi trong tháng được **tự đếm từ lịch học** (không tính buổi nghỉ).
-  - **Thành tiền = học phí × số buổi đã dạy**, kèm số tiền **dự kiến cả tháng**.
-  - Nút **Buổi cộng thêm** cho buổi dạy ngoài lịch; công tắc **Đã thu tiền tháng này**.
+  - **Đã dạy** = số buổi đã qua theo lịch + **Buổi cộng thêm** (buổi ngoài lịch).
+  - **Thành tiền = học phí × số buổi đã dạy**.
+  - **Dự kiến cả tháng** mặc định **8 buổi**, có thể bấm − / + để chỉnh riêng từng tháng. Tiền dự kiến = học phí × số buổi dự kiến.
+  - Công tắc **Đã thu tiền tháng này**.
 - Bên dưới là bảng **tổng học phí của tất cả học sinh** trong tháng, cùng số tiền đã thu.
 
 ## Chạy trên máy

@@ -318,6 +318,9 @@ const EN = {
   'Nhắn lại cho Vincenink…': 'Reply to Vincenink…', 'Gửi': 'Send', 'Để trống để tự lấy theo vị trí của bạn': 'Leave empty to use your location',
   'Lâng lâng vì được nghỉ lễ': 'Floating on holiday vibes', 'Co ro, muốn được ủ ấm': 'Cold, wants to be kept warm', 'Cuối tuần vẫn chăm, hơi tiếc giờ nghỉ': 'Working the weekend, missing rest', 'Háo hức vì sắp cuối tuần': 'Excited for the weekend',
   'Tết Dương lịch': 'New Year’s Day', 'Ngày Quốc tế Phụ nữ': 'International Women’s Day', 'Ngày Giải phóng miền Nam': 'Reunification Day', 'Ngày Quốc tế Lao động': 'Labour Day', 'Quốc khánh': 'National Day', 'Ngày Phụ nữ Việt Nam': 'Vietnamese Women’s Day', 'Ngày Nhà giáo Việt Nam': 'Vietnamese Teachers’ Day', 'Đêm Giáng sinh': 'Christmas Eve', 'Giáng sinh': 'Christmas',
+  '{a} theo lịch {s} {b} thêm': '{a} scheduled {s} {b} extra', 'Cho phép truy cập vị trí để xem thời tiết đúng nơi bạn đang ở.': 'Allow location access to see the weather where you are.',
+  'Cập nhật vị trí hiện tại': 'Update current location', 'Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí': 'Couldn’t get your location — please allow location access in your browser',
+  '“Đã dạy” = số buổi đã qua theo lịch (không tính buổi nghỉ) cộng “Buổi cộng thêm”. “Dự kiến cả tháng” mặc định 8 buổi, bấm − / + để chỉnh riêng từng tháng.': '“Taught” = past scheduled lessons (excluding cancelled) plus “Extra lessons”. “Planned this month” defaults to 8; use − / + to change it per month.',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1815,13 +1818,16 @@ function monthLessons(sid, y, m) {
   }
   return out;
 }
+const FEE_PLAN_DEFAULT = 8;
 function feeStats(st, y, m) {
   const now = new Date(), today = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, key = `${y}-${pad(m + 1)}`;
   const list = monthLessons(st.id, y, m);
   const taughtFn = o => !o.off && (o.date < today || (o.date === today && o.end <= hm));
-  const taught = list.filter(taughtFn).length, planned = list.filter(o => !o.off).length;
+  const taught = list.filter(taughtFn).length, scheduled = list.filter(o => !o.off).length;
   const adj = (st.feeAdj && st.feeAdj[key]) || 0, fee = st.fee || 0;
-  return { list, taughtFn, taught, planned, adj, fee, key, billable: Math.max(0, taught + adj), amount: fee * Math.max(0, taught + adj), projected: fee * Math.max(0, planned + adj), paid: !!(st.feePaid && st.feePaid[key]) };
+  const plan = st.feePlan && st.feePlan[key] != null ? st.feePlan[key] : FEE_PLAN_DEFAULT; // dự kiến cả tháng, mặc định 8 buổi
+  const billable = Math.max(0, taught + adj);
+  return { list, taughtFn, taught, scheduled, planned: plan, adj, fee, key, billable, amount: fee * billable, projected: fee * plan, paid: !!(st.feePaid && st.feePaid[key]) };
 }
 function renderFeeTab(body) {
   const st = studentById(S.studentId);
@@ -1842,8 +1848,8 @@ function renderFeeTab(body) {
       <button class="icon-btn sm" data-fm="1" title="${t('Tháng sau')}">${ic('right', 18)}</button>
     </div>
     <div class="fee-stats">
-      <div><b>${f.taught}</b><small>${t('Đã dạy')}</small></div>
-      <div><b>${f.planned}</b><small>${t('Dự kiến cả tháng')}</small></div>
+      <div class="taught"><b>${f.billable}</b><small>${t('Đã dạy')}</small>${f.adj ? `<i>${t('{a} theo lịch {s} {b} thêm', { a: f.taught, s: f.adj > 0 ? '+' : '−', b: Math.abs(f.adj) })}</i>` : ''}</div>
+      <div class="adj"><span class="adj-ctl"><button data-plan="-1" aria-label="-1">−</button><b>${f.planned}</b><button data-plan="1" aria-label="+1">+</button></span><small>${t('Dự kiến cả tháng')}</small></div>
       <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1">−</button><b>${f.adj > 0 ? '+' + f.adj : f.adj}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Buổi cộng thêm')}</small></div>
     </div>
     <div class="fee-total ${f.paid ? 'paid' : ''}">
@@ -1853,7 +1859,7 @@ function renderFeeTab(body) {
       <div class="ft-proj">${t('Dự kiến cả tháng: {x}', { x: fmtMoney(f.projected) })}</div>
       <label class="switch ft-paid"><input type="checkbox" id="feePaid" ${f.paid ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Đã thu tiền tháng này')}</span></label>
     </div>
-    <div class="hint">${t('Số buổi tự đếm từ lịch học (cố định, đổi lịch, buổi riêng), không tính buổi nghỉ. Dùng “Buổi cộng thêm” cho buổi dạy ngoài lịch.')}</div>
+    <div class="hint">${t('“Đã dạy” = số buổi đã qua theo lịch (không tính buổi nghỉ) cộng “Buổi cộng thêm”. “Dự kiến cả tháng” mặc định 8 buổi, bấm − / + để chỉnh riêng từng tháng.')}</div>
     <div class="sec-h">${ic('calendar', 15)}${t('Các buổi trong tháng')} <span class="muted">${f.list.length}</span></div>
     ${f.list.length ? `<div class="fee-list">${f.list.map(o => {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
@@ -1873,6 +1879,8 @@ function renderFeeTab(body) {
     const fm = e.target.closest('[data-fm]');
     if (fm) { e.preventDefault(); const v = +fm.dataset.fm; S.feeMonth = v === 0 ? new Date(new Date().getFullYear(), new Date().getMonth(), 1) : new Date(y, m + v, 1); return renderFeeTab(body); }
     const a = e.target.closest('[data-adj]');
+    const pl = e.target.closest('[data-plan]');
+    if (pl) { st.feePlan = st.feePlan || {}; const v = Math.max(0, f.planned + +pl.dataset.plan); if (v === FEE_PLAN_DEFAULT) delete st.feePlan[f.key]; else st.feePlan[f.key] = v; await DB.put('students', st); return renderFeeTab(body); }
     if (a) { st.feeAdj = st.feeAdj || {}; const v = (st.feeAdj[f.key] || 0) + +a.dataset.adj; if (v) st.feeAdj[f.key] = Math.max(-f.taught, v); else delete st.feeAdj[f.key]; await DB.put('students', st); return renderFeeTab(body); }
     const fs = e.target.closest('[data-fs]'); if (fs && fs.dataset.fs !== st.id) { S.tab = 'fee'; selectStudent(fs.dataset.fs); }
   };
@@ -2218,9 +2226,10 @@ const Loc = {
   async gps(ask) {
     if (!navigator.geolocation) return null;
     const st = await this.geoState();
-    if (st === 'denied' || (st !== 'granted' && !ask)) return null;
+    if (st === 'denied' || (st !== 'granted' && !ask && ls.get('vincenink.gpsOK', '') !== '1')) return null;
     try {
-      const pos = await withTimeout(new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, maximumAge: 6e5 })), 30000);
+      const pos = await withTimeout(new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3e5 })), 30000);
+      ls.set('vincenink.gpsOK', '1');
       const lat = +pos.coords.latitude.toFixed(3), lon = +pos.coords.longitude.toFixed(3);
       return { lat, lon, name: (await this.nameOf(lat, lon)) || t('Vị trí của bạn'), src: 'gps' };
     } catch (e) { return null; }
@@ -2237,10 +2246,8 @@ const Loc = {
     return null;
   },
   async get({ ask = false, force = false } = {}) {
-    const p = profile();
-    if (p.geo && p.geo.lat != null) return (this.cur = { ...p.geo, src: 'manual' });
     let c = null; try { c = JSON.parse(ls.get('vincenink.loc', 'null')); } catch (e) { /* */ }
-    if (!force && c && Date.now() - c.at < (c.src === 'gps' ? 6 : 1) * 36e5 && !(ask && c.src !== 'gps')) return (this.cur = c);
+    if (!force && c && Date.now() - c.at < (c.src === 'gps' ? 20 * 6e4 : 36e5) && !(ask && c.src !== 'gps')) return (this.cur = c);
     const r = (await this.gps(ask)) || (c && c.src === 'gps' ? c : null) || (await this.ip()) || c;
     if (r) { if (r !== c) r.at = Date.now(); ls.set('vincenink.loc', JSON.stringify(r)); }
     return (this.cur = r || null);
@@ -2262,7 +2269,7 @@ const Weather = {
     if (!loc) { this.data = null; return null; }
     let cache = null; try { cache = JSON.parse(ls.get('vincenink.wx', 'null')); } catch (e) { /* */ }
     const same = cache && cache.lat === loc.lat && cache.lon === loc.lon;
-    if (!force && same && cache.day === todayStr() && Date.now() - cache.at < 36e5) { this.data = { ...cache, city: loc.name || cache.city, src: loc.src }; return this.data; }
+    if (!force && same && cache.day === todayStr() && Date.now() - cache.at < 30 * 6e4) { this.data = { ...cache, city: loc.name || cache.city, src: loc.src }; return this.data; }
     try {
       const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`);
       const D = j.daily || {};
@@ -2280,28 +2287,11 @@ const Weather = {
     const before = this.data && this.data.city;
     const d = await this.load({ ask: true, force: true });
     this.locating = false;
-    if (!d || d.src !== 'gps') { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí, hoặc nhập thành phố trong Hồ sơ'), true); }
+    if (!d || d.src !== 'gps') { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí'), true); }
     else toast(t('Đã cập nhật thời tiết cho {c}', { c: d.city }));
     refreshDay(); if (d && d.city !== before) Daily.load();
   },
 };
-async function geocodeCity(name) {
-  const clean = name.replace(/^(tp\.?|thành phố|tỉnh)\s*/i, '').trim();
-  const plain = clean.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-  for (const q of [...new Set([clean, plain, plain + ' City'])]) {
-    try {
-      const j = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`), g = j.results && j.results[0];
-      if (g) return { lat: +g.latitude.toFixed(3), lon: +g.longitude.toFixed(3), name: g.name + (g.country_code && g.country_code !== 'VN' ? `, ${g.country}` : '') };
-    } catch (e) { /* thử cách khác */ }
-  }
-  return null;
-}
-async function setCity(city) {
-  const g = await geocodeCity(city);
-  if (!g) return toast(t('Không tìm thấy thành phố này'), true);
-  const p = profile(); p.geo = g; S.settings.profile = p; saveSettings();
-  await Weather.load({ force: true }); toast(t('Đã cập nhật thời tiết cho {c}', { c: g.name })); refreshDay(); Daily.load();
-}
 function refreshDay() { renderTodayCard(); renderGreet(); }
 const wxToday = () => { const w = Weather.data; return w && (w.days.find(d => d.date === todayStr()) || w.days[0]); };
 
@@ -2362,12 +2352,12 @@ function wxSection() {
   const w = Weather.data, loading = Weather.locating;
   const locBtn = `<button class="gr-loc ${loading ? 'spin' : ''}" data-gr="locate">${ic(loading ? 'refresh' : 'target', 13)}${t(loading ? 'Đang lấy vị trí…' : 'Vị trí chính xác')}</button>`;
   if (!w) return `<section class="gr-sec"><h3>${ic('sun2', 15)}${t('Thời tiết')}</h3>
-    <div class="gr-noloc">${locBtn}<button class="gr-city" data-gr="city">${ic('edit', 13)}${t('Nhập thành phố')}</button></div></section>`;
+    <div class="gr-noloc"><span>${t('Cho phép truy cập vị trí để xem thời tiết đúng nơi bạn đang ở.')}</span>${locBtn}</div></section>`;
   const name = (d, i) => i === 0 ? t('Hôm nay') : i === 1 ? t('Ngày mai') : WD[LANG][dow(parseD(d.date))];
-  const src = { gps: t('theo GPS'), ip: t('ước tính theo mạng'), manual: t('trong Hồ sơ') }[w.src] || '';
+  const src = { gps: t('theo GPS'), ip: t('ước tính theo mạng') }[w.src] || '';
   return `<section class="gr-sec">
     <h3>${ic('sun2', 15)}${t('Thời tiết')}
-      <span class="gr-city-n" data-gr="city" title="${t('Đổi thành phố')}">📍 ${esc(w.city || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
+      <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(w.city || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
     <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
       <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
       <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
@@ -2707,7 +2697,6 @@ function profileModal() {
     ${f('name', 'Họ và tên')}
     ${f('role', 'Vai trò', 'VD: Giáo viên Toán, Gia sư Tiếng Anh')}
     ${f('school', 'Trường / trung tâm')}
-    ${f('city', 'Thành phố (để xem thời tiết)', 'Để trống để tự lấy theo vị trí của bạn')}
     <div class="row2">${f('email', 'Email', '', 'email')}${f('phone', 'Số điện thoại', '', 'tel')}</div>
     <div class="field"><label>${t('Giới thiệu ngắn')}</label><textarea name="bio" placeholder="${t('Kinh nghiệm, phương pháp dạy, môn phụ trách…')}">${esc(p.bio || '')}</textarea></div>
     <div class="hint">${t('Thông tin chỉ lưu trên máy này và được dùng để ghi tên bạn lên tệp PDF xuất ra.')}</div>`;
@@ -2719,12 +2708,9 @@ function profileModal() {
   openModal({
     title: t('Hồ sơ của bạn'), body, width: 500, actions: [{ label: t('Huỷ') }, {
       label: t('Lưu'), kind: 'primary', onClick: () => {
-        const oldCity = p.city || '';
-        ['name', 'role', 'school', 'city', 'email', 'phone', 'bio'].forEach(k => { p[k] = $(`[name=${k}]`, body).value.trim(); });
-        if (!p.city) delete p.geo;
+        ['name', 'role', 'school', 'email', 'phone', 'bio'].forEach(k => { p[k] = $(`[name=${k}]`, body).value.trim(); });
+        delete p.city; delete p.geo;
         S.settings.profile = p; saveSettings(); renderProfileCard(); toast(t('Đã lưu hồ sơ'));
-        if (p.city && (p.city !== oldCity || !p.geo)) setCity(p.city);
-        else if (!p.city && oldCity) Weather.load(true).then(refreshDay);
       }
     }]
   });
@@ -2956,7 +2942,6 @@ $('#greetPop').addEventListener('click', e => {
   const b = e.target.closest('[data-gr]'); if (!b) return;
   if (b.dataset.gr === 'close') showGreet(false);
   else if (b.dataset.gr === 'locate') Weather.locate();
-  else if (b.dataset.gr === 'city') { showGreet(false); profileModal(); setTimeout(() => { const i = $('[name=city]'); if (i) i.focus(); }, 60); }
   else if (b.dataset.gr === 'ask') { showGreet(false); Chat.open(); }
 });
 $('#welcome').addEventListener('pointerdown', e => { if (e.target.id === 'welcome') showWelcome(false); });
@@ -3198,7 +3183,7 @@ async function init() {
   AI.check().then(async () => {
     await Weather.load(); refreshDay(); Daily.load(); Note.load();
     // Lần đầu: hỏi quyền vị trí của trình duyệt để lấy đúng thành phố
-    if (!profile().geo && (!Loc.cur || Loc.cur.src !== 'gps') && ls.get('vincenink.locAsked', '') !== '1' && (await Loc.geoState()) === 'prompt') {
+    if ((!Loc.cur || Loc.cur.src !== 'gps') && ls.get('vincenink.locAsked', '') !== '1' && (await Loc.geoState()) === 'prompt') {
       ls.set('vincenink.locAsked', '1'); Weather.locate(true);
     }
   });

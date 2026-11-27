@@ -1308,3 +1308,5 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .gr-noloc .gr-city { width: auto; }
 .chip-day { background: var(--hx); }
 .gr-hero, .gr-foot { flex: none; }
+.fee-stats .taught i { font-style: normal; font-size: 10.5px; color: var(--accent-ink); line-height: 1.2; }
+.gr-noloc { align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
