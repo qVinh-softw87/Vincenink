@@ -1577,3 +1577,7 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .mpk-go { margin-top: auto; padding-top: 6px; font-weight: 600; font-size: 13.5px; color: var(--accent-ink); }
 .mpk-card.guest .mpk-go { color: var(--ink-2, #6b5d4f); }
 @media (max-width: 560px) { .mode-pick { grid-template-columns: 1fr; } }
+
+/* Cửa sổ bắt buộc chọn: bấm ra ngoài chỉ rung nhẹ, không đóng (v36) */
+@keyframes vn-nudge { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+.nudge { animation: vn-nudge .38s ease; }

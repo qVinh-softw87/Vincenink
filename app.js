@@ -3865,7 +3865,7 @@ async function maybeBackupPrompt() {
       <small>${t('Tải lại trang (F5) thì vẫn còn.')}${Guest.legacyAt() ? ' ' + t('Dữ liệu bạn có từ trước vẫn được giữ trên máy này; chỉ những gì tạo mới khi chưa đăng nhập mới bị xoá khi đóng trang. Đăng nhập để sao lưu tất cả.') : ''}</small>
       <span class="mpk-go">${t('Tiếp tục với tư cách khách')} ›</span>
     </button>`;
-  const m = openModal({ title: t('Chọn cách sử dụng'), body, width: 640 });
+  const m = openModal({ title: t('Chọn cách sử dụng'), body, width: 640, locked: true });
   body.addEventListener('click', e => {
     const c = e.target.closest('[data-pick]'); if (!c) return;
     m.close();
@@ -3891,7 +3891,6 @@ function renderGreet() {
       <span class="gr-ic">${ic(DAY_ICON[part], 26)}</span>
       <div class="gr-ht"><small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small>
         <h2><span class="live-clock gr-clock">${hm}</span>${t(DAY_HELLO[part])}${name ? `, ${esc(name)}` : ''}!</h2></div>
-      <button class="icon-btn gr-x" data-gr="close" aria-label="${t('Đóng')}">${ic('x', 18)}</button>
       ${dayChips('gr-chips')}
     </header>
     <div class="gr-body">
@@ -3918,14 +3917,15 @@ function renderGreet() {
   const body = $('.gr-body', el); if (body) body.scrollTop = scroll;
 }
 $('#greetPop').addEventListener('click', e => {
-  if (e.target.id === 'greetPop') return showGreet(false);
+  if (e.target.id === 'greetPop') { const c = $('.greet-card', el0()); c && (c.classList.remove('nudge'), void c.offsetWidth, c.classList.add('nudge')); return; }  // chỉ đóng bằng 2 nút
   const ob = e.target.closest('[data-ob]'); if (ob) return runSetupStep(ob.dataset.ob);
   const b = e.target.closest('[data-gr]'); if (!b) return;
   if (b.dataset.gr === 'close') showGreet(false);
   else if (b.dataset.gr === 'locate') Weather.locate();
   else if (b.dataset.gr === 'ask') { showGreet(false); Chat.open(); }
 });
-$('#welcome').addEventListener('pointerdown', e => { if (e.target.id === 'welcome') showWelcome(false); });
+const el0 = () => $('#greetPop');
+$('#welcome').addEventListener('pointerdown', e => { if (e.target.id === 'welcome') { const c = $('.welcome-card'); c.classList.remove('nudge'); void c.offsetWidth; c.classList.add('nudge'); } });  // chỉ đóng bằng nút Bắt đầu dạy
 
 /* =====================================================================
    Sao lưu / khôi phục
@@ -4014,7 +4014,7 @@ function settingsModal() {
 /* =====================================================================
    Hộp thoại, menu, thông báo
    ===================================================================== */
-function openModal({ title, body, actions = [], width = 440, onClose }) {
+function openModal({ title, body, actions = [], width = 440, onClose, locked = false }) {
   const back = document.createElement('div'); back.className = 'modal-back';
   back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" style="width:min(${width}px,calc(100vw - 32px))"><div class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn sm" data-close aria-label="Close">${ic('x', 18)}</button></div><div class="modal-body"></div><div class="modal-foot"></div></div>`;
   const bodyEl = $('.modal-body', back); if (typeof body === 'string') bodyEl.innerHTML = body; else bodyEl.append(body);
@@ -4026,10 +4026,11 @@ function openModal({ title, body, actions = [], width = 440, onClose }) {
     foot.append(b);
   });
   if (!actions.length) foot.remove();
-  back.addEventListener('pointerdown', e => { if (e.target === back) close(); });
-  $('[data-close]', back).onclick = close;
+  const nudge = () => { const md = $('.modal', back); md.classList.remove('nudge'); void md.offsetWidth; md.classList.add('nudge'); };
+  back.addEventListener('pointerdown', e => { if (e.target === back) locked ? nudge() : close(); });
+  if (locked) $('[data-close]', back).remove(); else $('[data-close]', back).onclick = close;
   const onKey = e => {
-    if (e.key === 'Escape') { e.stopPropagation(); close(); }
+    if (e.key === 'Escape') { e.stopPropagation(); locked ? nudge() : close(); }
     else if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !['checkbox', 'radio'].includes(e.target.type)) { e.preventDefault(); foot.querySelector('.btn.primary, .btn.danger')?.click(); }
   };
   document.addEventListener('keydown', onKey, true);
