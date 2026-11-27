@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chính sách quyền riêng tư · Vincenink</title><link rel="icon" href="favicon.ico"><meta name="robots" content="index,follow">
+<style>
+:root{--bg:#F6F1E9;--card:#FFFDF9;--ink:#3A2E24;--soft:#6B5A4A;--acc:#A86B3C;--line:#E8DCCB}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:40px auto;padding:36px 40px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 30px rgba(120,85,50,.08)}
+header{display:flex;align-items:center;gap:12px;margin-bottom:8px}header img{width:44px;height:44px;border-radius:12px}
+h1{font-size:26px;margin:0}h2{font-size:18px;margin:28px 0 6px;color:var(--acc)}p,li{color:var(--soft)}small{color:#9A8A7A}
+a{color:var(--acc)}nav{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:14px}
+.lang{float:right;font-size:13px}@media(max-width:640px){main{margin:0;border-radius:0;padding:24px}}
+</style></head><body><main>
+<a class="lang" href="#en">English ↓</a>
+<header><img src="assets/icon-192.png" alt=""><div><h1>Chính sách quyền riêng tư</h1><small>Vincenink · cập nhật 28/11/2026</small></div></header>
+
+<p>Vincenink là bảng trắng dạy học trực tuyến. Trang này giải thích dữ liệu nào được lưu, ở đâu và để làm gì.</p>
+<h2>1. Dữ liệu lưu trên máy của bạn</h2>
+<p>Bảng vẽ, tài liệu, ảnh, học phí, ghi chú và cài đặt được lưu trong trình duyệt của bạn (IndexedDB / localStorage). Chúng không được gửi lên máy chủ của Vincenink.</p>
+<h2>2. Khi bạn đăng nhập (không bắt buộc)</h2>
+<ul>
+<li>Tài khoản được quản lý bởi <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a>. Khi đăng nhập bằng Google, Vincenink chỉ nhận <b>tên, địa chỉ email và ảnh đại diện</b> của tài khoản Google — không đọc Gmail, Drive hay dữ liệu Google nào khác.</li>
+<li>Được đồng bộ lên máy chủ: hồ sơ (tên, vai trò, trường, liên hệ, ảnh đại diện nhỏ), tên các lớp học, lịch học và cài đặt nhắc lịch, kèm múi giờ — để dùng trên nhiều thiết bị và gửi thông báo nhắc lịch.</li>
+<li><b>Không</b> đồng bộ: học phí, bảng vẽ, tài liệu, ảnh.</li>
+<li>Mỗi tài khoản chỉ đọc/ghi được dữ liệu của chính mình (Row Level Security).</li>
+</ul>
+<h2>3. Thông báo nhắc lịch</h2>
+<p>Nếu bạn bật thông báo, trình duyệt cung cấp một địa chỉ nhận thông báo (push subscription). Vincenink lưu địa chỉ này để gửi nhắc lịch và xoá khi bạn tắt thông báo hoặc đăng xuất.</p>
+<h2>4. Dịch vụ bên thứ ba</h2>
+<ul>
+<li><b>Thời tiết & vị trí:</b> nếu bạn cho phép, vị trí của trình duyệt được gửi tới Open-Meteo (thời tiết) và BigDataCloud (tên khu vực). Vị trí không được lưu trên máy chủ Vincenink.</li>
+<li><b>Trợ lý AI:</b> câu hỏi bạn gửi và thông tin ngữ cảnh (lịch hôm nay, tên lớp) được chuyển tới nhà cung cấp AI (Google Gemini, Groq hoặc Anthropic) để tạo câu trả lời.</li>
+<li><b>Lưu trữ web:</b> Vercel (máy chủ trang web), Supabase (tài khoản và dữ liệu đồng bộ).</li>
+</ul>
+<h2>5. Chúng tôi không làm</h2>
+<p>Không bán dữ liệu, không quảng cáo, không dùng dữ liệu của bạn để theo dõi hay lập hồ sơ.</p>
+<h2>6. Xoá dữ liệu</h2>
+<p>Đăng xuất sẽ ngừng đồng bộ trên thiết bị đó. Để xoá hẳn tài khoản và dữ liệu đã đồng bộ, hãy gửi yêu cầu tại <a href="https://github.com/qVinh-softw87/Vincenink/issues" target="_blank" rel="noopener">github.com/qVinh-softw87/Vincenink/issues</a>; yêu cầu được xử lý trong vòng 7 ngày. Dữ liệu trên máy có thể xoá bằng cách xoá dữ liệu trang web trong cài đặt trình duyệt.</p>
+<h2>7. Liên hệ</h2>
+<p><a href="https://github.com/qVinh-softw87/Vincenink/issues" target="_blank" rel="noopener">github.com/qVinh-softw87/Vincenink/issues</a></p>
+
+<hr id="en" style="margin:36px 0;border:0;border-top:1px dashed var(--line)">
+
+<h1 style="font-size:22px">Privacy Policy</h1>
+<p>Vincenink is an online teaching whiteboard. This page explains what data is stored, where, and why.</p>
+<h2>1. Data stored on your device</h2>
+<p>Boards, files, images, fees, notes and settings are stored in your browser (IndexedDB / localStorage) and are not sent to Vincenink servers.</p>
+<h2>2. When you sign in (optional)</h2>
+<ul><li>Accounts are managed by Supabase. With Google sign-in, Vincenink receives only your <b>name, email address and profile picture</b> — it does not access Gmail, Drive or any other Google data.</li>
+<li>Synced to the server: profile, class names, schedules and reminder settings with your time zone, so you can use them on several devices and receive reminders.</li>
+<li><b>Not</b> synced: fees, boards, files, images. Each account can only access its own data (Row Level Security).</li></ul>
+<h2>3. Reminder notifications</h2>
+<p>If you enable notifications, your browser provides a push subscription that Vincenink stores to send reminders; it is deleted when you turn notifications off or sign out.</p>
+<h2>4. Third-party services</h2>
+<p>Open-Meteo and BigDataCloud (weather and place name, only if you allow location), Google Gemini / Groq / Anthropic (AI assistant), Vercel (hosting), Supabase (accounts and sync).</p>
+<h2>5. What we don’t do</h2><p>We don’t sell data, show ads, or track or profile you.</p>
+<h2>6. Deleting your data</h2><p>Open a request at <a href="https://github.com/qVinh-softw87/Vincenink/issues" target="_blank" rel="noopener">github.com/qVinh-softw87/Vincenink/issues</a> to delete your account and synced data (handled within 7 days). Local data can be removed by clearing site data in your browser.</p>
+
+<nav><a href="./">← Về Vincenink</a> · <a href="privacy.html">Chính sách quyền riêng tư</a> · <a href="terms.html">Điều khoản sử dụng</a></nav>
+</main></body></html>
