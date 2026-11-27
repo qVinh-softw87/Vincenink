@@ -1533,3 +1533,5 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 [data-theme="dark"] .acct-me, [data-theme="chalk"] .acct-me { background: linear-gradient(140deg, #3E352C, #2E2721); color: #F1E6D8; border-color: rgba(255,240,220,.08); }
 [data-theme="dark"] .acct-me small, [data-theme="chalk"] .acct-me small { color: #C9B8A6; }
 .acct-foot .danger-text { margin-right: 0; } .acct-me .pf-av, .acct-me .avatar { background: var(--accent); color: #fff; }
+.acct-err { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; font-size: 12.5px; line-height: 1.5; color: #8A3E20; background: rgba(217,120,80,.12); }
+.acct-ok.bad { color: #A0562E; background: rgba(217,120,80,.14); }

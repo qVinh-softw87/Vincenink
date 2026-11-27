@@ -402,6 +402,20 @@ const EN = {
   "Đã đồng bộ · Thông báo đang bật": "Synced · Notifications on",
   "Đã đồng bộ lịch & hồ sơ": "Schedule & profile synced",
   "Đang kết nối…": "Connecting…",
+  "Máy này đang có dữ liệu của tài khoản khác": "This device has another account’s data",
+  "Lớp học và lịch trên trình duyệt này đã được đồng bộ với một tài khoản khác. Gộp chúng vào tài khoản {e}? Chọn “Huỷ” để đăng xuất, dữ liệu trên máy giữ nguyên.": "Classes and schedules in this browser were synced with a different account. Merge them into {e}? Choose “Cancel” to sign out; local data is kept.",
+  "Gộp vào tài khoản này": "Merge into this account",
+  "Đã đăng xuất để không trộn dữ liệu. Hãy dùng một hồ sơ trình duyệt riêng cho tài khoản đó.": "Signed out to avoid mixing data. Use a separate browser profile for that account.",
+  "Máy chủ chưa cấp quyền cho bảng dữ liệu — chủ trang cần chạy supabase/fix-01-grants.sql": "The server hasn’t granted table access — the site owner needs to run supabase/fix-01-grants.sql",
+  "Chưa đồng bộ được ({w}): {m}": "Couldn’t sync ({w}): {m}",
+  "Phiên đăng nhập đã hết, hãy đăng nhập lại": "Session expired, please sign in again",
+  "Không gọi được máy chủ": "Couldn’t reach the server",
+  "Đã gửi thông báo thử — kiểm tra góc màn hình nhé 🔔": "Test notification sent — check the corner of your screen 🔔",
+  "Máy chủ chưa có đăng ký của trình duyệt này — đã đăng ký lại, bấm gửi thử lần nữa": "The server had no subscription for this browser — re-subscribed, please try again",
+  "Đợi vài giây rồi thử lại nhé": "Wait a few seconds and try again",
+  "Gửi thử chưa được ({e})": "Test failed ({e})",
+  "Gửi thử từ máy chủ": "Send test from server",
+  "Chưa đồng bộ": "Not synced",
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3071,10 +3085,10 @@ function remindersModal() {
    Học phí, bảng vẽ, tài liệu KHÔNG đồng bộ: vẫn chỉ nằm trên máy này.
    ===================================================================== */
 const deviceId = (() => { let d = ls.get('vincenink.device', ''); if (!d) { d = Math.random().toString(36).slice(2, 10); ls.set('vincenink.device', d); } return d; })();
-const urlB64 = b => { const p = '='.repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
+const urlB64 = b => { b = String(b || '').trim(); const p = '='.repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
 
 var Cloud = window.Cloud = {
-  cfg: null, sb: null, user: null, ready: false, pushOn: false, timer: null, lastHash: '', syncedAt: 0, busy: false, recovery: false,
+  cfg: null, sb: null, user: null, ready: false, pushOn: false, timer: null, lastHash: '', syncedAt: 0, busy: false, recovery: false, blocked: false, lastError: '',
   configured() { return !!(this.cfg && this.cfg.cloud); },
   canPush() { return !!(this.cfg && this.cfg.push && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); },
   async init() {
@@ -3093,10 +3107,29 @@ var Cloud = window.Cloud = {
       } catch (e) { this.sb = null; }
     }
     this.ready = true; renderAccountUI();
-    if (this.user) { await this.pull(); await this.checkPush(); }
+    if (this.user && await this.guardOwner()) { await this.pull(); await this.checkPush(); }
     document.addEventListener('visibilitychange', () => { if (!document.hidden && this.user && Date.now() - this.syncedAt > 60e3) this.pull(); });
   },
+  /* Mỗi trình duyệt gắn với một tài khoản: đổi sang tài khoản khác thì hỏi trước, tránh trộn dữ liệu giữa hai người */
+  async guardOwner() {
+    const owner = ls.get('vincenink.cloud.owner', ''), me = this.user.id;
+    if (!owner || owner === me) { ls.set('vincenink.cloud.owner', me); return true; }
+    this.blocked = true;
+    const ok = await confirmBox(t('Máy này đang có dữ liệu của tài khoản khác'),
+      t('Lớp học và lịch trên trình duyệt này đã được đồng bộ với một tài khoản khác. Gộp chúng vào tài khoản {e}? Chọn “Huỷ” để đăng xuất, dữ liệu trên máy giữ nguyên.', { e: esc(this.user.email || '') }), t('Gộp vào tài khoản này'), false);
+    this.blocked = false;
+    if (!ok) { await this.sb.auth.signOut(); this.user = null; renderAccountUI(); toast(t('Đã đăng xuất để không trộn dữ liệu. Hãy dùng một hồ sơ trình duyệt riêng cho tài khoản đó.')); return false; }
+    ls.set('vincenink.cloud.owner', me); ls.set('vincenink.cloud.at', ''); return true;
+  },
+  fail(e, where) {
+    const m = String((e && (e.message || e.code)) || e || '');
+    this.lastError = /permission denied|42501|not allowed|PGRST301|401|403/i.test(m + (e && e.code))
+      ? t('Máy chủ chưa cấp quyền cho bảng dữ liệu — chủ trang cần chạy supabase/fix-01-grants.sql')
+      : t('Chưa đồng bộ được ({w}): {m}', { w, m: m.slice(0, 120) });
+    console.warn('cloud', where, e); renderAccountUI(); const md = $('#acctModal'); if (md) acctPaint(md);
+  },
   async afterLogin() {
+    if (!await this.guardOwner()) return;
     toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
     await this.pull(); await this.checkPush(); renderAccountUI();
     const m = $('#acctModal'); if (m) acctPaint(m);
@@ -3116,28 +3149,28 @@ var Cloud = window.Cloud = {
       reminders: { settings: Reminders.settings(), lessons: Reminders.upcoming(), lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh', serverPush: this.pushOn },
     };
   },
-  queue(now) { if (!this.user) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.push(), now ? 50 : 2500); },
+  queue(now) { if (!this.user || this.blocked) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.push(), now ? 50 : 2500); },
   async push() {
-    if (!this.user || this.busy) return;
+    if (!this.user || this.busy || this.blocked) return;
     const snap = this.snapshot(), h = hashStr(JSON.stringify(snap));
     if (h === this.lastHash) return;
     const updated_at = new Date().toISOString();
     const { error } = await this.sb.from('user_state').upsert({ user_id: this.user.id, ...snap, updated_at, device: deviceId });
-    if (error) { console.warn('cloud push', error); return; }
-    this.lastHash = h; this.syncedAt = Date.now(); ls.set('vincenink.cloud.at', updated_at); renderAccountUI();
+    if (error) return this.fail(error, 'push');
+    this.lastError = ''; this.lastHash = h; this.syncedAt = Date.now(); ls.set('vincenink.cloud.at', updated_at); renderAccountUI();
   },
   async pull() {
-    if (!this.user || this.busy) return;
-    this.busy = true;
+    if (!this.user || this.busy || this.blocked) return;
+    this.busy = true; let okPull = false;
     try {
       const { data, error } = await this.sb.from('user_state').select('*').eq('user_id', this.user.id).maybeSingle();
       if (error) throw error;
-      const localAt = ls.get('vincenink.cloud.at', '');
-      if (data && data.updated_at > localAt && data.device !== deviceId) await this.apply(data);
-      if (data) ls.set('vincenink.cloud.at', data.updated_at > localAt ? data.updated_at : localAt);
-      this.syncedAt = Date.now();
-    } catch (e) { console.warn('cloud pull', e); }
-    this.busy = false; this.lastHash = ''; this.queue(true); renderAccountUI();
+      const localAt = ls.get('vincenink.cloud.at', ''), rT = data ? Date.parse(data.updated_at) : 0, lT = Date.parse(localAt) || 0;
+      if (data && rT > lT && data.device !== deviceId) await this.apply(data);
+      if (data) ls.set('vincenink.cloud.at', rT > lT ? data.updated_at : localAt);
+      this.syncedAt = Date.now(); this.lastError = ''; okPull = true;
+    } catch (e) { this.fail(e, 'pull'); }
+    this.busy = false; if (okPull) { this.lastHash = ''; this.queue(true); } renderAccountUI();
   },
   /* Gộp dữ liệu từ máy chủ vào máy này (lớp: hợp nhất; lịch: lấy bản trên máy chủ) */
   async apply(r) {
@@ -3183,11 +3216,23 @@ var Cloud = window.Cloud = {
       const reg = await this.reg(); await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(this.cfg.vapidPublicKey) });
-      await this.saveSub(sub); this.pushOn = true;
+      await this.saveSub(sub); this.pushOn = true; this.lastError = '';
       if (!silent) toast(t('Đã bật thông báo nhắc lịch trên máy này 🔔'));
-    } catch (e) { console.warn(e); if (!silent) toast(t('Chưa bật được thông báo, thử lại sau nhé'), true); }
+    } catch (e) { this.fail(e, 'push_subscriptions'); if (!silent) toast(this.lastError || t('Chưa bật được thông báo, thử lại sau nhé'), true); }
     Reminders.sync(); this.lastHash = ''; this.queue(true); renderAccountUI();
     const m = $('#acctModal'); if (m) acctPaint(m); const r = $('#remModal'); if (r) remModalPaint(r);
+  },
+  async testPush() {
+    const { data } = await this.sb.auth.getSession(), tok = data.session && data.session.access_token;
+    if (!tok) return toast(t('Phiên đăng nhập đã hết, hãy đăng nhập lại'), true);
+    let r, j = {};
+    try { r = await fetch('api/push-test', { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: LANG }) }); j = await r.json().catch(() => ({})); }
+    catch (e) { return toast(t('Không gọi được máy chủ'), true); }
+    if (r.ok) return toast(t('Đã gửi thông báo thử — kiểm tra góc màn hình nhé 🔔'));
+    if (j.error === 'no_subscription') { await this.enablePush(true); return toast(t('Máy chủ chưa có đăng ký của trình duyệt này — đã đăng ký lại, bấm gửi thử lần nữa'), true); }
+    if (j.error === 'rate_limited') return toast(t('Đợi vài giây rồi thử lại nhé'), true);
+    if (j.error === 'subs') return toast(t('Máy chủ chưa cấp quyền cho bảng dữ liệu — chủ trang cần chạy supabase/fix-01-grants.sql'), true);
+    toast(t('Gửi thử chưa được ({e})', { e: j.error || (j.errors || []).join(', ') || r.status }), true);
   },
   async disablePush() {
     try {
@@ -3242,12 +3287,13 @@ function acctPaint(body) {
   if (u) {
     const at = c.syncedAt ? new Date(c.syncedAt) : null;
     body.innerHTML = `
-      <div class="acct-me">${profileAvatarHTML('round')}<div><b>${esc(dx(profile().name) || u.email || '')}</b><small>${esc(u.email || '')}</small></div><span class="acct-ok">${ic('check', 12)}${t('Đã đồng bộ')}${at ? ` ${pad(at.getHours())}:${pad(at.getMinutes())}` : ''}</span></div>
+      <div class="acct-me">${profileAvatarHTML('round')}<div><b>${esc(dx(profile().name) || u.email || '')}</b><small>${esc(u.email || '')}</small></div>${c.lastError ? `<span class="acct-ok bad">${t('Chưa đồng bộ')}</span>` : `<span class="acct-ok">${ic('check', 12)}${t('Đã đồng bộ')}${at ? ` ${pad(at.getHours())}:${pad(at.getMinutes())}` : ''}</span>`}</div>
       <div class="acct-card">
         <div class="ac-h">${ic('bell', 16)}<b>${t('Thông báo nhắc lịch')}</b>${c.pushOn ? `<em class="ok">${t('Đang bật trên máy này')}</em>` : ''}</div>
         <p>${c.canPush() ? t(c.pushOn ? 'Máy chủ sẽ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink.' : 'Bấm bật và chọn “Cho phép” — chỉ một lần, không cần cài thêm gì.') : t('Trình duyệt này chưa hỗ trợ thông báo đẩy, hoặc máy chủ chưa cấu hình VAPID.')}</p>
-        ${c.canPush() ? (c.pushOn ? `<button class="btn ghost sm" data-a="pushoff">${t('Tắt trên máy này')}</button><button class="btn ghost sm" data-a="remset">${ic('settings', 14)}${t('Giờ nhắc')}</button>` : `<button class="btn primary" data-a="pushon">${ic('bell', 15)}${t('Bật thông báo')}</button>`) : ''}
+        ${c.canPush() ? (c.pushOn ? `<button class="btn primary sm" data-a="pushtest">${ic('bell', 14)}${t('Gửi thử từ máy chủ')}</button><button class="btn ghost sm" data-a="pushoff">${t('Tắt trên máy này')}</button><button class="btn ghost sm" data-a="remset">${ic('settings', 14)}${t('Giờ nhắc')}</button>` : `<button class="btn primary" data-a="pushon">${ic('bell', 15)}${t('Bật thông báo')}</button>`) : ''}
       </div>
+      ${c.lastError ? `<p class="acct-err">${ic('info', 14)}${esc(c.lastError)}</p>` : ''}
       <p class="hint">${t('Được đồng bộ: lịch học, hồ sơ, tên các lớp và cài đặt nhắc lịch. Học phí, bảng vẽ, tài liệu vẫn chỉ nằm trên máy này.')}</p>
       <div class="acct-foot"><button class="btn ghost sm" data-a="sync">${ic('refresh', 14)}${t('Đồng bộ ngay')}</button><button class="btn sm danger-text" data-a="out">${t('Đăng xuất')}</button></div>`;
     return;
@@ -3279,6 +3325,7 @@ function accountModal() {
       const er = await Cloud.reset(em); msg(er ? authErr(er) : t('Đã gửi link đặt lại mật khẩu tới {e}', { e: em }), !er);
     }
     else if (act === 'pushon') Cloud.enablePush();
+    else if (act === 'pushtest') { a.disabled = true; await Cloud.testPush(); a.disabled = false; }
     else if (act === 'pushoff') { await Cloud.disablePush(); acctPaint(body); }
     else if (act === 'remset') { md && md.close && md.close(); remindersModal(); }
     else if (act === 'sync') { a.classList.add('spin'); await Cloud.pull(); acctPaint(body); toast(t('Đã đồng bộ')); }

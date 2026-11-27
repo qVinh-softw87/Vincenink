@@ -98,7 +98,9 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 - **Đăng nhập / đăng ký** bằng email hoặc Google (Hồ sơ → Đăng nhập / Đăng ký). Không bắt buộc.
 - Đồng bộ **lịch học, hồ sơ, tên lớp, giờ nhắc** giữa các máy. Học phí, bảng vẽ, tài liệu vẫn chỉ ở trên máy.
 - **Thông báo đẩy (Web Push)**: bấm “Bật thông báo” → “Cho phép” một lần; máy chủ gửi nhắc lịch cả khi đã đóng trang.
-- Cài đặt: xem [HUONG-DAN-SUPABASE.md](HUONG-DAN-SUPABASE.md) và [`supabase/setup.sql`](supabase/setup.sql). Mã máy chủ: `api/config.js`, `api/push-cron.js`, `sw.js`.
+- Cài đặt: xem [HUONG-DAN-SUPABASE.md](HUONG-DAN-SUPABASE.md), [`supabase/setup.sql`](supabase/setup.sql), bản vá [`supabase/fix-01-grants.sql`](supabase/fix-01-grants.sql) và [`supabase/verify.sql`](supabase/verify.sql).
+- Mã máy chủ: `api/config.js`, `api/push-cron.js` (cron mỗi phút), `api/push-test.js` (gửi thử, xác thực bằng phiên đăng nhập), `api/diag.js` (chẩn đoán), `api/_supa.js`, `sw.js`.
+- Kiểm thử: `npm run check`, `npm test` (máy chủ + phân quyền RLS trên Postgres PGlite), `npm run test:e2e` (Playwright, cần chạy `python3 -m http.server 8765`).
 
 ## Nhắc lịch bằng thông báo (kể cả khi không mở trang)
 

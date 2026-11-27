@@ -85,3 +85,28 @@ Làm một lần, khoảng 10–15 phút. Xong bước này, người dùng Vinc
 - Supabase miễn phí: 500 MB cơ sở dữ liệu, 50.000 người dùng hoạt động/tháng — dư sức cho Vincenink.
 - Dự án miễn phí **tự tạm dừng nếu một tuần không có hoạt động**. Nếu bị dừng: vào Supabase bấm **Restore/Resume project**. Dùng web hằng tuần thì hầu như không gặp.
 - Tiện ích Chrome cũ vẫn dùng được; khi đã bật thông báo qua tài khoản, tiện ích tự im lặng để không báo trùng.
+
+---
+
+## 6. Bản vá & kiểm tra sau khi cài (bắt buộc nếu dự án tạo từ 30/05/2026)
+
+Supabase không còn tự mở bảng mới cho trình duyệt/máy chủ. Nếu bạn đã chạy `setup.sql` **bản cũ** (trước khi có lệnh GRANT):
+
+1. **SQL Editor → New query** → dán toàn bộ [`supabase/fix-01-grants.sql`](supabase/fix-01-grants.sql) → **Run**. An toàn khi chạy lại nhiều lần, không đụng tới dữ liệu.
+2. Dán [`supabase/verify.sql`](supabase/verify.sql) → **Run** từng khối, đối chiếu “mong đợi” ghi trong tệp:
+   - khối 1: `authenticated_*` = true ở `user_state`, `push_subscriptions`; `anon_select` = false hết.
+   - khối 5: `status_code = 200` và nội dung có `"ok":true`. Nếu **401** → chuỗi trong cron khác biến `CRON_SECRET` trên Vercel.
+3. Mở `https://vincenink.vercel.app/api/diag?key=<CRON_SECRET>` → mong đợi `"ok": true`, `vapid: "ok"`, 3 bảng đều `ok`.
+   (Trang này chỉ báo trạng thái, không in khoá. Đừng chia sẻ đường link có `key=`.)
+4. Trên web: **Hồ sơ → Tài khoản → Gửi thử từ máy chủ** → phải hiện thông báo “Vincenink: thông báo thử”.
+
+### Đổi lịch hẹn cron nếu đã đặt sai bí mật
+
+```sql
+select cron.unschedule('vincenink-push');
+-- rồi chạy lại khối "5) Hẹn giờ" trong setup.sql với đúng CRON_SECRET
+```
+
+### Biến môi trường bị dính dấu xuống dòng
+
+Máy chủ đã tự bỏ khoảng trắng / xuống dòng thừa, nhưng nên sửa lại cho gọn: Vercel → Settings → Environment Variables → sửa `VAPID_PUBLIC_KEY` (và các biến khác nếu có) → xoá dòng trống cuối → **Save** → **Redeploy**.

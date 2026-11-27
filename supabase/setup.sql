@@ -48,6 +48,16 @@ drop policy if exists "own subs" on public.push_subscriptions;
 create policy "own subs" on public.push_subscriptions
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- 4b) Quyền Data API (dự án tạo từ 30/05/2026 không còn tự cấp quyền cho bảng mới)
+grant select, insert, update, delete on public.user_state         to authenticated;
+grant select, insert, update, delete on public.push_subscriptions to authenticated;
+grant usage, select on sequence public.push_subscriptions_id_seq  to authenticated;
+revoke all on public.user_state, public.push_subscriptions, public.push_log from anon;
+revoke all on public.push_log from authenticated;
+grant select, insert, update, delete on public.user_state, public.push_subscriptions, public.push_log to service_role;
+grant usage, select on sequence public.push_subscriptions_id_seq to service_role;
+notify pgrst, 'reload schema';
+
 -- 5) Hẹn giờ: mỗi phút gọi Vercel để gửi nhắc lịch
 --    ĐỔI 2 giá trị bên dưới: địa chỉ web của bạn và CRON_SECRET (giống biến trên Vercel)
 create extension if not exists pg_cron;
