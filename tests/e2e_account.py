@@ -25,6 +25,7 @@ async def supabase(route):
         if not us or us['password'] != b.get('password'): return await route.fulfill(status=400, json={"error": "invalid_grant", "error_description": "Invalid login credentials", "msg": "Invalid login credentials", "code": "invalid_credentials"})
         if not us['confirmed']: return await route.fulfill(status=400, json={"msg": "Email not confirmed", "code": "email_not_confirmed"})
         return await route.fulfill(json=session(us['id'], b['email']))
+    if '/auth/v1/settings' in u: return await route.fulfill(json={"external": {"email": True, "google": LOG.get('google', False)}})
     if '/auth/v1/logout' in u: return await route.fulfill(status=204, body='')
     if '/auth/v1/user' in u:
         if not uid: return await route.fulfill(status=401, json={})
@@ -93,6 +94,10 @@ async def main():
         await p.evaluate("""(async()=>{ const st={id:'c1',name:'Lớp 9A',color:'#c66',fee:250000,feePaid:{'2026-11':true},created:Date.now()}; await DB.put('students',st); S.students.push(st);
           const sc=sched('c1'); sc.fixed.push({id:'f1',dow:3,start:'18:00',end:'19:30',subject:'Toán'}); await saveSched('c1'); renderSidebar(); })()""")
 
+        await open_acct(p)
+        assert not await p.evaluate("!!document.querySelector('#acctModal [data-a=google]')"); ok('Google chưa bật trên Supabase → ẩn nút Google (không còn lỗi "provider is not enabled")')
+        LOG['google'] = True; await p.evaluate("fetch(Cloud.cfg.supabaseUrl+'/auth/v1/settings').then(r=>r.json()).then(j=>{Cloud.providers=j.external})"); await p.wait_for_timeout(300); await open_acct(p)
+        assert await p.evaluate("!!document.querySelector('#acctModal [data-a=google]')"); ok('Google đã bật → hiện nút "Tiếp tục với Google"')
         await login(p, 'a@test.vn', 'matkhau123', 'up')
         assert 'xác nhận' in (await msg(p)), await msg(p); ok('Đăng ký email → báo kiểm tra hộp thư xác nhận')
         await login(p, 'a@test.vn', 'matkhau123')
