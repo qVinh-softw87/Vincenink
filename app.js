@@ -321,6 +321,8 @@ const EN = {
   '{a} theo lịch {s} {b} thêm': '{a} scheduled {s} {b} extra', 'Cho phép truy cập vị trí để xem thời tiết đúng nơi bạn đang ở.': 'Allow location access to see the weather where you are.',
   'Cập nhật vị trí hiện tại': 'Update current location', 'Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí': 'Couldn’t get your location — please allow location access in your browser',
   '“Đã dạy” = số buổi đã qua theo lịch (không tính buổi nghỉ) cộng “Buổi cộng thêm”. “Dự kiến cả tháng” mặc định 8 buổi, bấm − / + để chỉnh riêng từng tháng.': '“Taught” = past scheduled lessons (excluding cancelled) plus “Extra lessons”. “Planned this month” defaults to 8; use − / + to change it per month.',
+  'GPS ±{m} m': 'GPS ±{m} m', 'Vị trí theo mạng có thể lệch vài chục km — cho phép GPS để chính xác.': 'Network location can be off by tens of km — allow GPS for accuracy.',
+  'Vincenink nhắn cậu': 'A note from Vincenink', 'Đang lấy vị trí và thời tiết chỗ cậu…': 'Finding your location and weather…', 'Đang viết lời nhắn…': 'Writing your note…',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1613,7 +1615,7 @@ function renderTodayCard() {
   const list = todayLessons(), part = dayPart(), p = profile();
   const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
-  const msg = Daily.lines().slice(0, 2).join(' ');
+  const msg = Daily.lines()[0] || '';
   el.innerHTML = `
     <div class="dc-top">
       <span class="dc-ic dc-${part}">${ic(DAY_ICON[part], 16)}</span>
@@ -1968,7 +1970,6 @@ function renderSchedTab(body) {
     </div>`;
   body.innerHTML = `
     <button class="btn primary block" id="btnAddSess">${ic('calendar', 17)}${t('Ghi lịch học')}</button>
-    <div class="legend"><span>${ic('repeat', 12)}${t('Cố định')}</span><span class="warn">${ic('edit', 12)}${t('Đổi tuần này')}</span><span>${ic('calendar', 12)}${t('Một buổi')}</span><span>${ic('ban', 12)}${t('Nghỉ')}</span></div>
     <div class="week-nav">
       <button class="icon-btn sm" data-w="-1" title="${t('Tuần trước')}">${ic('left', 18)}</button>
       <div class="wl">${shortDate(dstr(ws))} – ${shortDate(dstr(we))}/${we.getFullYear()}<small>${isThis ? t('Tuần này') : `<a href="#" data-w="0">${t('Về tuần này')}</a>`}</small></div>
@@ -2223,16 +2224,28 @@ const Loc = {
     try { return placeName(await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${LANG}`)); }
     catch (e) { return ''; }
   },
+  /* Lấy GPS chính xác: theo dõi vài giây, giữ lần đo có sai số nhỏ nhất */
+  bestFix(waitPrompt) {
+    return new Promise(resolve => {
+      let best = null, id = null, settle = null, finished = false;
+      const done = () => { if (finished) return; finished = true; if (id != null) navigator.geolocation.clearWatch(id); clearTimeout(hard); clearTimeout(settle); resolve(best); };
+      const hard = setTimeout(done, waitPrompt ? 45000 : 15000);
+      id = navigator.geolocation.watchPosition(pos => {
+        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+        if (pos.coords.accuracy <= 50) return done();
+        if (!settle) settle = setTimeout(done, 6000);
+      }, err => { if (err.code === 1 || !best) done(); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    });
+  },
   async gps(ask) {
     if (!navigator.geolocation) return null;
     const st = await this.geoState();
     if (st === 'denied' || (st !== 'granted' && !ask && ls.get('vincenink.gpsOK', '') !== '1')) return null;
-    try {
-      const pos = await withTimeout(new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3e5 })), 30000);
-      ls.set('vincenink.gpsOK', '1');
-      const lat = +pos.coords.latitude.toFixed(3), lon = +pos.coords.longitude.toFixed(3);
-      return { lat, lon, name: (await this.nameOf(lat, lon)) || t('Vị trí của bạn'), src: 'gps' };
-    } catch (e) { return null; }
+    const pos = await this.bestFix(st !== 'granted');
+    if (!pos) return null;
+    ls.set('vincenink.gpsOK', '1');
+    const lat = +pos.coords.latitude.toFixed(4), lon = +pos.coords.longitude.toFixed(4);
+    return { lat, lon, acc: Math.round(pos.coords.accuracy), name: (await this.nameOf(lat, lon)) || t('Vị trí của bạn'), src: 'gps' };
   },
   async ip() {
     try { // Vercel gắn sẵn vị trí theo IP vào request
@@ -2247,7 +2260,8 @@ const Loc = {
   },
   async get({ ask = false, force = false } = {}) {
     let c = null; try { c = JSON.parse(ls.get('vincenink.loc', 'null')); } catch (e) { /* */ }
-    if (!force && c && Date.now() - c.at < (c.src === 'gps' ? 20 * 6e4 : 36e5) && !(ask && c.src !== 'gps')) return (this.cur = c);
+    if (!force && c && c.src === 'gps' && Date.now() - c.at < 10 * 6e4) return (this.cur = c);
+    if (!force && c && c.src !== 'gps' && !ask && Date.now() - c.at < 36e5) return (this.cur = c);
     const r = (await this.gps(ask)) || (c && c.src === 'gps' ? c : null) || (await this.ip()) || c;
     if (r) { if (r !== c) r.at = Date.now(); ls.set('vincenink.loc', JSON.stringify(r)); }
     return (this.cur = r || null);
@@ -2304,7 +2318,7 @@ function dayType(d = new Date()) {
 function wxContext() {
   const w = Weather.data; if (!w) return null;
   const f = d => d && `${wxInfo(d.code).desc}, ${d.min}–${d.max}°C, ${t('mưa {p}%', { p: d.rain })}`;
-  return { city: w.city, now: `${w.temp}°C (${t('Cảm giác {f}°', { f: w.feels })}), ${wxInfo(w.code).desc}`, today: f(wxToday()), tomorrow: f(w.days[1]) };
+  return { city: w.city, source: w.src === 'gps' ? 'GPS' : 'IP (ước tính)', now: `${w.temp}°C (${t('Cảm giác {f}°', { f: w.feels })}), ${wxInfo(w.code).desc}`, today: f(wxToday()), tomorrow: f(w.days[1]) };
 }
 
 /* ---- Đoán tâm trạng người dạy (dự phòng khi AI chưa trả về) ---- */
@@ -2354,14 +2368,14 @@ function wxSection() {
   if (!w) return `<section class="gr-sec"><h3>${ic('sun2', 15)}${t('Thời tiết')}</h3>
     <div class="gr-noloc"><span>${t('Cho phép truy cập vị trí để xem thời tiết đúng nơi bạn đang ở.')}</span>${locBtn}</div></section>`;
   const name = (d, i) => i === 0 ? t('Hôm nay') : i === 1 ? t('Ngày mai') : WD[LANG][dow(parseD(d.date))];
-  const src = { gps: t('theo GPS'), ip: t('ước tính theo mạng') }[w.src] || '';
+  const lc = Loc.cur || {}, src = w.src === 'gps' ? (lc.acc ? t('GPS ±{m} m', { m: lc.acc }) : t('theo GPS')) : t('ước tính theo mạng');
   return `<section class="gr-sec">
     <h3>${ic('sun2', 15)}${t('Thời tiết')}
       <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(w.city || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
     <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
       <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
       <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
-    ${w.src === 'ip' ? `<div class="gr-loc-row"><span>${t('Vị trí theo mạng có thể lệch vài chục km.')}</span>${locBtn}</div>` : ''}
+    ${w.src !== 'gps' ? `<div class="gr-loc-row"><span>${t('Vị trí theo mạng có thể lệch vài chục km — cho phép GPS để chính xác.')}</span>${locBtn}</div>` : ''}
   </section>`;
 }
 /* Câu thời tiết cho lời chào dự phòng */
@@ -2448,51 +2462,15 @@ function fallbackDaily(salt = 0) {
   else if (dt.monday) L.push(vi ? `Đầu tuần hơi ì là bình thường nha, mình khởi động từ từ thôi.` : `Monday sluggishness is normal, let’s warm up slowly.`);
   else if (dt.friday) L.push(vi ? `Thứ 6 rồi đó, cố nốt hôm nay là được nghỉ xả hơi rồi!` : `It’s Friday — one more push and then rest!`);
   else L.push(vi ? `${dt.weekday} rồi, tuần này cậu đã đi được nửa chặng đường rồi đó.` : `It’s ${dt.weekday}, you’re halfway through the week.`);
-  L.push(vi ? `Tớ đoán hôm nay cậu đang kiểu ${mood.label.toLowerCase()} ${mood.emoji} — đúng không nè?` : `My guess: you’re feeling ${mood.label.toLowerCase()} ${mood.emoji} today — am I right?`);
+  L.push(vi ? `Tớ đoán hôm nay cậu đang kiểu ${mood.label.toLowerCase()} ${mood.emoji} — tớ hiểu mà, cứ từ từ thôi.` : `My guess: you’re feeling ${mood.label.toLowerCase()} ${mood.emoji} today — totally fine, take it slow.`);
   L.push(F.lessons(list.length, o));
   L.push(pickDay(F.wish, 3 + salt));
-  return L.join('\n');
+  // gộp thành 3 đoạn: chào + thời tiết · loại ngày + tâm trạng · lịch + lời chúc
+  const n = L.length;
+  return [L.slice(0, n - 4).join(' '), L.slice(n - 4, n - 2).join(' '), L.slice(n - 2).join(' ')].filter(Boolean).join('\n');
 }
 const fallbackNote = (salt = 0) => { const [title, body] = pickDay(FALLBACK[LANG].tips, salt); return { title, body }; };
 
-/* ---- Trò chuyện ngay trong cửa sổ chào ---- */
-const GreetChat = {
-  msgs: [], busy: false, draft: '',
-  key() { return `vincenink.ai.friend.${todayStr()}.${LANG}`; },
-  restore() { try { this.msgs = JSON.parse(ls.get(this.key(), '[]')) || []; } catch (e) { this.msgs = []; } },
-  save() { ls.set(this.key(), JSON.stringify(this.msgs.slice(-30))); },
-  offline(q) {
-    const vi = LANG === 'vi', s = q.toLowerCase();
-    const R = vi ? [
-      [/mệt|oải|đuối|kiệt|buồn ngủ/, ['Thương ghê, lại đây tớ ôm cái nè 🫂 Dạy xong buổi này thì nằm nghỉ 15 phút nha, không làm gì hết.', 'Mệt thì cứ nói tớ nghe, đừng gồng một mình. Uống ngụm nước ấm rồi mình đi từng việc một thôi.']],
-      [/buồn|chán|tệ|stress|áp lực|khóc/, ['Có chuyện gì kể tớ nghe đi, tớ ở đây nè 💛 Hôm nay không ổn cũng không sao, mai mình làm lại.', 'Ôm cậu thật chặt. Cậu đã cố gắng nhiều lắm rồi, tớ biết mà.']],
-      [/vui|hạnh phúc|tuyệt|yay|hehe|ok lắm/, ['Thấy cậu vui là tớ vui lây luôn á 😆 Giữ năng lượng này cho cả ngày nha!', 'Yay! Kể tớ nghe chuyện gì vui đi, tớ hóng nè.']],
-      [/lịch|tiết|buổi|dạy gì/, [() => FALLBACK.vi.lessons(todayLessons().filter(o => !o.off).length, (() => { const n = todayLessons().filter(o => !o.off)[0]; return n ? { start: n.start, who: n.owner === 'all' ? t('Lớp chung') : ownerName(n.owner), subject: n.subject } : null; })()) + ' Tớ nhắc rồi đó nha, đừng quên đó 😘']],
-      [/thời tiết|mưa|nắng|nóng|lạnh/, [() => (wxLine() || 'Tớ chưa biết chỗ cậu ở đâu, bấm "Vị trí chính xác" cho tớ xem với nha.')]],
-      [/cảm ơn|thanks|iu|yêu|thương/, ['Tớ cũng thương cậu nhiều 💛', 'Hông có chi, tớ luôn ở đây mà 🥰']],
-    ] : [
-      [/tired|sleepy|exhausted/, ['Aww, come here, hug 🫂 Rest for 15 minutes after this lesson, okay?']],
-      [/sad|bad|stress|cry/, ['Tell me what happened, I’m here 💛 It’s okay not to be okay today.']],
-      [/happy|great|yay/, ['Seeing you happy makes me happy too 😆']],
-      [/weather|rain|hot|cold/, [() => wxLine() || 'I don’t know where you are yet — tap "Exact location" for me.']],
-      [/thank|love/, ['Love you too 💛']],
-    ];
-    for (const [re, arr] of R) if (re.test(s)) { const a = arr[hashStr(q) % arr.length]; return typeof a === 'function' ? a() : a; }
-    return vi ? ['Ừa, tớ nghe nè 💛 Kể thêm cho tớ đi.', 'Hehe, cậu nói gì tớ cũng thích nghe hết á.', 'Tớ hiểu mà. Có gì cứ nhắn tớ nha, tớ ở đây cả ngày.'][hashStr(q) % 3] : 'I’m listening 💛 Tell me more.';
-  },
-  async send(text) {
-    text = String(text || '').trim(); if (!text || this.busy) return;
-    this.msgs.push({ role: 'user', content: text }); this.draft = ''; { const i = $('#grInput'); if (i) i.value = ''; } this.busy = true; this.save(); renderGreet(true);
-    let reply = '';
-    if (AI.status === 'on') {
-      const opening = Daily.lines().join('\n');
-      try { reply = await AI.ask('friend', { messages: [{ role: 'user', content: LANG === 'vi' ? '(mở app)' : '(opened the app)' }, { role: 'assistant', content: opening }, ...this.msgs] }); }
-      catch (e) { reply = ''; }
-    }
-    if (!reply) { await new Promise(r => setTimeout(r, 500)); reply = this.offline(text); }
-    this.msgs.push({ role: 'assistant', content: reply }); this.busy = false; this.save(); renderGreet(true);
-  },
-};
 
 /* ---- Lời chúc mỗi ngày (lưu theo ngày + buổi + ngôn ngữ + danh sách tiết) ---- */
 const Daily = {
@@ -2885,15 +2863,13 @@ function showGreet(on) {
   if (on) renderGreet(); else ls.set('vincenink.seen', '1');
   updateTitle();
 }
-function renderGreet(chat) {
+function renderGreet() {
   const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;
-  const oldIn = $('#grInput', el); if (oldIn) GreetChat.draft = oldIn.value;
-  const hadFocus = oldIn && document.activeElement === oldIn, oldBody = $('.gr-body', el), scroll = oldBody ? oldBody.scrollTop : 0;
+  const oldBody = $('.gr-body', el), scroll = oldBody ? oldBody.scrollTop : 0;
   const now = new Date(), part = dayPart(), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
-  const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, lines = Daily.lines();
+  const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const paras = Weather.locating && !Daily.cur && !ls.get(Daily.key(), '') ? [] : Daily.lines();
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  const dog = `<span class="gc-av"><img src="assets/icon-192.png" alt=""></span>`;
-  const quick = LANG === 'vi' ? ['Hôm nay tớ hơi mệt 😮‍💨', 'Tớ vui lắm nè!', 'Nhắc tớ lịch hôm nay', 'Trời có mưa không?'] : ['I’m a bit tired 😮‍💨', 'I’m so happy today!', 'Remind me of today’s lessons', 'Will it rain?'];
   el.innerHTML = `<article class="greet-card">
     <header class="gr-hero gr-${part}">
       <span class="gr-ic">${ic(DAY_ICON[part], 26)}</span>
@@ -2903,16 +2879,10 @@ function renderGreet(chat) {
       ${dayChips('gr-chips')}
     </header>
     <div class="gr-body">
-      <section class="gr-chat">
-        <div class="gc-thread" id="gcThread">
-          ${lines.length ? `<div class="gc-group">${dog}<div class="gc-bubbles">${lines.map(l => `<p class="gc-b">${esc(l)}</p>`).join('')}</div></div>`
-            : `<div class="gc-group">${dog}<div class="gc-bubbles"><p class="gc-b typing"><i></i><i></i><i></i></p></div></div>`}
-          ${GreetChat.msgs.map(m => m.role === 'user' ? `<div class="gc-me"><p class="gc-b">${esc(m.content)}</p></div>`
-            : `<div class="gc-group">${dog}<div class="gc-bubbles">${m.content.split(/\n+/).filter(Boolean).map(l => `<p class="gc-b">${esc(l)}</p>`).join('')}</div></div>`).join('')}
-          ${GreetChat.busy ? `<div class="gc-group">${dog}<div class="gc-bubbles"><p class="gc-b typing"><i></i><i></i><i></i></p></div></div>` : ''}
-        </div>
-        ${GreetChat.msgs.length ? '' : `<div class="gc-quick">${quick.map(q => `<button data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
-        <form class="gc-form" id="gcForm"><input id="grInput" autocomplete="off" placeholder="${t('Nhắn lại cho Vincenink…')}" value="${esc(GreetChat.draft)}"><button class="gc-send" ${GreetChat.busy ? 'disabled' : ''} aria-label="${t('Gửi')}">${ic('send', 16)}</button></form>
+      <section class="gr-letter">
+        <div class="gl-from"><span class="gc-av"><img src="assets/icon-192.png" alt=""></span><b>${t('Vincenink nhắn cậu')}</b><small>${pad(now.getHours())}:${pad(now.getMinutes())}</small></div>
+        ${paras.length ? paras.map(l => `<p>${esc(l)}</p>`).join('')
+          : `<p class="gl-wait">${Weather.locating ? t('Đang lấy vị trí và thời tiết chỗ cậu…') : t('Đang viết lời nhắn…')}</p><span class="shimmer"></span><span class="shimmer"></span><span class="shimmer short"></span>`}
       </section>
       ${wxSection()}
       <section class="gr-sec">
@@ -2929,16 +2899,11 @@ function renderGreet(chat) {
       <button class="btn primary" data-gr="close">${t('Bắt đầu dạy')}</button>
     </footer>
   </article>`;
-  const body = $('.gr-body', el), th = $('#gcThread', el);
-  if (body) body.scrollTop = scroll;
-  if (th && (chat || GreetChat.msgs.length)) th.scrollTop = th.scrollHeight;
-  $('#gcForm', el).onsubmit = e => { e.preventDefault(); GreetChat.send($('#grInput', el).value); };
-  if (hadFocus || chat) { const i = $('#grInput', el); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  const body = $('.gr-body', el); if (body) body.scrollTop = scroll;
 }
 $('#greetPop').addEventListener('click', e => {
   if (e.target.id === 'greetPop') return showGreet(false);
   const ob = e.target.closest('[data-ob]'); if (ob) return runSetupStep(ob.dataset.ob);
-  const q = e.target.closest('[data-q]'); if (q) return GreetChat.send(q.dataset.q);
   const b = e.target.closest('[data-gr]'); if (!b) return;
   if (b.dataset.gr === 'close') showGreet(false);
   else if (b.dataset.gr === 'locate') Weather.locate();
@@ -3179,13 +3144,12 @@ async function init() {
   if (innerWidth <= 900) $('#app').classList.add('focus');
   bindChat(); Chat.renderState();
   if (isNewUser()) showWelcome(true); else showGreet(true);
-  GreetChat.restore();
   AI.check().then(async () => {
-    await Weather.load(); refreshDay(); Daily.load(); Note.load();
-    // Lần đầu: hỏi quyền vị trí của trình duyệt để lấy đúng thành phố
-    if ((!Loc.cur || Loc.cur.src !== 'gps') && ls.get('vincenink.locAsked', '') !== '1' && (await Loc.geoState()) === 'prompt') {
-      ls.set('vincenink.locAsked', '1'); Weather.locate(true);
-    }
+    // Lấy GPS chính xác trước (hỏi quyền nếu cần), rồi mới viết lời nhắn theo đúng thời tiết chỗ mình
+    const st = await Loc.geoState();
+    Weather.locating = st !== 'denied' && !!navigator.geolocation; refreshDay();
+    await Weather.load({ ask: st !== 'denied' });
+    Weather.locating = false; refreshDay(); Daily.load(); Note.load();
   });
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
