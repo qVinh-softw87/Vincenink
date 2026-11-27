@@ -9,13 +9,13 @@ select t.tbl,
   has_table_privilege('authenticated', 'public.'||t.tbl, 'insert') as authenticated_insert,
   has_table_privilege('anon',          'public.'||t.tbl, 'select') as anon_select,
   has_table_privilege('service_role',  'public.'||t.tbl, 'insert') as service_role_insert
-from (values ('user_state'), ('push_subscriptions'), ('push_log')) t(tbl);
+from (values ('user_state'), ('push_subscriptions'), ('push_log'), ('boards')) t(tbl);
 
 -- 2) RLS đang bật + policy (mong đợi: rls = true ở cả 3 bảng; 2 policy "own state", "own subs")
 select c.relname as tbl, c.relrowsecurity as rls,
   (select string_agg(polname, ', ') from pg_policy p where p.polrelid = c.oid) as policies
 from pg_class c join pg_namespace n on n.oid = c.relnamespace
-where n.nspname = 'public' and c.relname in ('user_state', 'push_subscriptions', 'push_log');
+where n.nspname = 'public' and c.relname in ('user_state', 'push_subscriptions', 'push_log', 'boards');
 
 -- 3) Cron đang chạy (mong đợi: active = true, schedule = * * * * *)
 select jobid, jobname, schedule, active from cron.job where jobname = 'vincenink-push';
@@ -33,5 +33,6 @@ from net._http_response order by created desc limit 5;
 
 -- 6) Số tài khoản đã đồng bộ và số trình duyệt đã bật thông báo
 select (select count(*) from public.user_state) as accounts_synced,
+       (select count(*) from public.boards where not deleted) as boards_backed_up,
        (select count(*) from public.push_subscriptions) as devices_subscribed,
        (select count(*) from public.push_log where sent_at > now() - interval '1 day') as pushes_last_24h;

@@ -6,7 +6,9 @@ Làm một lần, khoảng 10–15 phút. Xong bước này, người dùng Vinc
 - **Đồng bộ** lịch học, hồ sơ, tên các lớp và giờ nhắc giữa các máy.
 - **Nhận thông báo nhắc lịch** kể cả khi đã đóng trang — chỉ cần bấm “Cho phép” một lần, không cần cài tiện ích.
 
-> Học phí, bảng vẽ và tài liệu **không** được gửi lên máy chủ — vẫn chỉ nằm trên máy mỗi người.
+> **Từ v34:** khi đã đăng nhập, Vincenink sao lưu cả **học phí** và **bảng vẽ** (bảng `boards`). Chỉ tài liệu tải lên (PDF/ảnh) là vẫn nằm trên máy.
+> Chưa đăng nhập = **chế độ khách**: đóng trang là dữ liệu bị xoá.
+> **Cần chạy thêm 1 lần:** [`supabase/fix-02-boards.sql`](supabase/fix-02-boards.sql) trong SQL Editor (tạo bảng `boards` + RLS + quyền).
 
 ---
 

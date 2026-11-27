@@ -58,6 +58,24 @@ grant select, insert, update, delete on public.user_state, public.push_subscript
 grant usage, select on sequence public.push_subscriptions_id_seq to service_role;
 notify pgrst, 'reload schema';
 
+-- 4c) Bảng vẽ (sao lưu khi đã đăng nhập) — mỗi bảng một dòng, chỉ chủ tài khoản đọc/ghi được
+create table if not exists public.boards (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  id         text not null,
+  meta       jsonb not null default '{}'::jsonb,
+  data       jsonb,
+  deleted    boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
+alter table public.boards enable row level security;
+drop policy if exists "own boards" on public.boards;
+create policy "own boards" on public.boards
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+revoke all on public.boards from anon;
+grant select, insert, update, delete on public.boards to authenticated, service_role;
+notify pgrst, 'reload schema';
+
 -- 5) Hẹn giờ: mỗi phút gọi Vercel để gửi nhắc lịch
 --    ĐỔI 2 giá trị bên dưới: địa chỉ web của bạn và CRON_SECRET (giống biến trên Vercel)
 create extension if not exists pg_cron;

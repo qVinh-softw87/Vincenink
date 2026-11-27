@@ -7,6 +7,7 @@ USERS = {}      # email -> {id, password, confirmed}
 TOKENS = {}     # token -> user id
 STATE = {}      # user id -> row
 SUBS = {}       # endpoint -> row
+BOARDS = {}     # (user id, board id) -> row
 LOG = {'denied': False, 'pushtest_auth': []}
 
 def user_obj(uid, email): return {"id": uid, "aud": "authenticated", "role": "authenticated", "email": email, "app_metadata": {"provider": "email"}, "user_metadata": {}, "created_at": "2026-11-01T00:00:00Z"}
@@ -41,6 +42,21 @@ async def supabase(route):
             b = json.loads(req.post_data); b = b[0] if isinstance(b, list) else b
             if b['user_id'] != uid: return await route.fulfill(status=403, json={"code": "42501", "message": "new row violates row-level security policy"})
             STATE[uid] = b; return await route.fulfill(status=201, body='')
+        if '/rest/v1/boards' in u and LOG.get('noboards'): return await route.fulfill(status=404, json={"code": "PGRST205", "message": "Could not find the table 'public.boards' in the schema cache"})
+        if '/rest/v1/boards' in u:
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(u).query)
+            if m == 'GET':
+                rows = [r for (o, _), r in BOARDS.items() if o == uid]
+                if 'id' in qs: rows = [r for r in rows if 'eq.' + r['id'] == qs['id'][0]]
+                cols = qs.get('select', ['*'])[0].split(',')
+                rows = [r if cols == ['*'] else {c: r.get(c) for c in cols} for r in rows]
+                if 'vnd.pgrst.object' in req.headers.get('accept', ''):
+                    return await route.fulfill(json=rows[0], headers={'content-type': 'application/vnd.pgrst.object+json'}) if rows else await route.fulfill(status=406, json={"code": "PGRST116"})
+                return await route.fulfill(json=rows)
+            b = json.loads(req.post_data); b = b[0] if isinstance(b, list) else b
+            if b['user_id'] != uid: return await route.fulfill(status=403, json={"code": "42501", "message": "new row violates row-level security policy"})
+            BOARDS[(uid, b['id'])] = b; return await route.fulfill(status=201, body='')
         if '/rest/v1/push_subscriptions' in u:
             if m == 'DELETE':
                 for ep in [e for e, r in SUBS.items() if r['user_id'] == uid]: SUBS.pop(ep)
@@ -114,7 +130,12 @@ async def main():
         assert 'Xác nhận email thành công' in await p.evaluate("document.body.innerText"); ok('Xác nhận xong, đăng nhập lần đầu → hiện cửa sổ chúc mừng')
         A = USERS['a@test.vn']['id']; row = STATE.get(A)
         assert row and [c['name'] for c in row['classes'] if not c.get('deleted')] == ['Lớp 9A'] and 'c1' in row['schedule']; ok('Đăng nhập → đẩy lớp + lịch lên user_state của A')
-        assert 'fee' not in json.dumps(row) and 'boardData' not in json.dumps(row) and 'feePaid' not in json.dumps(row); ok('Không đồng bộ học phí / bảng vẽ / tài liệu')
+        c1 = next(c for c in row['classes'] if c['id'] == 'c1')
+        assert c1['fee'] == 250000 and c1['feePaid'] == {'2026-11': True} and 'files' not in json.dumps(row); ok('Đăng nhập → sao lưu cả học phí của lớp (tài liệu thì không)')
+        await p.evaluate("(async()=>{ E.items.push({type:'image',x:0,y:0,w:200,h:200,src:'data:image/png;base64,'+'A'.repeat(10)}, {type:'path',pts:[[0,0],[5,5]],color:'#000',size:2}); scheduleSave(true); await doSave(); })()"); await p.wait_for_timeout(5500)
+        bid = await p.evaluate("S.boardId"); brow = BOARDS.get((A, bid))
+        assert brow and len(brow['data']['items']) == 2 and brow['meta']['title'] and not brow['deleted']; ok('Vẽ lên bảng → tự sao lưu bảng vẽ lên bảng `boards` của A')
+        assert not await p.evaluate("document.querySelector('.board-card .bk')") ; ok('Đã đăng nhập → không còn nhãn "tự xoá sau N ngày"')
         assert row['reminders']['tz'] in ('Asia/Ho_Chi_Minh', 'Asia/Saigon') and len(row['reminders']['lessons']) > 0; ok('Gửi kèm múi giờ + danh sách buổi học 5 tuần tới cho máy chủ')
 
         await p.evaluate("S.settings.profile={...profile(), name:'Nguyễn Vĩnh', school:'THCS A'}; saveSettings(); Cloud.queue(true)"); await p.wait_for_timeout(1200)
@@ -129,13 +150,16 @@ async def main():
 
         await open_acct(p); await p.click('#acctModal [data-a=out]'); await p.wait_for_timeout(300)
         await p.click('.modal .btn.danger'); await p.wait_for_timeout(1500)
-        assert not await p.evaluate("!!Cloud.user") and await p.evaluate("S.students.length") == 1 and not any(s['user_id'] == A for s in SUBS.values()); ok('Đăng xuất → dữ liệu trên máy giữ nguyên, máy này ngừng nhận thông báo')
+        assert not await p.evaluate("!!Cloud.user") and await p.evaluate("S.students.length") == 1 and not any(s['user_id'] == A for s in SUBS.values()); ok('Đăng xuất → còn dữ liệu tới khi đóng trang, máy này ngừng nhận thông báo')
 
         ctx2, q = await page(b, 'may2')
         await login(q, 'a@test.vn', 'matkhau123'); await q.wait_for_timeout(3000)
         names = await q.evaluate("S.students.map(s=>s.name)"); fixed = await q.evaluate("(sched('c1').fixed||[]).length")
         assert names == ['Lớp 9A'] and fixed == 1 and await q.evaluate("profile().name") == 'Nguyễn Vĩnh'; ok('Máy khác đăng nhập lại → có đủ hồ sơ, lớp, lịch')
-        assert await q.evaluate("studentById('c1').fee") is None; ok('Máy khác không nhận học phí (đúng phạm vi đồng bộ)')
+        assert await q.evaluate("studentById('c1').fee") == 250000 and await q.evaluate("studentById('c1').feePaid['2026-11']"); ok('Máy khác nhận đủ học phí + tháng đã thu')
+        assert await q.evaluate(f"(async()=>{{ const d = await DB.get('boardData', '{bid}'); return !!S.boards.find(x=>x.id==='{bid}') && d.items.length }})()") == 2; ok('Máy khác tải về đủ bảng vẽ')
+        await q.evaluate(f"(async()=>{{ await DB.del('boards','{bid}'); await DB.del('boardData','{bid}'); Cloud.markBoardDeleted('{bid}'); }})()"); await q.wait_for_timeout(5000)
+        assert BOARDS[(A, bid)]['deleted'] is True; ok('Xoá bảng ở máy 2 → máy chủ ghi dấu đã xoá')
 
         await q.evaluate("sched('c1').sessions.push({id:'s9',date:todayStr(),start:'20:00',end:'21:00',subject:'Ôn thi'}); saveSched('c1'); Cloud.queue(true)"); await q.wait_for_timeout(1500)
         await p.evaluate("Cloud"); await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(3000)
@@ -157,6 +181,12 @@ async def main():
         t_err = await r.evaluate("document.querySelector('#acctModal .acct-err')?.textContent || ''")
         assert 'fix-01-grants' in t_err; ok('Máy chủ thiếu quyền bảng → hiện hướng dẫn chạy fix-01-grants.sql')
         LOG['denied'] = False
+        LOG['noboards'] = True
+        await r.evaluate("Cloud.syncedAt=0; Cloud.pull()"); await r.wait_for_timeout(1500); await open_acct(r)
+        t_err = await r.evaluate("document.querySelector('#acctModal .acct-err')?.textContent || ''")
+        await r.evaluate("S.settings.profile={...profile(), name:'B2'}; saveSettings(); Cloud.lastHash=''; Cloud.queue(true)"); await r.wait_for_timeout(1200)
+        assert 'fix-02-boards' in t_err and STATE[B]['profile'].get('name') == 'B2'; ok('Chưa chạy fix-02-boards.sql → báo hướng dẫn, lịch/hồ sơ vẫn đồng bộ bình thường')
+        LOG['noboards'] = False
 
         errs = p.errs + q.errs + r.errs
         assert not errs, errs; ok('Không có lỗi JavaScript')

@@ -96,9 +96,10 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 ## Tài khoản, đồng bộ & thông báo đẩy (tuỳ chọn, miễn phí với Supabase)
 
 - **Đăng nhập / đăng ký** bằng email hoặc Google (Hồ sơ → Đăng nhập / Đăng ký). Không bắt buộc.
-- Đồng bộ **lịch học, hồ sơ, tên lớp, giờ nhắc** giữa các máy. Học phí, bảng vẽ, tài liệu vẫn chỉ ở trên máy.
+- **Chế độ khách** (chưa đăng nhập): dữ liệu chỉ sống trong phiên — tải lại trang vẫn còn, đóng hết tab là bị xoá. Dữ liệu có từ trước v34 được giữ lại.
+- **Đã đăng nhập**: trình duyệt nhớ phiên, lần sau mở không cần đăng nhập lại; sao lưu **hồ sơ, lớp, học phí, lịch, giờ nhắc và bảng vẽ** (ảnh dán được nén), không tự xoá bảng sau 7 ngày. Tài liệu tải lên (PDF/ảnh) vẫn chỉ ở trên máy.
 - **Thông báo đẩy (Web Push)**: bấm “Bật thông báo” → “Cho phép” một lần; máy chủ gửi nhắc lịch cả khi đã đóng trang.
-- Cài đặt: xem [HUONG-DAN-SUPABASE.md](HUONG-DAN-SUPABASE.md), [`supabase/setup.sql`](supabase/setup.sql), bản vá [`supabase/fix-01-grants.sql`](supabase/fix-01-grants.sql) và [`supabase/verify.sql`](supabase/verify.sql).
+- Cài đặt: xem [HUONG-DAN-SUPABASE.md](HUONG-DAN-SUPABASE.md), [`supabase/setup.sql`](supabase/setup.sql), bản vá [`supabase/fix-01-grants.sql`](supabase/fix-01-grants.sql), [`supabase/fix-02-boards.sql`](supabase/fix-02-boards.sql) và [`supabase/verify.sql`](supabase/verify.sql).
 - Mã máy chủ: `api/config.js`, `api/push-cron.js` (cron mỗi phút), `api/push-test.js` (gửi thử, xác thực bằng phiên đăng nhập), `api/diag.js` (chẩn đoán), `api/_supa.js`, `sw.js`.
 - Kiểm thử: `npm run check`, `npm test` (máy chủ + phân quyền RLS trên Postgres PGlite), `npm run test:e2e` (Playwright, cần chạy `python3 -m http.server 8765`).
 

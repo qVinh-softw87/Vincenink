@@ -67,6 +67,16 @@ await t('đăng ký nhận thông báo: A thêm của mình được, chỉ th�
 await t('upsert theo endpoint (như supabase-js onConflict) hoạt động với người dùng thường', async () => {
   await as(db, 'authenticated', A, `insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1,'e-a','p2','a2') on conflict (endpoint) do update set p256dh=excluded.p256dh, auth=excluded.auth`, [A]);
 });
+await t('boards: mỗi tài khoản chỉ thấy/sửa bảng vẽ của mình', async () => {
+  await as(db, 'authenticated', A, `insert into public.boards (user_id, id, meta, data) values ($1,'b1','{"title":"A1"}','{"items":[]}')`, [A]);
+  await as(db, 'authenticated', B, `insert into public.boards (user_id, id, meta, data) values ($1,'b1','{"title":"B1"}','{"items":[]}')`, [B]);
+  const r = await as(db, 'authenticated', A, `select meta->>'title' t from public.boards`);
+  assert.deepStrictEqual(r.rows.map(x => x.t), ['A1']);
+  assert.ok(await denied(as(db, 'authenticated', A, `insert into public.boards (user_id, id) values ($1,'x')`, [B])));
+  const up = await as(db, 'authenticated', A, `update public.boards set meta='{"title":"hack"}' where user_id=$1`, [B]);
+  assert.strictEqual(up.affectedRows || 0, 0);
+  assert.ok(await denied(as(db, 'anon', null, `select * from public.boards`)));
+});
 await t('push_log: người dùng không đọc/ghi được; máy chủ ghi được và chống trùng', async () => {
   assert.ok(await denied(as(db, 'authenticated', A, `select * from public.push_log`)));
   const a = await as(db, 'service_role', null, `insert into public.push_log (user_id, key) values ($1,'les|x|15') on conflict do nothing returning key`, [A]);

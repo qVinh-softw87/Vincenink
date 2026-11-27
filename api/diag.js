@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     if (k === 'SUPABASE_ANON_KEY' && v) out.env[k] += v.startsWith('sb_secret_') ? ' · ⚠ ĐANG DÙNG KHOÁ BÍ MẬT Ở FRONTEND — đổi ngay!' : '';
   }
   try { vapid(webpush); out.vapid = 'ok'; } catch (e) { out.vapid = 'lỗi: ' + e.message; }
-  for (const t of ['user_state', 'push_subscriptions', 'push_log']) {
+  for (const t of ['user_state', 'push_subscriptions', 'push_log', 'boards']) {
     try {
       const r = await admin(`${t}?select=*&limit=1`, { headers: { Prefer: 'count=exact' } });
       out.tables[t] = r.ok ? `ok · ${(r.headers.get('content-range') || '').split('/')[1] || '?'} dòng` : `lỗi ${r.status}: ${(await r.text()).slice(0, 160)}`;

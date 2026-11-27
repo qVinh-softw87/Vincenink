@@ -15,12 +15,13 @@ a{color:var(--acc)}nav{margin-top:28px;padding-top:16px;border-top:1px solid var
 
 <p>Vincenink là bảng trắng dạy học trực tuyến. Trang này giải thích dữ liệu nào được lưu, ở đâu và để làm gì.</p>
 <h2>1. Dữ liệu lưu trên máy của bạn</h2>
-<p>Bảng vẽ, tài liệu, ảnh, học phí, ghi chú và cài đặt được lưu trong trình duyệt của bạn (IndexedDB / localStorage). Chúng không được gửi lên máy chủ của Vincenink.</p>
+<p>Dữ liệu được lưu trong trình duyệt của bạn (IndexedDB / localStorage). <b>Khi chưa đăng nhập (chế độ khách)</b>, dữ liệu chỉ tồn tại trong phiên: tải lại trang vẫn còn, nhưng đóng hết các tab Vincenink rồi mở lại thì dữ liệu tạo trong chế độ khách bị xoá khỏi máy. Dữ liệu khách không được gửi lên máy chủ.</p>
 <h2>2. Khi bạn đăng nhập (không bắt buộc)</h2>
 <ul>
 <li>Tài khoản được quản lý bởi <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a>. Khi đăng nhập bằng Google, Vincenink chỉ nhận <b>tên, địa chỉ email và ảnh đại diện</b> của tài khoản Google — không đọc Gmail, Drive hay dữ liệu Google nào khác.</li>
-<li>Được đồng bộ lên máy chủ: hồ sơ (tên, vai trò, trường, liên hệ, ảnh đại diện nhỏ), tên các lớp học, lịch học và cài đặt nhắc lịch, kèm múi giờ — để dùng trên nhiều thiết bị và gửi thông báo nhắc lịch.</li>
-<li><b>Không</b> đồng bộ: học phí, bảng vẽ, tài liệu, ảnh.</li>
+<li>Được sao lưu lên máy chủ: hồ sơ (tên, vai trò, trường, liên hệ, ảnh đại diện nhỏ), lớp học kèm học phí và các tháng đã thu, lịch học, cài đặt nhắc lịch kèm múi giờ, và bảng vẽ (ảnh dán trong bảng được nén) — để dữ liệu không mất, dùng được trên nhiều thiết bị và nhận thông báo nhắc lịch.</li>
+<li><b>Không</b> gửi lên máy chủ: tài liệu tải lên (PDF, ảnh trong mục Tài liệu).</li>
+<li>Trình duyệt ghi nhớ phiên đăng nhập, nên lần sau mở lại không cần đăng nhập. Khi đăng xuất, bản trên máy được xoá lúc đóng trang; dữ liệu đã sao lưu vẫn còn trên tài khoản.</li>
 <li>Mỗi tài khoản chỉ đọc/ghi được dữ liệu của chính mình (Row Level Security).</li>
 </ul>
 <h2>3. Thông báo nhắc lịch</h2>
@@ -43,11 +44,11 @@ a{color:var(--acc)}nav{margin-top:28px;padding-top:16px;border-top:1px solid var
 <h1 style="font-size:22px">Privacy Policy</h1>
 <p>Vincenink is an online teaching whiteboard. This page explains what data is stored, where, and why.</p>
 <h2>1. Data stored on your device</h2>
-<p>Boards, files, images, fees, notes and settings are stored in your browser (IndexedDB / localStorage) and are not sent to Vincenink servers.</p>
+<p>Data is stored in your browser (IndexedDB / localStorage). <b>When you are not signed in (guest mode)</b>, data lasts only for the session: reloading keeps it, but closing every Vincenink tab removes data created in guest mode. Guest data is never sent to Vincenink servers.</p>
 <h2>2. When you sign in (optional)</h2>
 <ul><li>Accounts are managed by Supabase. With Google sign-in, Vincenink receives only your <b>name, email address and profile picture</b> — it does not access Gmail, Drive or any other Google data.</li>
-<li>Synced to the server: profile, class names, schedules and reminder settings with your time zone, so you can use them on several devices and receive reminders.</li>
-<li><b>Not</b> synced: fees, boards, files, images. Each account can only access its own data (Row Level Security).</li></ul>
+<li>Backed up to the server: profile, classes with fees and paid months, schedules, reminder settings with your time zone, and boards (pasted images are compressed), so nothing is lost and you can use several devices and receive reminders.</li>
+<li><b>Not</b> sent to the server: uploaded documents (PDFs, images in Files). Your browser remembers your sign-in. After signing out, the local copy is removed when the page closes; your backup stays in your account. Each account can only access its own data (Row Level Security).</li></ul>
 <h2>3. Reminder notifications</h2>
 <p>If you enable notifications, your browser provides a push subscription that Vincenink stores to send reminders; it is deleted when you turn notifications off or sign out.</p>
 <h2>4. Third-party services</h2>

@@ -445,6 +445,19 @@ const EN = {
   "Chưa sao lưu": "Not backed up",
   "Đăng nhập để không mất lịch học": "Sign in so you don’t lose your schedule",
   "Sao lưu dữ liệu & nhận thông báo": "Back up data & get reminders",
+  "Đã đăng xuất. Dữ liệu đã sao lưu trên tài khoản — bản trên máy này sẽ xoá khi đóng trang.": "Signed out. Your data is backed up to your account; the copy on this device is removed when you close the page.",
+  "Dữ liệu đã được sao lưu trên tài khoản. Sau khi đăng xuất, máy này chuyển sang chế độ khách: đóng trang thì bản trên máy bị xoá, đăng nhập lại sẽ tải về đủ.": "Your data is backed up to your account. After signing out this device switches to guest mode: closing the page removes the local copy, and signing in again restores everything.",
+  "Bạn đang dùng Vincenink ở <b>chế độ khách</b> (chưa đăng nhập).": "You are using Vincenink in <b>guest mode</b> (not signed in).",
+  "Ở chế độ khách, <b>đóng trang hoặc trình duyệt là dữ liệu bị xoá</b> (tải lại trang thì vẫn còn).": "In guest mode, <b>closing the tab or browser deletes your data</b> (reloading keeps it).",
+  "Lưu toàn bộ: lớp, lịch, học phí và bảng vẽ": "Save everything: classes, schedule, fees and boards",
+  "Trình duyệt nhớ đăng nhập — lần sau mở là dùng tiếp, không phải đăng nhập lại": "Your browser remembers you, so next time you just open it and continue",
+  "Mở trên máy khác vẫn thấy đủ dữ liệu": "See all your data on any other device",
+  "Dữ liệu bạn có từ trước vẫn được giữ trên máy này; chỉ những gì tạo mới khi chưa đăng nhập mới bị xoá khi đóng trang. Đăng nhập để sao lưu tất cả.": "Data you already had is kept on this device; only what you create while signed out is deleted when the page closes. Sign in to back up everything.",
+  "Tài liệu tải lên (PDF/ảnh lớn) chỉ lưu trên máy đang dùng.": "Uploaded documents (PDFs, large images) stay on this device only.",
+  "Đóng trang là mất dữ liệu — hãy đăng nhập": "Closing the page loses data, so sign in",
+  "Được sao lưu: hồ sơ, lớp học, lịch, học phí, bảng vẽ và giờ nhắc. Tài liệu tải lên (PDF/ảnh lớn) chỉ nằm trên máy này.": "Backed up: profile, classes, schedule, fees, boards and reminders. Uploaded documents (PDFs, large images) stay on this device only.",
+  "Không đăng nhập vẫn dùng được (chế độ khách), nhưng đóng trang là dữ liệu bị xoá. Đăng nhập một lần, trình duyệt sẽ nhớ — dữ liệu được lưu và sao lưu đầy đủ.": "You can use it without signing in (guest mode), but closing the page deletes your data. Sign in once and your browser remembers you, with everything saved and backed up.",
+  "Máy chủ chưa có bảng sao lưu bảng vẽ — chủ trang cần chạy supabase/fix-02-boards.sql": "The server has no table for board backups yet. The site owner needs to run supabase/fix-02-boards.sql"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1663,6 +1676,7 @@ async function doSave() {
       }
     }
     setStatus(false);
+    if (content) Cloud.queueBoards();
   } catch (err) { console.error(err); toast(t('Không lưu được — bộ nhớ trình duyệt có thể đã đầy'), true); }
 }
 let saving = false;
@@ -1716,24 +1730,25 @@ async function duplicateBoard(id) {
 /* ---- Bảng tự xoá sau 7 ngày nếu chưa tải xuống (PNG/PDF) và chưa bấm Giữ lại ---- */
 const BOARD_TTL = 7 * 864e5;
 const boardExpiry = b => (b.keep || b.exportedAt) ? 0 : Math.max(b.updatedAt || 0, b.createdAt || 0) + BOARD_TTL;
-const boardDaysLeft = b => { const e = boardExpiry(b); return e ? Math.max(0, Math.ceil((e - Date.now()) / 864e5)) : null; };
+const boardDaysLeft = b => { if (isMemberSync()) return null; const e = boardExpiry(b); return e ? Math.max(0, Math.ceil((e - Date.now()) / 864e5)) : null; };
 async function purgeOldBoards() {
+  if (isMemberSync()) return;   // đã đăng nhập: bảng được sao lưu, không tự xoá
   const old = S.boards.filter(b => { const e = boardExpiry(b); return e && e < Date.now() && b.id !== S.settings.lastBoard; });
   for (const b of old) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
   if (old.length) { S.boards = S.boards.filter(b => !old.includes(b)); setTimeout(() => toast(t('Đã tự xoá {n} bảng cũ hơn 7 ngày chưa tải xuống', { n: old.length })), 1200); }
 }
 async function markExported() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b || b.exportedAt) return;
-  b.exportedAt = Date.now(); await DB.put('boards', b); if (S.tab === 'boards') renderPanel();
+  b.exportedAt = Date.now(); b.updatedAt = Date.now(); await DB.put('boards', b); Cloud.queueBoards(); if (S.tab === 'boards') renderPanel();
 }
 async function toggleKeep(id) {
-  const b = S.boards.find(x => x.id === id); b.keep = !b.keep; await DB.put('boards', b); renderPanel();
+  const b = S.boards.find(x => x.id === id); b.keep = !b.keep; b.updatedAt = Date.now(); await DB.put('boards', b); Cloud.queueBoards(); renderPanel();
   toast(t(b.keep ? 'Đã giữ lại bảng — sẽ không tự xoá' : 'Bảng sẽ tự xoá sau 7 ngày nếu chưa tải xuống'));
 }
 async function deleteBoard(id) {
   const b = S.boards.find(x => x.id === id);
   if (!await confirmBox(t('Xoá bảng này?'), t('“{t}” sẽ bị xoá vĩnh viễn và không thể khôi phục.', { t: esc(b.title) }), t('Xoá'))) return;
-  await DB.del('boards', id); await DB.del('boardData', id);
+  await DB.del('boards', id); await DB.del('boardData', id); Cloud.markBoardDeleted(id);
   S.boards = S.boards.filter(x => x.id !== id);
   if (S.boardId === id) {
     S.boardId = null; contentDirty = viewDirty = false;
@@ -1750,8 +1765,8 @@ async function editBoardMeta(id) {
     { name: 'owner', label: t('Thuộc về'), type: 'select', value: b.studentId, options: [['all', t('Lớp chung')], ...S.students.map(s => [s.id, dx(s.name)])] },
   ], t('Lưu'));
   if (!r) return;
-  b.title = r.title.trim() || b.title; b.date = r.date || b.date; b.studentId = r.owner;
-  await DB.put('boards', b);
+  b.title = r.title.trim() || b.title; b.date = r.date || b.date; b.studentId = r.owner; b.updatedAt = Date.now();
+  await DB.put('boards', b); Cloud.queueBoards();
   if (S.boardId === id && b.studentId !== S.studentId) S.studentId = b.studentId;
   renderTopbar(); renderPanel(); renderSidebar();
 }
@@ -1794,7 +1809,7 @@ function studentModal(st) {
 async function deleteStudent(st) {
   const nb = S.boards.filter(b => b.studentId === st.id).length, nf = S.files.filter(f => f.studentId === st.id).length;
   if (!await confirmBox(t('Xoá lớp học {n}?', { n: esc(st.name) }), t('Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của lớp học này trên máy.', { b: nb, f: nf }), t('Xoá'))) return false;
-  for (const b of S.boards.filter(b => b.studentId === st.id)) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
+  for (const b of S.boards.filter(b => b.studentId === st.id)) { await DB.del('boards', b.id); await DB.del('boardData', b.id); Cloud.markBoardDeleted(b.id); }
   for (const f of S.files.filter(f => f.studentId === st.id)) await DB.del('files', f.id);
   await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id); Cloud.markDeleted(st.id);
   S.boards = S.boards.filter(b => b.studentId !== st.id); S.files = S.files.filter(f => f.studentId !== st.id); S.students = S.students.filter(s => s.id !== st.id);
@@ -1980,7 +1995,7 @@ function renderBoardsTab(body) {
       ${groups[d].map(b => `
         <div class="board-card ${b.id === S.boardId ? 'active' : ''}" data-board="${b.id}">
           <div class="thumb">${b.thumb ? `<img src="${b.thumb}" alt="">` : ''}</div>
-          <div class="meta"><div class="t">${esc(boardTitle(b))}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
+          <div class="meta"><div class="t">${esc(boardTitle(b))}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return isMemberSync() ? '' : b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
           <button class="icon-btn sm more" data-bmenu="${b.id}" title="${t('Tuỳ chọn')}">${ic('more', 18)}</button>
         </div>`).join('')}`).join('')
     || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
@@ -2117,7 +2132,7 @@ function renderFeeTab(body) {
   if (!S.feeMonth) S.feeMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const y = S.feeMonth.getFullYear(), m = S.feeMonth.getMonth(), isThis = ymKey(S.feeMonth) === ymKey(new Date());
   const f = feeStats(st, y, m), mLabel = `${pad(m + 1)}/${y}`, today = todayStr();
-  const L = feeLedger(st, y, m); setTimeout(renderIncomeBtn, 0);
+  const L = feeLedger(st, y, m); setTimeout(renderIncomeBtn, 0); Cloud.queue();
   body.innerHTML = `
     <div class="fee-rate">
       <label for="feeInput">${ic('wallet', 15)}${t('Học phí mỗi buổi')}</label>
@@ -3109,15 +3124,104 @@ function remindersModal() {
 }
 
 /* =====================================================================
+   Chế độ khách & tài khoản
+   - Chưa đăng nhập (khách): dữ liệu chỉ tồn tại trong phiên — tải lại trang (F5) vẫn còn,
+     ĐÓNG tab / trình duyệt rồi mở lại thì bị xoá.
+   - Đã đăng nhập: giữ toàn bộ trên máy + sao lưu lên tài khoản; trình duyệt nhớ phiên đăng nhập.
+   - Trình duyệt đã có dữ liệu từ TRƯỚC khi có chế độ này (legacy): giữ dữ liệu cũ, chỉ xoá
+     những gì tạo mới ở chế độ khách.
+   ===================================================================== */
+const AUTH_KEY = 'vincenink.auth';
+const isMemberSync = () => { try { return !!localStorage.getItem(AUTH_KEY) || !!(window.Cloud && Cloud.user); } catch (e) { return false; } };
+const Guest = {
+  tabId: Math.random().toString(36).slice(2),
+  legacyAt: () => +ls.get('vincenink.legacyAt', '0') || 0,
+  /* Có tab Vincenink nào khác đang mở không? (để không xoá dữ liệu khi người dùng chỉ mở thêm tab) */
+  othersOpen() {
+    return new Promise(res => {
+      if (!('BroadcastChannel' in window)) return res(false);
+      let seen = false; const ch = new BroadcastChannel('vincenink-tabs');
+      ch.onmessage = e => { if (e.data && e.data.pong === this.tabId) seen = true; };
+      ch.postMessage({ ping: this.tabId }); setTimeout(() => { ch.close(); res(seen); }, 300);
+    });
+  },
+  listen() {
+    if (!('BroadcastChannel' in window)) return;
+    const ch = new BroadcastChannel('vincenink-tabs');
+    ch.onmessage = e => { if (e.data && e.data.ping && e.data.ping !== this.tabId) ch.postMessage({ pong: e.data.ping }); };
+  },
+  /* Chạy lúc mở trang, trước khi hiển thị dữ liệu */
+  async start(hasData) {
+    this.listen();
+    if (!ls.get('vincenink.mode.v', '')) {           // lần đầu chạy bản có chế độ khách
+      ls.set('vincenink.mode.v', '1');
+      if (hasData && !isMemberSync()) ls.set('vincenink.legacyAt', String(Date.now()));
+    }
+    let fresh = false;
+    try { fresh = !sessionStorage.getItem('vincenink.sess'); sessionStorage.setItem('vincenink.sess', '1'); } catch (e) { /* */ }
+    if (!fresh || isMemberSync() || !hasData) return false;
+    if (await this.othersOpen()) return false;
+    await this.wipe(this.legacyAt());
+    return true;
+  },
+  /* Xoá dữ liệu khách của phiên trước. legacyAt > 0: chỉ xoá những gì tạo sau mốc đó */
+  async wipe(since) {
+    const newer = x => !since || (x.createdAt || x.created || 0) > since;
+    const goneSt = new Set(S.students.filter(newer).map(s => s.id));
+    for (const b of S.boards.filter(b => newer(b) || goneSt.has(b.studentId))) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
+    for (const f of S.files.filter(f => newer(f) || goneSt.has(f.studentId))) await DB.del('files', f.id);
+    for (const id of goneSt) { await DB.del('students', id); await DB.del('schedule', id); S.sched.delete(id); }
+    if (!since) {
+      for (const k of [...S.sched.keys()]) { await DB.del('schedule', k); S.sched.delete(k); }
+      const keep = {};
+      ['penOnly', 'aiCode'].forEach(k => { if (S.settings[k] != null) keep[k] = S.settings[k]; });
+      S.settings = { ...keep }; await DB.put('settings', { id: 'main', ...S.settings });
+      ['vincenink.reminders', 'vincenink.cloud.at', 'vincenink.cloud.bsync', 'vincenink.cloud.deleted', 'vincenink.cloud.bdel', 'vincenink.cloud.owner', 'vincenink.firedLocal'].forEach(k => ls.set(k, k === 'vincenink.cloud.at' ? '' : (/deleted|bdel/.test(k) ? '[]' : k.endsWith('owner') ? '' : '{}')));
+    }
+    S.students = S.students.filter(s => !goneSt.has(s.id));
+    S.boards = S.boards.filter(b => !(newer(b) || goneSt.has(b.studentId)));
+    S.files = S.files.filter(f => !(newer(f) || goneSt.has(f.studentId)));
+  },
+  /* Khách đang có dữ liệu sẽ mất khi đóng trang? (để hỏi lại trước khi đóng) */
+  atRisk() {
+    if (isMemberSync()) return false;
+    const since = this.legacyAt(), newer = x => !since || (x.createdAt || x.created || 0) > since;
+    return S.students.some(newer) || S.files.some(newer) || S.boards.some(b => newer(b) && (b.updatedAt || 0) - (b.createdAt || 0) > 1000);
+  },
+};
+window.addEventListener('beforeunload', e => { if (typeof Cloud !== 'undefined' && Cloud.configured() && Guest.atRisk()) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---- Sao lưu bảng vẽ: nén ảnh dán trong bảng trước khi gửi lên ---- */
+async function shrinkSrc(src) {
+  if (typeof src !== 'string' || !src.startsWith('data:image') || src.length < 400e3) return src;
+  try {
+    const img = await loadImg(src), max = 1600, big = Math.max(img.naturalWidth, img.naturalHeight), k = Math.min(1, max / big);
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL('image/jpeg', 0.8); return out.length < src.length ? out : src;
+  } catch (e) { return src; }
+}
+async function boardPayload(b) {
+  const d = (await DB.get('boardData', b.id)) || { items: [], bg: 'grid', view: { x: 0, y: 0, s: 1 } };
+  const items = [];
+  for (const it of d.items || []) items.push(it.type === 'image' ? { ...it, src: await shrinkSrc(it.src) } : it);
+  return {
+    meta: { title: b.title, date: b.date, studentId: b.studentId, createdAt: b.createdAt || 0, updatedAt: b.updatedAt || 0, thumb: b.thumb || null, keep: !!b.keep, exportedAt: b.exportedAt || 0 },
+    data: { items, bg: d.bg || 'grid', view: d.view || { x: 0, y: 0, s: 1 } },
+  };
+}
+
+/* =====================================================================
    Tài khoản (Supabase): đăng nhập / đăng ký, đồng bộ lịch + hồ sơ + danh sách lớp,
    và thông báo đẩy (Web Push) do máy chủ gửi — kể cả khi đã đóng trang.
-   Học phí, bảng vẽ, tài liệu KHÔNG đồng bộ: vẫn chỉ nằm trên máy này.
+   Đồng bộ thêm học phí (theo lớp) và bảng vẽ (bảng `boards`, ảnh dán được nén).
+   Tài liệu tải lên (PDF/ảnh lớn) vẫn chỉ nằm trên máy này.
    ===================================================================== */
 const deviceId = (() => { let d = ls.get('vincenink.device', ''); if (!d) { d = Math.random().toString(36).slice(2, 10); ls.set('vincenink.device', d); } return d; })();
 const urlB64 = b => { b = String(b || '').trim(); const p = '='.repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
 
 var Cloud = window.Cloud = {
-  cfg: null, sb: null, user: null, ready: false, providers: {}, pushOn: false, timer: null, lastHash: '', syncedAt: 0, busy: false, recovery: false, blocked: false, lastError: '',
+  cfg: null, sb: null, user: null, ready: false, providers: {}, pushOn: false, timer: null, lastHash: '', syncedAt: 0, busy: false, recovery: false, blocked: false, lastError: '', boardErr: '',
   configured() { return !!(this.cfg && this.cfg.cloud); },
   canPush() { return !!(this.cfg && this.cfg.push && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); },
   async init() {
@@ -3144,16 +3248,20 @@ var Cloud = window.Cloud = {
   /* Mỗi trình duyệt gắn với một tài khoản: đổi sang tài khoản khác thì hỏi trước, tránh trộn dữ liệu giữa hai người */
   async guardOwner() {
     const owner = ls.get('vincenink.cloud.owner', ''), me = this.user.id;
-    if (!owner || owner === me) { ls.set('vincenink.cloud.owner', me); return true; }
+    if (!owner || owner === me) { ls.set('vincenink.cloud.owner', me); ls.set('vincenink.legacyAt', '0'); return true; }
     this.blocked = true;
     const ok = await confirmBox(t('Máy này đang có dữ liệu của tài khoản khác'),
       t('Lớp học và lịch trên trình duyệt này đã được đồng bộ với một tài khoản khác. Gộp chúng vào tài khoản {e}? Chọn “Huỷ” để đăng xuất, dữ liệu trên máy giữ nguyên.', { e: esc(this.user.email || '') }), t('Gộp vào tài khoản này'), false);
     this.blocked = false;
     if (!ok) { await this.sb.auth.signOut(); this.user = null; renderAccountUI(); toast(t('Đã đăng xuất để không trộn dữ liệu. Hãy dùng một hồ sơ trình duyệt riêng cho tài khoản đó.')); return false; }
-    ls.set('vincenink.cloud.owner', me); ls.set('vincenink.cloud.at', ''); return true;
+    ls.set('vincenink.cloud.owner', me); ls.set('vincenink.cloud.at', ''); ls.set('vincenink.cloud.bsync', '{}'); ls.set('vincenink.legacyAt', '0'); return true;
   },
   fail(e, where) {
     const m = String((e && (e.message || e.code)) || e || '');
+    if (where === 'boards' && /PGRST205|42P01|could not find the table|does not exist/i.test(m + (e && e.code))) {
+      this.boardErr = t('Máy chủ chưa có bảng sao lưu bảng vẽ — chủ trang cần chạy supabase/fix-02-boards.sql');
+      console.warn('cloud', where, e); renderAccountUI(); const md0 = $('#acctModal'); if (md0) acctPaint(md0); return;
+    }
     this.lastError = /permission denied|42501|not allowed|PGRST301|401|403/i.test(m + (e && e.code))
       ? t('Máy chủ chưa cấp quyền cho bảng dữ liệu — chủ trang cần chạy supabase/fix-01-grants.sql')
       : t('Chưa đồng bộ được ({w}): {m}', { w, m: m.slice(0, 120) });
@@ -3177,7 +3285,7 @@ var Cloud = window.Cloud = {
     S.sched.forEach((v, k) => { schedule[k] = { fixed: v.fixed || [], sessions: v.sessions || [], skips: v.skips || [], overrides: v.overrides || {}, weekNotes: v.weekNotes || {} }; });
     return {
       profile: p,
-      classes: S.students.map(s => ({ id: s.id, name: s.name, color: s.color || '', grade: s.grade || '', created: s.created || 0 })).concat(this.deleted().map(id => ({ id, deleted: true }))),
+      classes: S.students.map(s => ({ id: s.id, name: s.name, color: s.color || '', grade: s.grade || '', created: s.created || 0, fee: s.fee || 0, feePlan: s.feePlan || null, feeAdj: s.feeAdj || {}, feePaid: s.feePaid || {} })).concat(this.deleted().map(id => ({ id, deleted: true }))),
       schedule,
       reminders: { settings: Reminders.settings(), lessons: Reminders.upcoming(), lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh', serverPush: this.pushOn },
     };
@@ -3201,6 +3309,7 @@ var Cloud = window.Cloud = {
       const localAt = ls.get('vincenink.cloud.at', ''), rT = data ? Date.parse(data.updated_at) : 0, lT = Date.parse(localAt) || 0;
       if (data && rT > lT && data.device !== deviceId) await this.apply(data);
       if (data) ls.set('vincenink.cloud.at', rT > lT ? data.updated_at : localAt);
+      await this.pullBoards().then(() => { this.boardErr = ''; }, e => this.fail(e, 'boards'));
       this.syncedAt = Date.now(); this.lastError = ''; okPull = true;
     } catch (e) { this.fail(e, 'pull'); }
     this.busy = false; if (okPull) { this.lastHash = ''; this.queue(true); } renderAccountUI();
@@ -3212,6 +3321,7 @@ var Cloud = window.Cloud = {
       let st = studentById(c.id);
       if (!st) { st = { id: c.id, name: c.name, color: c.color || '#B5835A', grade: c.grade || '', created: c.created || Date.now() }; S.students.push(st); }
       else Object.assign(st, { name: c.name, color: c.color || st.color, grade: c.grade || '' });
+      if ('fee' in c) Object.assign(st, { fee: c.fee || 0, feePlan: c.feePlan || st.feePlan || null, feeAdj: { ...(st.feeAdj || {}), ...(c.feeAdj || {}) }, feePaid: { ...(st.feePaid || {}), ...(c.feePaid || {}) } });
       await DB.put('students', st);
     }
     for (const id of gone) if (studentById(id)) { await DB.del('students', id); await DB.del('schedule', id); S.sched.delete(id); S.students = S.students.filter(s => s.id !== id); }
@@ -3221,6 +3331,62 @@ var Cloud = window.Cloud = {
     saveSettings();
     if (!studentById(S.studentId) && S.studentId !== 'all') S.studentId = (firstStudent() || { id: 'all' }).id;
     renderSidebar(); renderPanel(); renderProfileCard(); refreshDay(); Reminders.sync();
+  },
+
+  /* ---- Bảng vẽ: mỗi bảng một dòng trong bảng `boards` (mốc đã gửi lưu ở cloud.bsync) ---- */
+  bsync() { try { return JSON.parse(ls.get('vincenink.cloud.bsync', '{}')) || {}; } catch (e) { return {}; } },
+  setB(id, v) { const m = this.bsync(); if (v == null) delete m[id]; else m[id] = v; ls.set('vincenink.cloud.bsync', JSON.stringify(m)); },
+  btimer: null, bbusy: false,
+  deletedBoards() { try { return JSON.parse(ls.get('vincenink.cloud.bdel', '[]')) || []; } catch (e) { return []; } },
+  setDeletedBoards(d) { ls.set('vincenink.cloud.bdel', JSON.stringify(d.slice(-500))); },
+  markBoardDeleted(id) { if (!this.user) return; const d = this.deletedBoards(); if (!d.includes(id)) d.push(id); this.setDeletedBoards(d); this.setB(id, null); this.queueBoards(); },
+  queueBoards(now) { if (!this.user || this.blocked) return; clearTimeout(this.btimer); this.btimer = setTimeout(() => this.pushBoards(), now ? 50 : 4000); },
+  async pushBoards() {
+    if (!this.user || this.blocked) return;
+    if (this.bbusy) { this.queueBoards(); return; }
+    this.bbusy = true;
+    try {
+      const sync = this.bsync();
+      for (const b of S.boards.filter(b => (b.updatedAt || 0) > (sync[b.id] || 0))) {
+        const p = await boardPayload(b);
+        const { error } = await this.sb.from('boards').upsert({ user_id: this.user.id, id: b.id, meta: p.meta, data: p.data, deleted: false, updated_at: new Date(b.updatedAt || Date.now()).toISOString() });
+        if (error) { this.fail(error, 'boards'); break; }
+        this.setB(b.id, b.updatedAt || 0);
+      }
+      for (const id of this.deletedBoards()) {
+        const { error } = await this.sb.from('boards').upsert({ user_id: this.user.id, id, meta: {}, data: null, deleted: true, updated_at: new Date().toISOString() });
+        if (error) { this.fail(error, 'boards'); break; }
+        this.setDeletedBoards(this.deletedBoards().filter(x => x !== id));
+      }
+    } catch (e) { this.fail(e, 'boards'); }
+    this.bbusy = false;
+  },
+  async pullBoards() {
+    const { data, error } = await this.sb.from('boards').select('id,meta,deleted,updated_at').eq('user_id', this.user.id);
+    if (error) throw error;
+    let changed = false; const pendingDel = this.deletedBoards();
+    for (const r of data || []) {
+      const local = S.boards.find(b => b.id === r.id), rT = (r.meta && r.meta.updatedAt) || Date.parse(r.updated_at) || 0;
+      if (r.deleted) {
+        if (local) { await DB.del('boards', r.id); await DB.del('boardData', r.id); S.boards = S.boards.filter(b => b.id !== r.id); changed = true; }
+        this.setB(r.id, null); continue;
+      }
+      if (pendingDel.includes(r.id) || (local && (local.updatedAt || 0) >= rT)) continue;
+      if (local && S.boardId === r.id && contentDirty) continue;
+      const { data: full, error: e2 } = await this.sb.from('boards').select('data').eq('user_id', this.user.id).eq('id', r.id).maybeSingle();
+      if (e2 || !full) continue;
+      const m = r.meta || {};
+      const b = { id: r.id, title: m.title || t('Bảng'), date: m.date || todayStr(), studentId: m.studentId || 'all', createdAt: m.createdAt || rT, updatedAt: rT, thumb: m.thumb || null, keep: !!m.keep, exportedAt: m.exportedAt || 0 };
+      await DB.put('boards', b); await DB.put('boardData', { id: r.id, ...(full.data || { items: [] }) });
+      if (local) Object.assign(local, b); else S.boards.push(b);
+      this.setB(r.id, rT); changed = true;
+      if (S.boardId === r.id) await openBoard(r.id);
+    }
+    if (changed) {
+      if (S.boardId && !S.boards.find(b => b.id === S.boardId)) { const nx = boardsOf(S.studentId)[0] || await createBoard(S.studentId, false); await openBoard(nx.id); }
+      renderSidebar(); renderPanel();
+    }
+    this.queueBoards(true);
   },
 
   /* ---- Thông báo đẩy ---- */
@@ -3285,9 +3451,10 @@ var Cloud = window.Cloud = {
   async reset(email) { const { error } = await this.sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0].split('?')[0] }); return error; },
   async newPassword(pw) { const { error } = await this.sb.auth.updateUser({ password: pw }); if (!error) this.recovery = false; return error; },
   async signOut() {
+    try { clearTimeout(this.timer); clearTimeout(this.btimer); await this.push(); this.bbusy = false; await this.pushBoards(); } catch (e) { /* vẫn đăng xuất */ }
     await this.disablePush();
     await this.sb.auth.signOut(); this.user = null; this.lastHash = ''; ls.set('vincenink.cloud.at', '');
-    toast(t('Đã đăng xuất — dữ liệu trên máy này vẫn được giữ nguyên')); renderAccountUI();
+    toast(t('Đã đăng xuất. Dữ liệu đã sao lưu trên tài khoản — bản trên máy này sẽ xoá khi đóng trang.')); renderAccountUI();
   },
 };
 
@@ -3327,8 +3494,8 @@ function acctPaint(body) {
         <p>${c.canPush() ? t(c.pushOn ? 'Máy chủ sẽ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink.' : 'Bấm bật và chọn “Cho phép” — chỉ một lần, không cần cài thêm gì.') : t('Trình duyệt này chưa hỗ trợ thông báo đẩy, hoặc máy chủ chưa cấu hình VAPID.')}</p>
         ${c.canPush() ? (c.pushOn ? `<button class="btn primary sm" data-a="pushtest">${ic('bell', 14)}${t('Gửi thử từ máy chủ')}</button><button class="btn ghost sm" data-a="pushoff">${t('Tắt trên máy này')}</button><button class="btn ghost sm" data-a="remset">${ic('settings', 14)}${t('Giờ nhắc')}</button>` : `<button class="btn primary" data-a="pushon">${ic('bell', 15)}${t('Bật thông báo')}</button>`) : ''}
       </div>
-      ${c.lastError ? `<p class="acct-err">${ic('info', 14)}${esc(c.lastError)}</p>` : ''}
-      <p class="hint">${t('Được đồng bộ: lịch học, hồ sơ, tên các lớp và cài đặt nhắc lịch. Học phí, bảng vẽ, tài liệu vẫn chỉ nằm trên máy này.')}</p>
+      ${(c.lastError || c.boardErr) ? `<p class="acct-err">${ic('info', 14)}${esc(c.lastError || c.boardErr)}</p>` : ''}
+      <p class="hint">${t('Được sao lưu: hồ sơ, lớp học, lịch, học phí, bảng vẽ và giờ nhắc. Tài liệu tải lên (PDF/ảnh lớn) chỉ nằm trên máy này.')}</p>
       <div class="acct-foot"><button class="btn ghost sm" data-a="sync">${ic('refresh', 14)}${t('Đồng bộ ngay')}</button><button class="btn sm danger-text" data-a="out">${t('Đăng xuất')}</button></div>`;
     return;
   }
@@ -3344,7 +3511,7 @@ function acctPaint(body) {
       ${mode === 'in' ? `<button type="button" class="link-btn" data-a="forgot">${t('Quên mật khẩu?')}</button>` : ''}
       <p class="acct-msg"></p>
     </form>
-    <p class="hint">${t('Không bắt buộc: không đăng nhập vẫn dùng được, dữ liệu lưu trên máy này. Đăng nhập để đồng bộ lịch học, hồ sơ giữa các máy và nhận thông báo nhắc lịch kể cả khi đã đóng trang.')}</p>`;
+    <p class="hint">${t('Không đăng nhập vẫn dùng được (chế độ khách), nhưng đóng trang là dữ liệu bị xoá. Đăng nhập một lần, trình duyệt sẽ nhớ — dữ liệu được lưu và sao lưu đầy đủ.')}</p>`;
 }
 /* Cửa sổ báo đã gửi email (xác nhận đăng ký / đặt lại mật khẩu / chưa xác nhận) */
 const mailLink = em => { const d = String(em).split('@')[1] || ''; return /gmail|googlemail/.test(d) ? ['Gmail', 'https://mail.google.com/mail/u/0/#inbox'] : /outlook|hotmail|live|msn/.test(d) ? ['Outlook', 'https://outlook.live.com/mail/'] : /yahoo/.test(d) ? ['Yahoo Mail', 'https://mail.yahoo.com'] : /icloud|me\.com|mac\.com/.test(d) ? ['iCloud Mail', 'https://www.icloud.com/mail'] : null; };
@@ -3389,7 +3556,7 @@ function welcomeAccountModal() {
   openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: acts });
 }
 async function signOutFlow() {
-  if (!await confirmBox(t('Đăng xuất?'), t('Dữ liệu trên máy này vẫn được giữ nguyên. Máy này sẽ ngừng nhận thông báo đẩy.'), t('Đăng xuất'))) return;
+  if (!await confirmBox(t('Đăng xuất?'), t('Dữ liệu đã được sao lưu trên tài khoản. Sau khi đăng xuất, máy này chuyển sang chế độ khách: đóng trang thì bản trên máy bị xoá, đăng nhập lại sẽ tải về đủ.'), t('Đăng xuất'))) return;
   await Cloud.signOut(); const m = $('#acctModal'); if (m) acctPaint(m);
 }
 function accountModal() {
@@ -3565,7 +3732,7 @@ function renderTopbar() {
 function bindTopbar() {
   $('#btnBgPick').onclick = e => bgPopover(e.currentTarget);
   const title = $('#boardTitle');
-  title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; if (title.value.trim() && title.value.trim() !== boardTitle(b)) b.title = title.value.trim(); title.value = boardTitle(b); await DB.put('boards', b); renderPanel(); renderTopbar(); };
+  title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; if (title.value.trim() && title.value.trim() !== boardTitle(b)) b.title = title.value.trim(); title.value = boardTitle(b); b.updatedAt = Date.now(); await DB.put('boards', b); Cloud.queueBoards(); renderPanel(); renderTopbar(); };
   title.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') title.blur(); };
   $('#boardDate').onchange = async e => { const b = S.boards.find(x => x.id === S.boardId); if (!b || !e.target.value) return; b.date = e.target.value; await DB.put('boards', b); renderPanel(); };
   $('#ownerChip').onclick = () => { const b = S.boards.find(x => x.id === S.boardId); if (b) { $('#app').classList.remove('focus'); setTimeout(resize, 0); selectStudent(b.studentId); } };
@@ -3665,14 +3832,15 @@ async function maybeBackupPrompt() {
   const body = document.createElement('div'); body.className = 'mail-pop backup-pop';
   body.innerHTML = `<div class="mp-ic">☁️</div>
     <h3>${t('Đăng nhập để sao lưu dữ liệu')}</h3>
-    <p class="mp-lead">${t('Bạn đang dùng Vincenink mà <b>chưa đăng nhập</b>. Mọi dữ liệu chỉ nằm trong trình duyệt này và <b>chưa được sao lưu</b>.')}</p>
-    <div class="bk-warn">${ic('info', 16)}<span>${t('Nếu xoá lịch sử / dữ liệu trang web, dùng chế độ ẩn danh, đổi trình duyệt hoặc đổi máy, dữ liệu sẽ <b>bị mất</b> và không khôi phục được.')}</span></div>
+    <p class="mp-lead">${t('Bạn đang dùng Vincenink ở <b>chế độ khách</b> (chưa đăng nhập).')}</p>
+    <div class="bk-warn">${ic('info', 16)}<span>${t('Ở chế độ khách, <b>đóng trang hoặc trình duyệt là dữ liệu bị xoá</b> (tải lại trang thì vẫn còn).')}</span></div>
     <ul class="bk-list">
-      <li>✓ ${t('Sao lưu lịch học, hồ sơ và danh sách lớp lên mạng')}</li>
-      <li>✓ ${t('Mở trên máy khác vẫn thấy đủ lịch')}</li>
+      <li>✓ ${t('Lưu toàn bộ: lớp, lịch, học phí và bảng vẽ')}</li>
+      <li>✓ ${t('Trình duyệt nhớ đăng nhập — lần sau mở là dùng tiếp, không phải đăng nhập lại')}</li>
+      <li>✓ ${t('Mở trên máy khác vẫn thấy đủ dữ liệu')}</li>
       <li>✓ ${t('Nhận thông báo nhắc lịch kể cả khi đã đóng trang')}</li>
     </ul>
-    <p class="hint">${t('Bảng vẽ, học phí và tài liệu vẫn chỉ lưu trên máy này — hãy tải xuống (PNG/PDF) những gì quan trọng.')}</p>`;
+    ${Guest.legacyAt() ? `<p class="hint">${t('Dữ liệu bạn có từ trước vẫn được giữ trên máy này; chỉ những gì tạo mới khi chưa đăng nhập mới bị xoá khi đóng trang. Đăng nhập để sao lưu tất cả.')}</p>` : `<p class="hint">${t('Tài liệu tải lên (PDF/ảnh lớn) chỉ lưu trên máy đang dùng.')}</p>`}`;
   openModal({ title: t('Sao lưu dữ liệu'), body, width: 440, actions: [
     { label: t('Để sau') },
     { label: t('Đăng nhập / Đăng ký'), kind: 'primary', onClick: () => setTimeout(accountModal, 60) },
@@ -3682,7 +3850,7 @@ function renderBackupNudge() {
   const el = $('#backupNudge'); if (!el) return;
   const show = Cloud.ready && Cloud.configured() && !Cloud.user;
   el.classList.toggle('hidden', !show);
-  if (show) el.innerHTML = `<span class="bn-ic">⚠</span><span class="bn-t"><b>${t('Chưa sao lưu')}</b><small>${t('Đăng nhập để không mất lịch học')}</small></span><em class="fb-go">›</em>`;
+  if (show) el.innerHTML = `<span class="bn-ic">⚠</span><span class="bn-t"><b>${t('Chưa sao lưu')}</b><small>${t('Đóng trang là mất dữ liệu — hãy đăng nhập')}</small></span><em class="fb-go">›</em>`;
 }
 function renderGreet() {
   const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;
@@ -3954,6 +4122,7 @@ async function init() {
   const [st, bo, fi, sc, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.all('schedule'), DB.get('settings', 'main')]);
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
   if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
+  await Guest.start(!!(st.length || bo.length || fi.length || sc.length || (se && se.profile && se.profile.name)));
   await purgeOldBoards();
   S.studentId = studentById(S.settings.lastStudent) ? S.settings.lastStudent : (firstStudent()?.id || 'all');
   renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool); initResizers();
