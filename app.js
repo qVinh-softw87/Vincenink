@@ -83,14 +83,14 @@ const EN = {
   'Xoá sạch': 'Clear', 'Đang lưu…': 'Saving…', 'Đã lưu': 'Saved', 'Không lưu được — bộ nhớ trình duyệt có thể đã đầy': 'Could not save — browser storage may be full',
   'Buổi học {d}': 'Lesson {d}', ' (bản sao)': ' (copy)', 'Đã nhân bản bảng': 'Board duplicated', 'Xoá bảng này?': 'Delete this board?',
   '“{t}” sẽ bị xoá vĩnh viễn và không thể khôi phục.': '“{t}” will be permanently deleted.', 'Xoá': 'Delete', 'Huỷ': 'Cancel', 'Lưu': 'Save',
-  'Sửa thông tin bảng': 'Edit board', 'Ngày': 'Date', 'Thuộc về': 'Belongs to', 'Lớp chung': 'Whole class', 'Học sinh': 'Student',
-  'Tên học sinh': 'Student name', 'VD: Nguyễn Minh An': 'e.g. Minh An Nguyen', 'Lớp / ghi chú ngắn (tuỳ chọn)': 'Class / short note (optional)',
-  'VD: Lớp 5 · Toán, Tiếng Việt': 'e.g. Grade 5 · Maths, English', 'Màu nhận diện': 'Colour', 'Thêm học sinh': 'Add student', 'Sửa học sinh': 'Edit student',
-  'Xoá học sinh': 'Delete student', 'Đã thêm {n} và tạo bảng đầu tiên': 'Added {n} and created their first board',
-  'Xoá học sinh {n}?': 'Delete student {n}?', 'Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của học sinh này trên máy.': 'This also deletes their {b} boards, {f} files and schedule on this device.',
-  'Học sinh · {n}': 'Students · {n}', 'Chưa có học sinh nào.': 'No students yet.',
-  'Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.': 'Click + to add one — each student gets their own boards, files, schedule and notes.',
-  '{b} bảng · {f} tài liệu': '{b} boards · {f} files', 'Sửa thông tin học sinh': 'Edit student', 'Buổi tới: {x}': 'Next lesson: {x}',
+  'Sửa thông tin bảng': 'Edit board', 'Ngày': 'Date', 'Thuộc về': 'Belongs to', 'Lớp chung': 'Whole class', 'Lớp học': 'Class',
+  'Tên lớp học': 'Class name', 'VD: Lớp 9A, Nhóm IELTS, Minh An': 'e.g. Grade 9A, IELTS group, Minh An', 'Lớp / ghi chú ngắn (tuỳ chọn)': 'Class / short note (optional)',
+  'VD: Lớp 5 · Toán, Tiếng Việt': 'e.g. Grade 5 · Maths, English', 'Màu nhận diện': 'Colour', 'Thêm lớp học': 'Add class', 'Sửa lớp học': 'Edit class',
+  'Xoá lớp học': 'Delete class', 'Đã thêm {n} và tạo bảng đầu tiên': 'Added {n} and created their first board',
+  'Xoá lớp học {n}?': 'Delete class {n}?', 'Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của lớp học này trên máy.': 'This removes {b} board(s), {f} file(s) and the schedule of this class from this device.',
+  'Lớp học · {n}': 'Classes · {n}', 'Chưa có lớp học nào.': 'No classes yet.',
+  'Bấm + để thêm — mỗi lớp có bảng, tài liệu, lịch học và học phí riêng.': 'Tap + to add — each class gets its own boards, files, schedule and fees.',
+  '{b} bảng · {f} tài liệu': '{b} boards · {f} files', 'Sửa thông tin lớp học': 'Edit class info', 'Buổi tới: {x}': 'Next lesson: {x}',
   'Bảng': 'Boards', 'Tài liệu': 'Files', 'Lịch': 'Schedule', 'Ghi chú': 'Notes',
   'Bảng mới hôm nay': 'New board for today', 'Tìm bảng theo tên hoặc ngày…': 'Search boards by name or date…', 'Hôm nay · ': 'Today · ',
   'Sửa lúc {t}': 'Edited {t}', 'Tuỳ chọn': 'Options', 'Không tìm thấy bảng': 'No boards found', 'Chưa có bảng nào': 'No boards yet',
@@ -112,7 +112,7 @@ const EN = {
   'Chỉ một buổi': 'One-off', 'Học bù, học thêm, đổi lịch…': 'Make-up, extra lesson, rescheduled…', 'Thứ': 'Day', 'Bắt đầu': 'Start', 'Kết thúc': 'End',
   'Môn / nội dung': 'Subject / topic', 'VD: Toán – phân số': 'e.g. Maths – fractions', 'Ghi chú (tuỳ chọn)': 'Note (optional)', 'Áp dụng cho': 'For',
   'Mở bảng cho buổi này': 'Open board for this lesson', 'Sửa': 'Edit', 'Nghỉ buổi này': 'Cancel this lesson', 'Học lại buổi này': 'Restore this lesson',
-  'Xoá lịch cố định': 'Delete weekly lesson', 'Xoá buổi này': 'Delete lesson', 'Mở trang học sinh': 'Open student',
+  'Xoá lịch cố định': 'Delete weekly lesson', 'Xoá buổi này': 'Delete lesson', 'Mở trang lớp học': 'Open class page',
   'Xoá lịch cố định?': 'Delete weekly lesson?', 'Buổi “{s}” sẽ không còn lặp lại mỗi tuần.': '“{s}” will no longer repeat every week.',
   'Giờ kết thúc phải sau giờ bắt đầu': 'End time must be after start time', 'Buổi học': 'Lesson',
   'Hồ sơ của bạn': 'Your profile', 'Thêm thông tin cá nhân': 'Add your profile', 'Giáo viên': 'Teacher', 'Đổi ảnh': 'Change photo', 'Xoá ảnh': 'Remove photo', 'Chọn ảnh đại diện': 'Choose a photo',
@@ -136,7 +136,7 @@ const EN = {
   'Tải PDF': 'Download PDF', 'Kiểu PDF': 'PDF style', 'Màu': 'Colour', 'Giữ nguyên màu như trên bảng': 'Exactly as on the board', 'Bản quét': 'Scan',
   'Đen trắng, nền trắng — nhẹ, in rõ': 'Black & white on white — small and print-friendly', 'Khổ giấy': 'Page size', 'A4 dọc': 'A4 portrait', 'A4 ngang': 'A4 landscape', 'Tự động': 'Auto',
   'Chia trang': 'Layout', 'Chia thành nhiều trang A4': 'Split into A4 pages', 'Gộp vừa 1 trang': 'Fit on one page', 'In kèm nền ô/kẻ': 'Include background lines',
-  'Thêm tiêu đề (tên bảng, học sinh, ngày, giáo viên)': 'Add a header (board, student, date, teacher)', 'Đang tạo PDF…': 'Creating PDF…', 'Đã tải PDF ({n} trang)': 'PDF downloaded ({n} pages)',
+  'Thêm tiêu đề (tên bảng, lớp học, ngày, giáo viên)': 'Add a header (board, student, date, teacher)', 'Đang tạo PDF…': 'Creating PDF…', 'Đã tải PDF ({n} trang)': 'PDF downloaded ({n} pages)',
   'Tạo PDF': 'Create PDF', 'Giáo viên: {n}': 'Teacher: {n}',
   'Chưa có lịch.': 'Nothing scheduled.',
   '✏️ Bài giảng đang chờ bạn…': '✏️ Your lesson is waiting…', 'Bảng trắng dạy học trực tuyến': 'Online teaching whiteboard',
@@ -158,7 +158,7 @@ const EN = {
   'Thêm': 'Add',
   'ghi lịch cho ngày này': 'add a lesson this day',
   'Chú thích tuần này': 'Notes for this week',
-  'Lịch cố định của từng học sinh nằm trong trang của học sinh đó; tuần ở trên đã gộp lịch của cả lớp.': 'Each student’s weekly schedule lives on their page; the week above combines the whole class.',
+  'Lịch cố định của từng lớp nằm trong trang của lớp đó; tuần ở trên đã gộp lịch của tất cả các lớp.': 'Each class’s fixed schedule lives on its own page; the week above combines all classes.',
   'Sửa lịch cố định (mọi tuần)': 'Edit weekly schedule (all weeks)',
   'Chưa có lịch cố định. Bấm “Ghi lịch học” và chọn “Cố định hằng tuần” để buổi học tự lặp lại mỗi tuần.': 'No weekly schedule yet. Click “Add to schedule” and choose “Every week” so the lesson repeats automatically.',
   'Sửa buổi này': 'Edit this lesson',
@@ -204,7 +204,7 @@ const EN = {
   'Hôm nay không có buổi học nào.': 'No lessons today.',
   'Ghi lịch': 'Add lesson',
   'Đã nghỉ hôm nay': 'Cancelled today',
-  'Đang học': 'Now',
+  'Đang dạy': 'Teaching',
   '{b} bảng': '{b} boards',
   'Cố định hằng tuần hoặc một buổi': 'Weekly or one-off',
   'Xem lịch học': 'View schedule',
@@ -300,7 +300,7 @@ const EN = {
   'Tổng cộng': 'Total',
   'Đã thu {x}': 'Collected {x}',
   'Chưa đặt học phí': 'No fee set',
-  'Thêm học sinh để tính học phí.': 'Add a student to track fees.',
+  'Thêm lớp học để tính học phí.': 'Add a class to calculate fees.',
   'Số buổi tự đếm từ lịch học (cố định, đổi lịch, buổi riêng), không tính buổi nghỉ. Dùng “Buổi cộng thêm” cho buổi dạy ngoài lịch.': 'Lessons are counted from the schedule (weekly, moved and one-off), excluding cancelled ones. Use “Extra lessons” for lessons outside the schedule.',
   'Tháng này': 'This month',
 
@@ -333,7 +333,8 @@ const EN = {
   'Bạn đã chặn thông báo — bật lại trong biểu tượng ổ khoá cạnh địa chỉ web': 'Notifications are blocked — re-enable them via the lock icon in the address bar',
   '🐶 Vincenink đã sẵn sàng': '🐶 Vincenink is ready', 'Thông báo nhắc lịch sẽ hiện như thế này.': 'Lesson reminders will look like this.', '⏰ {m} phút nữa: {w}': '⏰ In {m} min: {w}',
   'Còn nợ các tháng trước': 'Owed from previous months', '{n} buổi': '{n} lessons', 'Tổng chưa thu': 'Total unpaid', 'Đã thu hết': 'Mark all paid', 'Đã thu đủ tất cả các tháng': 'All months paid',
-  'Tổng học phí các học sinh': 'All students’ fees', 'Chưa thu: {m}': 'Unpaid: {m}', 'Đã thu đủ': 'Fully paid', 'Đã ghi nhận đã thu': 'Marked as paid',
+  'Tổng học phí các lớp học': 'All classes’ fees', 'Chưa thu: {m}': 'Unpaid: {m}', 'Đã thu đủ': 'Fully paid', 'Đã ghi nhận đã thu': 'Marked as paid',
+  'Vừa khít nội dung': 'Fits the content', 'Xem trọn bảng một lần': 'Whole board at once', 'Chia nhiều trang': 'Split into pages', 'Chữ to, dễ in': 'Larger text, print-friendly',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -509,7 +510,7 @@ function loadPrefs() {
 function savePrefs() { const p = {}; PREF_KEYS.forEach(k => p[k] = E[k]); ls.set('vincenink.prefs', JSON.stringify(p)); }
 const saveSettings = () => DB.put('settings', S.settings).catch(() => {});
 const studentById = id => S.students.find(s => s.id === id);
-const ownerName = id => id === 'all' ? t('Lớp chung') : (studentById(id)?.name || t('Học sinh'));
+const ownerName = id => id === 'all' ? t('Lớp chung') : (studentById(id)?.name || t('Lớp học'));
 const ownerColor = id => id === 'all' ? null : (studentById(id)?.color || STUDENT_COLORS[0]);
 const avatarHTML = (id, cls = '') => id === 'all'
   ? `<span class="avatar class ${cls}">${ic('book', cls.includes('lg') ? 20 : 16)}</span>`
@@ -1300,7 +1301,7 @@ function buildPDF(pages) {
   const obj = (id, ...chunks) => { offs[id] = len; push(`${id} 0 obj\n`); chunks.forEach(push); push('\nendobj\n'); };
   push('%PDF-1.4\n%âãÏÓ\n');
   const n = pages.length, kids = pages.map((_, i) => `${3 + i * 3} 0 R`).join(' ');
-  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R /OpenAction [3 0 R /FitH null] /PageLayout /OneColumn >>');
   obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
   pages.forEach((p, i) => {
     const pid = 3 + i * 3, cid = pid + 1, iid = pid + 2;
@@ -1324,16 +1325,21 @@ async function exportPdfDialog() {
       <label><input type="radio" name="mode" value="color" checked><b>${t('Màu')}</b><span>${t('Giữ nguyên màu như trên bảng')}</span></label>
       <label><input type="radio" name="mode" value="scan"><b>${t('Bản quét')}</b><span>${t('Đen trắng, nền trắng — nhẹ, in rõ')}</span></label>
     </div></div>
-    <div class="row2">
-      <div class="field"><label>${t('Khổ giấy')}</label><select name="orient"><option value="auto">${t('Tự động')}</option><option value="p">${t('A4 dọc')}</option><option value="l">${t('A4 ngang')}</option></select></div>
-      <div class="field"><label>${t('Chia trang')}</label><select name="layout"><option value="fit" selected>${t('Gộp vừa 1 trang')}</option><option value="split">${t('Chia thành nhiều trang A4')}</option></select></div>
-    </div>
+    <div class="field"><label>${t('Khổ giấy')}</label><div class="opt-seg c3">
+      <label><input type="radio" name="orient" value="auto" checked><span class="og-ic pg-auto"><i></i></span><b>${t('Tự động')}</b><small>${t('Vừa khít nội dung')}</small></label>
+      <label><input type="radio" name="orient" value="p"><span class="og-ic pg-p"><i></i></span><b>${t('A4 dọc')}</b><small>210 × 297</small></label>
+      <label><input type="radio" name="orient" value="l"><span class="og-ic pg-l"><i></i></span><b>${t('A4 ngang')}</b><small>297 × 210</small></label>
+    </div></div>
+    <div class="field"><label>${t('Chia trang')}</label><div class="opt-seg c2">
+      <label><input type="radio" name="layout" value="fit" checked><span class="og-ic pg-one"><i></i></span><b>${t('Gộp vừa 1 trang')}</b><small>${t('Xem trọn bảng một lần')}</small></label>
+      <label><input type="radio" name="layout" value="split"><span class="og-ic pg-many"><i></i><i></i></span><b>${t('Chia nhiều trang')}</b><small>${t('Chữ to, dễ in')}</small></label>
+    </div></div>
     <label class="check"><input type="checkbox" name="bg"> ${t('In kèm nền ô/kẻ')}</label>
-    <label class="check"><input type="checkbox" name="header" checked> ${t('Thêm tiêu đề (tên bảng, học sinh, ngày, giáo viên)')}</label>`;
+    <label class="check"><input type="checkbox" name="header" checked> ${t('Thêm tiêu đề (tên bảng, lớp học, ngày, giáo viên)')}</label>`;
   openModal({
     title: t('Tải PDF'), body, width: 480, actions: [{ label: t('Huỷ') }, {
       label: t('Tạo PDF'), kind: 'primary', onClick: () => {
-        const o = { mode: $('[name=mode]:checked', body).value, orient: $('[name=orient]', body).value, layout: $('[name=layout]', body).value, bg: $('[name=bg]', body).checked, header: $('[name=header]', body).checked };
+        const o = { mode: $('[name=mode]:checked', body).value, orient: $('[name=orient]:checked', body).value, layout: $('[name=layout]:checked', body).value, bg: $('[name=bg]', body).checked, header: $('[name=header]', body).checked };
         setTimeout(() => exportPdf(o), 50);
       }
     }]
@@ -1364,7 +1370,12 @@ async function exportPdf(o) {
   }
   if (o.mode === 'scan') scanFlatten(full);
   const pages = [];
-  if (o.layout === 'fit') {
+  if (o.layout === 'fit' && o.orient === 'auto') {
+    // Trang vừa khít nội dung (cạnh dài 842pt), lề nhỏ → mở ra là thấy to, không cần phóng
+    const mm = 14, long = 842, s = long / Math.max(full.width, full.height), dw = full.width * s, dh = full.height * s;
+    const pw = Math.round(dw + 2 * mm), ph = Math.round(dh + 2 * mm);
+    pages.push({ jpeg: await canvasJPEG(full, o.mode === 'scan' ? 0.82 : 0.9), w: full.width, h: full.height, pw, ph, dw, dh, dx: mm, dy: mm });
+  } else if (o.layout === 'fit') {
     const s = Math.min(cw / full.width, chPage / full.height), dw = full.width * s, dh = full.height * s;
     pages.push({ jpeg: await canvasJPEG(full, o.mode === 'scan' ? 0.82 : 0.9), w: full.width, h: full.height, pw: PW, ph: PH, dw, dh, dx: (PW - dw) / 2, dy: PH - M - dh });
   } else {
@@ -1489,7 +1500,7 @@ async function doSave() {
 let saving = false;
 function setStatus(sv) {
   saving = sv; const s = $('#saveStatus'); s.classList.toggle('saving', sv);
-  s.innerHTML = `<span class="d"></span><span class="txt">${t(sv ? 'Đang lưu…' : 'Đã lưu')}</span>`;
+  s.innerHTML = sv ? `<span class="d"></span><span class="txt">${t('Đang lưu…')}</span>` : '';
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); updateTitle(); });
 window.addEventListener('beforeunload', () => { doSave(); });
@@ -1572,7 +1583,7 @@ function studentModal(st) {
   let color = st?.color || STUDENT_COLORS[S.students.length % STUDENT_COLORS.length];
   const body = document.createElement('div');
   body.innerHTML = `
-    <div class="field"><label>${t('Tên học sinh')}</label><input type="text" name="name" value="${esc(st?.name || '')}" placeholder="${t('VD: Nguyễn Minh An')}"></div>
+    <div class="field"><label>${t('Tên lớp học')}</label><input type="text" name="name" value="${esc(st?.name || '')}" placeholder="${t('VD: Lớp 9A, Nhóm IELTS, Minh An')}"></div>
     <div class="field"><label>${t('Lớp / ghi chú ngắn (tuỳ chọn)')}</label><input type="text" name="grade" value="${esc(st?.grade || '')}" placeholder="${t('VD: Lớp 5 · Toán, Tiếng Việt')}"></div>
     <div class="field"><label>${t('Màu nhận diện')}</label><div class="color-pick">${STUDENT_COLORS.map(c => `<button type="button" data-c="${c}" class="${c === color ? 'active' : ''}" style="background:${c}"></button>`).join('')}</div></div>`;
   $('.color-pick', body).addEventListener('click', e => {
@@ -1580,7 +1591,7 @@ function studentModal(st) {
     $$('.color-pick button', body).forEach(x => x.classList.toggle('active', x === b));
   });
   const actions = [{ label: t('Huỷ') }, {
-    label: st ? t('Lưu') : t('Thêm học sinh'), kind: 'primary', onClick: async () => {
+    label: st ? t('Lưu') : t('Thêm lớp học'), kind: 'primary', onClick: async () => {
       const name = $('[name=name]', body).value.trim(); if (!name) { $('[name=name]', body).focus(); return false; }
       const grade = $('[name=grade]', body).value.trim();
       if (st) { Object.assign(st, { name, grade, color }); await DB.put('students', st); renderSidebar(); renderPanel(); renderTopbar(); }
@@ -1592,12 +1603,12 @@ function studentModal(st) {
       }
     }
   }];
-  if (st) actions.unshift({ label: t('Xoá học sinh'), kind: 'danger-text', onClick: () => deleteStudent(st) });
-  openModal({ title: st ? t('Sửa học sinh') : t('Thêm học sinh'), body, actions });
+  if (st) actions.unshift({ label: t('Xoá lớp học'), kind: 'danger-text', onClick: () => deleteStudent(st) });
+  openModal({ title: st ? t('Sửa lớp học') : t('Thêm lớp học'), body, actions });
 }
 async function deleteStudent(st) {
   const nb = S.boards.filter(b => b.studentId === st.id).length, nf = S.files.filter(f => f.studentId === st.id).length;
-  if (!await confirmBox(t('Xoá học sinh {n}?', { n: esc(st.name) }), t('Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của học sinh này trên máy.', { b: nb, f: nf }), t('Xoá'))) return false;
+  if (!await confirmBox(t('Xoá lớp học {n}?', { n: esc(st.name) }), t('Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của lớp học này trên máy.', { b: nb, f: nf }), t('Xoá'))) return false;
   for (const b of S.boards.filter(b => b.studentId === st.id)) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
   for (const f of S.files.filter(f => f.studentId === st.id)) await DB.del('files', f.id);
   await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id);
@@ -1643,7 +1654,7 @@ function renderTodayCard() {
       return `<button class="tc-item ${st}" data-owner="${o.owner}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
         <span class="tc-time">${o.start}<small>${o.end}</small></span>
         <span class="tc-body"><b>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</b><small>${esc(o.subject || t('Buổi học'))}</small></span>
-        ${st === 'now' ? `<span class="tc-badge">${t('Đang học')}</span>` : st === 'off' ? `<span class="tc-badge off">${t('Nghỉ')}</span>` : ''}
+        ${st === 'now' ? `<span class="tc-badge">${t('Đang dạy')}</span>` : st === 'done' ? `<span class="tc-done">${ic('check', 11)}Done</span>` : st === 'off' ? `<span class="tc-badge off">${t('Nghỉ')}</span>` : ''}
       </button>`; }).join('')}</div>`
       : `<div class="dc-free">${ic('calendar', 14)}${t('Hôm nay không có tiết nào.')}</div>`}`;
   el.onclick = e => {
@@ -1677,9 +1688,9 @@ function renderSidebar() {
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
-    <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
+    <div class="side-label"><span>${t('Lớp học · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm lớp học')}" aria-label="${t('Thêm lớp học')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
     ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
-    || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
+    || `<div class="side-empty">${t('Chưa có lớp học nào.')}<br>${t('Bấm + để thêm — mỗi lớp có bảng, tài liệu, lịch học và học phí riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
   if (e.target.closest('#btnAddStudent')) return studentModal(null);
@@ -1695,9 +1706,9 @@ function studentMenu(anchor, id) {
     { icon: 'calendar', label: t('Ghi lịch học'), sub: t('Cố định hằng tuần hoặc một buổi'), onClick: async () => { await selectStudent(id); S.tab = 'sched'; renderPanel(); sessionModal(id, null, null); } },
     { icon: 'clock', label: t('Xem lịch học'), onClick: openSched },
     { icon: 'plus', label: t('Bảng mới hôm nay'), onClick: async () => { S.studentId = id; await createBoard(id, true); S.tab = 'boards'; renderPanel(); } },
-    { icon: 'edit', label: t('Sửa thông tin học sinh'), onClick: () => studentModal(st) },
+    { icon: 'edit', label: t('Sửa thông tin lớp học'), onClick: () => studentModal(st) },
     '-',
-    { icon: 'trash', label: t('Xoá học sinh'), danger: true, onClick: () => deleteStudent(st) },
+    { icon: 'trash', label: t('Xoá lớp học'), danger: true, onClick: () => deleteStudent(st) },
   ]);  if (menuAnchor === anchor) anchor.closest('.nav-item').classList.add('menu-open');
 }
 
@@ -1720,16 +1731,17 @@ function renderPanel() {
   $('#panel').innerHTML = `
     <div class="panel-head">${avatarHTML(sid, 'lg')}
       <div class="ttl"><h2>${esc(ownerName(sid))}</h2><div class="sub">${st?.grade ? esc(st.grade) + ' · ' : ''}${t('{b} bảng · {f} tài liệu', { b: nb, f: nf })}</div></div>
-      ${st ? `<button class="icon-btn" id="btnEditStudent" title="${t('Sửa thông tin học sinh')}">${ic('edit', 18)}</button>` : ''}
+      ${st ? `<button class="icon-btn" id="btnEditStudent" title="${t('Sửa thông tin lớp học')}">${ic('edit', 18)}</button>` : ''}
     </div>
     ${next ? `<div class="next-lesson">${ic('clock', 15)}${t('Buổi tới: {x}', { x: esc(next) })}</div>` : ''}
     <div class="tabs" role="tablist">
-      ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['fee', 'wallet', 'Học phí'], ['notes', 'note', 'Ghi chú']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
+      ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['fee', 'wallet', 'Học phí']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
     </div>
     <div class="panel-body" id="panelBody"></div>
     <div class="resizer" data-resize="panel" title="${t('Kéo để đổi độ rộng · nhấp đúp để về mặc định')}"></div>`;
   const body = $('#panelBody');
-  ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, fee: renderFeeTab, notes: renderNotesTab })[S.tab](body);
+  if (S.tab === 'notes') S.tab = 'boards';
+  ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, fee: renderFeeTab })[S.tab](body);
 }
 $('#panel').addEventListener('click', e => {
   const tb = e.target.closest('[data-tab]'); if (tb) { S.tab = tb.dataset.tab; renderPanel(); return; }
@@ -1853,7 +1865,7 @@ function feeStats(st, y, m) {
   const taughtFn = o => !o.off && (o.date < today || (o.date === today && o.end <= hm));
   const taught = list.filter(taughtFn).length, scheduled = list.filter(o => !o.off).length;
   const adj = (st.feeAdj && st.feeAdj[key]) || 0, fee = st.fee || 0;
-  const plan = st.feePlan && st.feePlan[key] != null ? st.feePlan[key] : FEE_PLAN_DEFAULT; // dự kiến cả tháng, mặc định 8 buổi
+  const plan = FEE_PLAN_DEFAULT; // dự kiến cả tháng: 8 buổi cho mọi lớp
   const billable = Math.max(0, taught + adj);
   return { list, taughtFn, taught, scheduled, planned: plan, adj, fee, key, billable, amount: fee * billable, projected: fee * plan, paid: !!(st.feePaid && st.feePaid[key]) };
 }
@@ -1881,7 +1893,7 @@ function feeLedger(st, y, m) {
 }
 function renderFeeTab(body) {
   const st = studentById(S.studentId);
-  if (!st) { body.innerHTML = `<div class="empty"><div class="big">${t('Học phí')}</div>${t('Thêm học sinh để tính học phí.')}</div>`; return; }
+  if (!st) { body.innerHTML = `<div class="empty"><div class="big">${t('Học phí')}</div>${t('Thêm lớp học để tính học phí.')}</div>`; return; }
   if (!S.feeMonth) S.feeMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const y = S.feeMonth.getFullYear(), m = S.feeMonth.getMonth(), isThis = ymKey(S.feeMonth) === ymKey(new Date());
   const f = feeStats(st, y, m), mLabel = `${pad(m + 1)}/${y}`, today = todayStr();
@@ -1900,7 +1912,7 @@ function renderFeeTab(body) {
     </div>
     <div class="fee-stats">
       <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1" ${f.billable ? '' : 'disabled'}>−</button><b>${f.billable}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Đã dạy')}</small></div>
-      <div class="adj"><span class="adj-ctl"><button data-plan="-1" aria-label="-1">−</button><b>${f.planned}</b><button data-plan="1" aria-label="+1">+</button></span><small>${t('Dự kiến cả tháng')}</small></div>
+      <div class="plan"><b>${f.planned}</b><small>${t('Dự kiến cả tháng')}</small></div>
     </div>
     <div class="fee-total ${f.paid ? 'paid' : ''}">
       <small>${t('Thành tiền')} · ${t('Tháng {m}', { m: mLabel })}</small>
@@ -1919,7 +1931,7 @@ function renderFeeTab(body) {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
       return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(o.subject || '')}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
     }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
-    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các học sinh')}</div>
+    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các lớp học')}</div>
     <div class="fee-sum">
       ${all.map(({ s, L: x }) => `<button class="fs-row ${s.id === st.id ? 'cur' : ''}" data-fs="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${!s.fee ? t('Chưa đặt học phí') : x.unpaid.length ? t('Chưa thu: {m}', { m: x.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã thu đủ')}</small></span><span class="fs-a"><b>${fmtMoney(x.due)}</b><em class="${x.due ? '' : 'ok'}">${t(x.due ? 'Chưa thu' : 'Đã thu')}</em></span></button>`).join('')}
       <div class="fs-total"><span>${t('Tổng chưa thu')}</span><b>${fmtMoney(sum)}</b><small>${t('Đã thu {x}', { x: fmtMoney(got) })}</small></div>
@@ -2038,7 +2050,7 @@ function renderSchedTab(body) {
     <div class="sec-h">${ic('note', 15)}${t('Chú thích tuần này')}</div>
     <textarea class="week-note" id="weekNote" placeholder="${t('Nội dung dạy, bài về nhà, nhắc phụ huynh…')}">${esc(sc.weekNotes[wk] || '')}</textarea>
     <div class="sec-h">${ic('repeat', 15)}${t('Lịch cố định hằng tuần')}</div>
-    ${sid === 'all' && !sc.fixed.length ? `<div class="hint">${t('Lịch cố định của từng học sinh nằm trong trang của học sinh đó; tuần ở trên đã gộp lịch của cả lớp.')}</div>` : ''}
+    ${sid === 'all' && !sc.fixed.length ? `<div class="hint">${t('Lịch cố định của từng lớp nằm trong trang của lớp đó; tuần ở trên đã gộp lịch của tất cả các lớp.')}</div>` : ''}
     ${sc.fixed.length ? [...sc.fixed].sort((a, b) => a.dow - b.dow || a.start.localeCompare(b.start)).map(f => `
       <div class="fixed-row"><span class="fd">${WD[LANG][f.dow]}</span><span class="ft">${f.start}–${f.end}</span><span class="fj">${esc(f.subject || '')}</span>
         <button class="icon-btn sm" data-fedit="${f.id}" title="${t('Sửa lịch cố định (mọi tuần)')}">${ic('edit', 15)}</button></div>`).join('')
@@ -2064,7 +2076,7 @@ function sessionMenu(el) {
   const shownDate = moved ? sc.overrides[key].date : orig;
   const after = () => { saveSched(owner); renderPanel(); };
   const items = [{ icon: 'board', label: t('Mở bảng cho buổi này'), onClick: () => openLessonBoard(owner, shownDate, moved ? sc.overrides[key].subject : ref.subject) }];
-  if (S.studentId === 'all' && owner !== 'all') items.push({ icon: 'user', label: t('Mở trang học sinh'), onClick: () => { S.tab = 'sched'; selectStudent(owner); } });
+  if (S.studentId === 'all' && owner !== 'all') items.push({ icon: 'user', label: t('Mở trang lớp học'), onClick: () => { S.tab = 'sched'; selectStudent(owner); } });
   if (kind === 'once') {
     items.push({ icon: 'edit', label: t('Sửa buổi này'), onClick: () => sessionModal(owner, { kind, ref }) }, '-',
       { icon: 'trash', label: t('Xoá buổi này'), danger: true, onClick: () => { sc.sessions = sc.sessions.filter(x => x !== ref); after(); } });
@@ -2162,7 +2174,7 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
   const DUR = [[45, t('45 phút')], [60, t('1 giờ')], [90, t('1,5 giờ')], [120, t('2 giờ')]];
   body.innerHTML = `
     ${!isEdit && (pickOwner || owner === 'all') && S.students.length ? `
-    <div class="field"><label>${t('Học sinh')}</label>
+    <div class="field"><label>${t('Lớp học')}</label>
       <div class="owner-pick">${ownerOpts.map(([v, l]) => `
         <label class="op-item"><input type="radio" name="owner" value="${v}" ${v === owner ? 'checked' : ''}>${avatarHTML(v)}<span>${esc(l)}</span><i class="op-check">${ic('check', 11)}</i></label>`).join('')}
       </div></div>` : ''}
@@ -2268,8 +2280,7 @@ const getJSON = async (url, ms = 7000) => { const r = await withTimeout(fetch(ur
 function placeName(j) {
   const tidy = s => String(s || '').replace(/^Thành phố\s+/i, 'TP. ').replace(/^Tỉnh\s+/i, '').replace(/^City of\s+/i, '').trim();
   const city = tidy(j.city || j.principalSubdivision), loc = tidy(j.locality);
-  if (loc && city && !city.includes(loc) && !loc.includes(city)) return `${loc}, ${city}`;
-  return city || loc || '';
+  return city || loc.replace(/^(Phường|Xã|Thị trấn)\s+/i, '') || '';
 }
 const Loc = {
   cur: null,
@@ -2312,7 +2323,7 @@ const Loc = {
   /* Tên khu vực: nhớ theo toạ độ (~100 m) để khỏi gọi lại */
   async placeFor(loc) {
     if (loc.named && loc.name) return loc.name;
-    const k = `vincenink.place.${LANG}.${(+loc.lat).toFixed(3)},${(+loc.lon).toFixed(3)}`, hit = ls.get(k, '');
+    const k = `vincenink.place2.${LANG}.${(+loc.lat).toFixed(3)},${(+loc.lon).toFixed(3)}`, hit = ls.get(k, '');
     if (hit) return hit;
     const n = await this.nameOf(loc.lat, loc.lon); if (n) ls.set(k, n);
     return n || loc.name || '';
@@ -3039,7 +3050,7 @@ function setupStepsHTML() {
   const p = profile(), hasSched = S.students.some(st => (S.sched.get(st.id)?.fixed || []).length || (S.sched.get(st.id)?.sessions || []).length);
   const steps = [
     ['profile', 'user', 'Cập nhật hồ sơ', 'Tên và ảnh đại diện để Vincenink chào đúng thầy/cô', !!p.name],
-    ['student', 'plus', 'Thêm học sinh', 'Mỗi em có bảng, tài liệu, lịch và học phí riêng', S.students.length > 0],
+    ['student', 'plus', 'Thêm lớp học', 'Mỗi em có bảng, tài liệu, lịch và học phí riêng', S.students.length > 0],
     ['sched', 'calendar', 'Ghi lịch học', 'Để nhận lời nhắc tiết học mỗi ngày', hasSched],
   ];
   return steps.map(([k, i, tt, d, done], n) => `
@@ -3094,7 +3105,7 @@ function renderGreet() {
         <h3>${ic('calendar', 15)}${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></h3>
         ${list.length ? `<div class="gr-lessons">${list.map(o => {
           const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
-          return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(o.subject || '')}</small>${st === 'now' ? `<i>${t('Đang học')}</i>` : st === 'done' ? `<i class="dn">${t('Xong')}</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
+          return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(o.subject || '')}</small>${st === 'now' ? `<i>${t('Đang dạy')}</i>` : st === 'done' ? `<i class="done">${ic('check', 11)}Done</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
         }).join('')}</div>` : `<p class="gr-free">${t('Hôm nay không có tiết nào — cậu thong thả nghỉ ngơi xíu nha 🌿')}</p>`}
       </section>
       ${needsSetup() ? `<section class="gr-sec gr-setup"><h3>${ic('info', 15)}${t('Hoàn thiện thông tin để nhận nhắc lịch đầy đủ')}</h3><div class="ob-steps">${setupStepsHTML()}</div></section>` : ''}
