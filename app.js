@@ -312,6 +312,12 @@ const EN = {
   'Buồn ngủ, cần được ôm đi ngủ': 'Sleepy, needs a hug and bed', 'Mệt nhẹ, muốn được vỗ về': 'A bit tired, wants comfort', 'Bận rộn mà vẫn cháy lắm': 'Busy but on fire',
   'Lười nhẹ, muốn cuộn chăn': 'Cosy, wants a blanket', 'Hơi oải vì nóng': 'Drained by the heat', 'Thư thả, muốn được nuông chiều': 'Relaxed, wants pampering',
   'Nhẹ nhõm, thong thả': 'Light and easy', 'Vui vẻ, sẵn sàng': 'Cheerful and ready', 'Cần chút cà phê khởi động': 'Needs coffee to start', 'Hào hứng, tràn năng lượng': 'Excited and energetic', 'Bình yên, dễ chịu': 'Calm and content',
+  'Đang lấy vị trí…': 'Locating…', 'Vị trí chính xác': 'Exact location', 'Nhập thành phố': 'Enter city', 'Đổi thành phố': 'Change city',
+  'theo GPS': 'via GPS', 'ước tính theo mạng': 'estimated from network', 'trong Hồ sơ': 'from profile', 'Vị trí theo mạng có thể lệch vài chục km.': 'Network location can be off by tens of km.',
+  'Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí, hoặc nhập thành phố trong Hồ sơ': 'Couldn’t get your location — allow location access in the browser, or enter a city in your profile',
+  'Nhắn lại cho Vincenink…': 'Reply to Vincenink…', 'Gửi': 'Send', 'Để trống để tự lấy theo vị trí của bạn': 'Leave empty to use your location',
+  'Lâng lâng vì được nghỉ lễ': 'Floating on holiday vibes', 'Co ro, muốn được ủ ấm': 'Cold, wants to be kept warm', 'Cuối tuần vẫn chăm, hơi tiếc giờ nghỉ': 'Working the weekend, missing rest', 'Háo hức vì sắp cuối tuần': 'Excited for the weekend',
+  'Tết Dương lịch': 'New Year’s Day', 'Ngày Quốc tế Phụ nữ': 'International Women’s Day', 'Ngày Giải phóng miền Nam': 'Reunification Day', 'Ngày Quốc tế Lao động': 'Labour Day', 'Quốc khánh': 'National Day', 'Ngày Phụ nữ Việt Nam': 'Vietnamese Women’s Day', 'Ngày Nhà giáo Việt Nam': 'Vietnamese Teachers’ Day', 'Đêm Giáng sinh': 'Christmas Eve', 'Giáng sinh': 'Christmas',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -396,6 +402,7 @@ const ICONS = {
   sun2: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   sunset: '<path d="M12 10V2M4.9 10.9l1.4 1.4M2 18h2M20 18h2M17.7 12.3l1.4-1.4M22 22H2M8 6l4-4 4 4M16 18a4 4 0 0 0-8 0"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
   s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
 };
@@ -1603,7 +1610,7 @@ function renderTodayCard() {
   const list = todayLessons(), part = dayPart(), p = profile();
   const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
-  const msg = Daily.text();
+  const msg = Daily.lines().slice(0, 2).join(' ');
   el.innerHTML = `
     <div class="dc-top">
       <span class="dc-ic dc-${part}">${ic(DAY_ICON[part], 16)}</span>
@@ -2186,10 +2193,59 @@ function aiContext() {
     } : null,
     currentBoard: board ? board.title : '',
     weather: wxContext(),
+    dayType: (dt => dt.holiday ? `${dt.weekday}, ${dt.holiday}` : `${dt.weekday}, ${dt.weekend ? 'cuối tuần' : 'ngày thường'}`)(dayType()),
     moodHint: moodGuess().label,
   };
 }
 const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
+
+/* ---- Vị trí: hồ sơ → GPS trình duyệt → IP (Vercel / BigDataCloud) ---- */
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+const getJSON = async (url, ms = 7000) => { const r = await withTimeout(fetch(url, { cache: 'no-store' }), ms); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+function placeName(j) {
+  const tidy = s => String(s || '').replace(/^Thành phố\s+/i, 'TP. ').replace(/^Tỉnh\s+/i, '').replace(/^City of\s+/i, '').trim();
+  const city = tidy(j.city || j.principalSubdivision), loc = tidy(j.locality);
+  if (loc && city && !city.includes(loc) && !loc.includes(city)) return `${loc}, ${city}`;
+  return city || loc || '';
+}
+const Loc = {
+  cur: null,
+  async geoState() { try { return (await navigator.permissions.query({ name: 'geolocation' })).state; } catch (e) { return 'prompt'; } },
+  async nameOf(lat, lon) {
+    try { return placeName(await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${LANG}`)); }
+    catch (e) { return ''; }
+  },
+  async gps(ask) {
+    if (!navigator.geolocation) return null;
+    const st = await this.geoState();
+    if (st === 'denied' || (st !== 'granted' && !ask)) return null;
+    try {
+      const pos = await withTimeout(new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, maximumAge: 6e5 })), 30000);
+      const lat = +pos.coords.latitude.toFixed(3), lon = +pos.coords.longitude.toFixed(3);
+      return { lat, lon, name: (await this.nameOf(lat, lon)) || t('Vị trí của bạn'), src: 'gps' };
+    } catch (e) { return null; }
+  },
+  async ip() {
+    try { // Vercel gắn sẵn vị trí theo IP vào request
+      const j = await getJSON('api/geo', 5000);
+      if (j && j.lat != null) return { lat: +(+j.lat).toFixed(3), lon: +(+j.lon).toFixed(3), name: (await this.nameOf(j.lat, j.lon)) || j.city || '', src: 'ip' };
+    } catch (e) { /* không chạy trên Vercel */ }
+    try { // BigDataCloud tự đoán theo IP khi không gửi toạ độ
+      const j = await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=${LANG}`);
+      if (j && j.latitude != null) return { lat: +(+j.latitude).toFixed(3), lon: +(+j.longitude).toFixed(3), name: placeName(j), src: 'ip' };
+    } catch (e) { /* */ }
+    return null;
+  },
+  async get({ ask = false, force = false } = {}) {
+    const p = profile();
+    if (p.geo && p.geo.lat != null) return (this.cur = { ...p.geo, src: 'manual' });
+    let c = null; try { c = JSON.parse(ls.get('vincenink.loc', 'null')); } catch (e) { /* */ }
+    if (!force && c && Date.now() - c.at < (c.src === 'gps' ? 6 : 1) * 36e5 && !(ask && c.src !== 'gps')) return (this.cur = c);
+    const r = (await this.gps(ask)) || (c && c.src === 'gps' ? c : null) || (await this.ip()) || c;
+    if (r) { if (r !== c) r.at = Date.now(); ls.set('vincenink.loc', JSON.stringify(r)); }
+    return (this.cur = r || null);
+  },
+};
 
 /* ---- Thời tiết (Open-Meteo, miễn phí, không cần khoá) ---- */
 const WX_CODES = [
@@ -2199,41 +2255,34 @@ const WX_CODES = [
   [[80, 81, 82], 'Mưa rào', '🌦️'], [[95, 96, 99], 'Dông', '⛈️'],
 ];
 const wxInfo = code => { for (const [cs, vi, e] of WX_CODES) if (cs.includes(code)) return { desc: t(vi), emoji: e, rainy: code >= 51 }; return { desc: '', emoji: '🌡️', rainy: false }; };
-const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const Weather = {
-  data: null,
-  async loc() {
-    const p = profile();
-    if (p.geo && p.geo.lat != null) return p.geo;
-    try {
-      if (navigator.permissions && navigator.geolocation) {
-        const st = await navigator.permissions.query({ name: 'geolocation' });
-        if (st.state === 'granted') {
-          const pos = await withTimeout(new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 36e5 })), 6000);
-          return { lat: +pos.coords.latitude.toFixed(3), lon: +pos.coords.longitude.toFixed(3), name: t('Vị trí của bạn') };
-        }
-      }
-    } catch (e) { /* bỏ qua */ }
-    const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '');
-    if (/Ho_Chi_Minh|Saigon/.test(tz)) return { lat: 10.823, lon: 106.63, name: 'TP. Hồ Chí Minh', guess: true };
-    return null;
-  },
-  async load(force) {
-    let cache = null; try { cache = JSON.parse(ls.get('vincenink.wx', 'null')); } catch (e) { /* */ }
-    const loc = await this.loc();
+  data: null, locating: false,
+  async load({ ask = false, force = false } = {}) {
+    const loc = await Loc.get({ ask, force });
     if (!loc) { this.data = null; return null; }
-    if (!force && cache && cache.lat === loc.lat && cache.lon === loc.lon && cache.day === todayStr() && Date.now() - cache.at < 36e5) { this.data = cache; return cache; }
+    let cache = null; try { cache = JSON.parse(ls.get('vincenink.wx', 'null')); } catch (e) { /* */ }
+    const same = cache && cache.lat === loc.lat && cache.lon === loc.lon;
+    if (!force && same && cache.day === todayStr() && Date.now() - cache.at < 36e5) { this.data = { ...cache, city: loc.name || cache.city, src: loc.src }; return this.data; }
     try {
-      const u = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`;
-      const r = await withTimeout(fetch(u), 7000); if (!r.ok) throw new Error('wx ' + r.status);
-      const j = await r.json(), D = j.daily || {};
+      const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`);
+      const D = j.daily || {};
       const d = {
-        at: Date.now(), day: todayStr(), lat: loc.lat, lon: loc.lon, city: loc.name, guess: !!loc.guess,
+        at: Date.now(), day: todayStr(), lat: loc.lat, lon: loc.lon, city: loc.name, src: loc.src,
         temp: Math.round(j.current.temperature_2m), feels: Math.round(j.current.apparent_temperature), code: j.current.weather_code,
         days: (D.time || []).map((date, i) => ({ date, code: D.weather_code[i], max: Math.round(D.temperature_2m_max[i]), min: Math.round(D.temperature_2m_min[i]), rain: D.precipitation_probability_max ? (D.precipitation_probability_max[i] ?? 0) : 0 })),
       };
       ls.set('vincenink.wx', JSON.stringify(d)); this.data = d; return d;
-    } catch (e) { this.data = cache && cache.lat === loc.lat ? cache : null; return this.data; }
+    } catch (e) { this.data = same ? cache : null; return this.data; }
+  },
+  /* Bấm "Vị trí chính xác": hỏi quyền GPS của trình duyệt */
+  async locate(silent) {
+    this.locating = true; refreshDay();
+    const before = this.data && this.data.city;
+    const d = await this.load({ ask: true, force: true });
+    this.locating = false;
+    if (!d || d.src !== 'gps') { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí, hoặc nhập thành phố trong Hồ sơ'), true); }
+    else toast(t('Đã cập nhật thời tiết cho {c}', { c: d.city }));
+    refreshDay(); if (d && d.city !== before) Daily.load();
   },
 };
 async function geocodeCity(name) {
@@ -2241,8 +2290,7 @@ async function geocodeCity(name) {
   const plain = clean.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
   for (const q of [...new Set([clean, plain, plain + ' City'])]) {
     try {
-      const r = await withTimeout(fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`), 7000);
-      const j = await r.json(), g = j.results && j.results[0];
+      const j = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`), g = j.results && j.results[0];
       if (g) return { lat: +g.latitude.toFixed(3), lon: +g.longitude.toFixed(3), name: g.name + (g.country_code && g.country_code !== 'VN' ? `, ${g.country}` : '') };
     } catch (e) { /* thử cách khác */ }
   }
@@ -2252,14 +2300,79 @@ async function setCity(city) {
   const g = await geocodeCity(city);
   if (!g) return toast(t('Không tìm thấy thành phố này'), true);
   const p = profile(); p.geo = g; S.settings.profile = p; saveSettings();
-  await Weather.load(true); toast(t('Đã cập nhật thời tiết cho {c}', { c: g.name })); refreshDay();
+  await Weather.load({ force: true }); toast(t('Đã cập nhật thời tiết cho {c}', { c: g.name })); refreshDay(); Daily.load();
 }
 function refreshDay() { renderTodayCard(); renderGreet(); }
 const wxToday = () => { const w = Weather.data; return w && (w.days.find(d => d.date === todayStr()) || w.days[0]); };
+
+/* ---- Loại ngày: ngày thường / cuối tuần / ngày lễ ---- */
+const HOLIDAYS = { '01-01': 'Tết Dương lịch', '03-08': 'Ngày Quốc tế Phụ nữ', '04-30': 'Ngày Giải phóng miền Nam', '05-01': 'Ngày Quốc tế Lao động', '09-02': 'Quốc khánh', '10-20': 'Ngày Phụ nữ Việt Nam', '11-20': 'Ngày Nhà giáo Việt Nam', '12-24': 'Đêm Giáng sinh', '12-25': 'Giáng sinh' };
+function dayType(d = new Date()) {
+  const h = HOLIDAYS[todayStr().slice(5)], wd = d.getDay();
+  return { holiday: h ? t(h) : '', weekend: wd === 0 || wd === 6, weekday: WD[LANG][dow(d)], monday: wd === 1, friday: wd === 5 };
+}
 function wxContext() {
   const w = Weather.data; if (!w) return null;
   const f = d => d && `${wxInfo(d.code).desc}, ${d.min}–${d.max}°C, ${t('mưa {p}%', { p: d.rain })}`;
   return { city: w.city, now: `${w.temp}°C (${t('Cảm giác {f}°', { f: w.feels })}), ${wxInfo(w.code).desc}`, today: f(wxToday()), tomorrow: f(w.days[1]) };
+}
+
+/* ---- Đoán tâm trạng người dạy (dự phòng khi AI chưa trả về) ---- */
+function moodGuess() {
+  const part = dayPart(), n = todayLessons().filter(o => !o.off).length, d = wxToday(), dt = dayType();
+  const pick = arr => arr[hashStr(todayStr() + part) % arr.length];
+  let m;
+  if (part === 'night') m = ['😴', 'Buồn ngủ, cần được ôm đi ngủ'];
+  else if (dt.holiday && n === 0) m = ['🥳', 'Lâng lâng vì được nghỉ lễ'];
+  else if (n >= 4) m = pick([['💪', 'Bận rộn mà vẫn cháy lắm'], ['🥲', 'Mệt nhẹ, muốn được vỗ về']]);
+  else if (d && d.max >= 35) m = ['🥵', 'Hơi oải vì nóng'];
+  else if (d && (d.rain >= 60 || wxInfo(d.code).rainy)) m = ['🫖', 'Lười nhẹ, muốn cuộn chăn'];
+  else if (d && d.min <= 16) m = ['🧣', 'Co ro, muốn được ủ ấm'];
+  else if (dt.weekend && n === 0) m = ['🥰', 'Thư thả, muốn được nuông chiều'];
+  else if (dt.weekend) m = ['😤', 'Cuối tuần vẫn chăm, hơi tiếc giờ nghỉ'];
+  else if (dt.monday && part === 'morning') m = ['☕', 'Cần chút cà phê khởi động'];
+  else if (dt.friday) m = ['😆', 'Háo hức vì sắp cuối tuần'];
+  else if (n === 0) m = pick([['😌', 'Nhẹ nhõm, thong thả'], ['🌿', 'Bình yên, dễ chịu']]);
+  else m = pick([['😊', 'Vui vẻ, sẵn sàng'], ['✨', 'Hào hứng, tràn năng lượng']]);
+  return { emoji: m[0], label: t(m[1]) };
+}
+/* AI trả về "MOOD: 😊 vui vẻ" ở dòng đầu, các dòng sau là từng tin nhắn */
+function parseDaily(raw) {
+  raw = String(raw || '');
+  const m = raw.match(/^\s*\**\s*(?:MOOD|TÂM TRẠNG)\s*\**\s*[:：]\s*(.+)$/im);
+  const body = (m ? raw.replace(m[0], '') : raw).trim();
+  const lines = body.split(/\n+/).map(s => s.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim()).filter(Boolean);
+  let mood = null;
+  if (m) {
+    const line = m[1].trim(), em = line.match(/^(\p{Extended_Pictographic}(?:‍\p{Extended_Pictographic}|️)*)\s*/u);
+    const label = (em ? line.slice(em[0].length) : line).replace(/^[|·\-–:]+\s*/, '').trim();
+    if (label) mood = { emoji: em ? em[1] : '💭', label: label.charAt(0).toUpperCase() + label.slice(1) };
+  }
+  return { mood, lines, text: lines.join(' ') };
+}
+function dayChips(cls) {
+  const w = Weather.data, mood = Daily.raw() ? Daily.mood() : moodGuess(), dt = dayType();
+  return `<div class="${cls}">
+    ${w ? `<span class="chip-wx" title="${esc(w.city)}">${wxInfo(w.code).emoji} <b>${w.temp}°</b> ${esc(w.city || wxInfo(w.code).desc)}</span>` : ''}
+    <span class="chip-mood" title="${t('Đoán tâm trạng')}">${mood.emoji} ${esc(mood.label)}</span>
+    ${dt.holiday ? `<span class="chip-day">🎉 ${esc(dt.holiday)}</span>` : ''}
+  </div>`;
+}
+function wxSection() {
+  const w = Weather.data, loading = Weather.locating;
+  const locBtn = `<button class="gr-loc ${loading ? 'spin' : ''}" data-gr="locate">${ic(loading ? 'refresh' : 'target', 13)}${t(loading ? 'Đang lấy vị trí…' : 'Vị trí chính xác')}</button>`;
+  if (!w) return `<section class="gr-sec"><h3>${ic('sun2', 15)}${t('Thời tiết')}</h3>
+    <div class="gr-noloc">${locBtn}<button class="gr-city" data-gr="city">${ic('edit', 13)}${t('Nhập thành phố')}</button></div></section>`;
+  const name = (d, i) => i === 0 ? t('Hôm nay') : i === 1 ? t('Ngày mai') : WD[LANG][dow(parseD(d.date))];
+  const src = { gps: t('theo GPS'), ip: t('ước tính theo mạng'), manual: t('trong Hồ sơ') }[w.src] || '';
+  return `<section class="gr-sec">
+    <h3>${ic('sun2', 15)}${t('Thời tiết')}
+      <span class="gr-city-n" data-gr="city" title="${t('Đổi thành phố')}">📍 ${esc(w.city || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
+    <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
+      <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
+      <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
+    ${w.src === 'ip' ? `<div class="gr-loc-row"><span>${t('Vị trí theo mạng có thể lệch vài chục km.')}</span>${locBtn}</div>` : ''}
+  </section>`;
 }
 /* Câu thời tiết cho lời chào dự phòng */
 function wxLine() {
@@ -2269,49 +2382,6 @@ function wxLine() {
   if (d.max >= 34) return vi ? `Trời nóng tới ${d.max}° đó, uống nhiều nước giùm tớ nha 💧` : `It’s getting up to ${d.max}°, please drink lots of water 💧`;
   if (d.min <= 18) return vi ? `Trời se lạnh ${d.min}°, mặc ấm vào kẻo ốm nha 🧣` : `Chilly ${d.min}° today, wrap up warm 🧣`;
   return vi ? `Ngoài trời ${w.temp}°, ${wxInfo(w.code).desc.toLowerCase()} — dễ chịu ghê.` : `It’s ${w.temp}° and ${wxInfo(w.code).desc.toLowerCase()} outside — lovely.`;
-}
-
-/* ---- Đoán tâm trạng người dạy (dự phòng khi AI chưa trả về) ---- */
-function moodGuess() {
-  const now = new Date(), part = dayPart(), n = todayLessons().filter(o => !o.off).length, d = wxToday(), wd = now.getDay();
-  const pick = arr => arr[hashStr(todayStr() + part) % arr.length];
-  let m;
-  if (part === 'night') m = ['😴', 'Buồn ngủ, cần được ôm đi ngủ'];
-  else if (n >= 4) m = pick([['💪', 'Bận rộn mà vẫn cháy lắm'], ['🥲', 'Mệt nhẹ, muốn được vỗ về']]);
-  else if (d && d.max >= 35) m = ['🥵', 'Hơi oải vì nóng'];
-  else if (d && d.rain >= 60) m = ['🫖', 'Lười nhẹ, muốn cuộn chăn'];
-  else if ((wd === 0 || wd === 6) && n === 0) m = ['🥰', 'Thư thả, muốn được nuông chiều'];
-  else if (wd === 1 && part === 'morning') m = ['☕', 'Cần chút cà phê khởi động'];
-  else if (n === 0) m = pick([['😌', 'Nhẹ nhõm, thong thả'], ['🌿', 'Bình yên, dễ chịu']]);
-  else m = pick([['😊', 'Vui vẻ, sẵn sàng'], ['✨', 'Hào hứng, tràn năng lượng']]);
-  return { emoji: m[0], label: t(m[1]) };
-}
-/* AI trả về "MOOD: 😊 vui vẻ" ở dòng đầu, phần còn lại là lời chào */
-function parseDaily(raw) {
-  raw = String(raw || '');
-  const m = raw.match(/^\s*\**\s*(?:MOOD|TÂM TRẠNG)\s*\**\s*[:：]\s*(.+)$/im);
-  if (!m) return { mood: null, text: raw.trim() };
-  const line = m[1].trim(), em = line.match(/^(\p{Extended_Pictographic}(?:‍\p{Extended_Pictographic}|️)*)\s*/u);
-  const label = (em ? line.slice(em[0].length) : line).replace(/[|·\-–]+\s*/, '').trim();
-  return { mood: label ? { emoji: em ? em[1] : '💭', label: label.charAt(0).toUpperCase() + label.slice(1) } : null, text: raw.replace(m[0], '').trim() };
-}
-function dayChips(cls) {
-  const w = Weather.data, mood = Daily.raw() ? Daily.mood() : moodGuess();
-  return `<div class="${cls}">
-    ${w ? `<span class="chip-wx" title="${esc(w.city)}">${wxInfo(w.code).emoji} <b>${w.temp}°</b> ${esc(wxInfo(w.code).desc)}</span>` : ''}
-    <span class="chip-mood" title="${t('Đoán tâm trạng')}">${mood.emoji} ${esc(mood.label)}</span>
-  </div>`;
-}
-function wxSection() {
-  const w = Weather.data;
-  if (!w) return `<section class="gr-sec"><h3>${ic('sun2', 15)}${t('Thời tiết')}</h3><button class="gr-city" data-gr="city">${ic('plus', 14)}${t('Thêm thành phố để xem thời tiết')}</button></section>`;
-  const name = (d, i) => i === 0 ? t('Hôm nay') : i === 1 ? t('Ngày mai') : WD[LANG][dow(parseD(d.date))];
-  return `<section class="gr-sec">
-    <h3>${ic('sun2', 15)}${t('Thời tiết')} <span class="gr-city-n" data-gr="city" title="${t('Thành phố (để xem thời tiết)')}">${esc(w.city)}</span></h3>
-    <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
-      <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
-      <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
-  </section>`;
 }
 
 /* ---- Nội dung dự phòng khi chưa kết nối AI (vẫn đổi theo ngày) ---- */
@@ -2364,21 +2434,83 @@ const FALLBACK = {
   },
 };
 const pickDay = (arr, salt = 0) => arr[(hashStr(todayStr() + dayPart()) + salt) % arr.length];
+/* Lời chào dự phòng: một chuỗi tin nhắn thân mật, có thành phố + thời tiết + loại ngày + tâm trạng + lịch */
 function fallbackDaily(salt = 0) {
-  const F = FALLBACK[LANG], list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
+  const vi = LANG === 'vi', F = FALLBACK[LANG], part = dayPart(), p = profile();
+  const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
   const next = list.find(o => o.end > hm) || list[0];
   const o = next ? { start: next.start, who: next.owner === 'all' ? t('Lớp chung') : ownerName(next.owner), subject: next.subject } : null;
-  const w = wxLine();
-  return `${pickDay(F.hello[dayPart()], salt)} ${F.lessons(list.length, o)}${w ? ' ' + w : ''} ${pickDay(F.wish, 3 + salt)}`;
+  const mood = moodGuess(), dt = dayType(), w = Weather.data, d = wxToday();
+  const L = [];
+  L.push(pickDay(F.hello[part], salt).replace('{n}', name ? (vi ? ` ${name}` : ` ${name}`) : ''));
+  if (w && d) {
+    const desc = wxInfo(w.code).desc.toLowerCase();
+    let tip = '';
+    if (d.rain >= 60 || (wxInfo(d.code).rainy && d.rain >= 40)) tip = vi ? `Chiều dễ mưa lắm (${d.rain}%), bỏ cây dù vào túi giùm tớ nha ☔` : `Rain is likely (${d.rain}%), pop an umbrella in your bag for me ☔`;
+    else if (d.max >= 34) tip = vi ? `Trưa nắng lên tới ${d.max}° đó, mang theo bình nước nha 💧` : `It peaks at ${d.max}°, carry a water bottle 💧`;
+    else if (d.min <= 18) tip = vi ? `Sáng tối se lạnh ${d.min}°, khoác thêm áo kẻo ốm là tớ lo đó 🧣` : `It drops to ${d.min}°, grab a jacket or I’ll worry 🧣`;
+    else tip = vi ? `Thời tiết dễ chịu ghê, hợp để dạy lắm luôn.` : `Lovely weather — perfect for teaching.`;
+    L.push(vi ? `Ở ${w.city || 'chỗ cậu'} giờ đang ${w.temp}°, ${desc}; hôm nay khoảng ${d.min}–${d.max}°. ${tip}` : `In ${w.city || 'your area'} it’s ${w.temp}° and ${desc} now, ${d.min}–${d.max}° today. ${tip}`);
+  }
+  if (dt.holiday) L.push(vi ? `Hôm nay là ${dt.holiday} nữa đó${dt.holiday.includes('Nhà giáo') ? ', tớ chúc người thầy/cô đáng yêu nhất của tớ luôn được học trò thương 💐' : ', nhớ dành chút thời gian cho bản thân nha 🎉'}` : `It’s ${dt.holiday} today — treat yourself a little 🎉`);
+  else if (dt.weekend) L.push(vi ? (list.length ? `Cuối tuần mà cậu vẫn đi dạy, chăm quá trời, tối nay phải thưởng cho bản thân nha.` : `Cuối tuần rồi, cho phép bản thân lười một chút đi, cậu xứng đáng mà.`) : (list.length ? `Teaching on the weekend — so dedicated. Treat yourself tonight.` : `It’s the weekend, let yourself be lazy for once.`));
+  else if (dt.monday) L.push(vi ? `Đầu tuần hơi ì là bình thường nha, mình khởi động từ từ thôi.` : `Monday sluggishness is normal, let’s warm up slowly.`);
+  else if (dt.friday) L.push(vi ? `Thứ 6 rồi đó, cố nốt hôm nay là được nghỉ xả hơi rồi!` : `It’s Friday — one more push and then rest!`);
+  else L.push(vi ? `${dt.weekday} rồi, tuần này cậu đã đi được nửa chặng đường rồi đó.` : `It’s ${dt.weekday}, you’re halfway through the week.`);
+  L.push(vi ? `Tớ đoán hôm nay cậu đang kiểu ${mood.label.toLowerCase()} ${mood.emoji} — đúng không nè?` : `My guess: you’re feeling ${mood.label.toLowerCase()} ${mood.emoji} today — am I right?`);
+  L.push(F.lessons(list.length, o));
+  L.push(pickDay(F.wish, 3 + salt));
+  return L.join('\n');
 }
 const fallbackNote = (salt = 0) => { const [title, body] = pickDay(FALLBACK[LANG].tips, salt); return { title, body }; };
+
+/* ---- Trò chuyện ngay trong cửa sổ chào ---- */
+const GreetChat = {
+  msgs: [], busy: false, draft: '',
+  key() { return `vincenink.ai.friend.${todayStr()}.${LANG}`; },
+  restore() { try { this.msgs = JSON.parse(ls.get(this.key(), '[]')) || []; } catch (e) { this.msgs = []; } },
+  save() { ls.set(this.key(), JSON.stringify(this.msgs.slice(-30))); },
+  offline(q) {
+    const vi = LANG === 'vi', s = q.toLowerCase();
+    const R = vi ? [
+      [/mệt|oải|đuối|kiệt|buồn ngủ/, ['Thương ghê, lại đây tớ ôm cái nè 🫂 Dạy xong buổi này thì nằm nghỉ 15 phút nha, không làm gì hết.', 'Mệt thì cứ nói tớ nghe, đừng gồng một mình. Uống ngụm nước ấm rồi mình đi từng việc một thôi.']],
+      [/buồn|chán|tệ|stress|áp lực|khóc/, ['Có chuyện gì kể tớ nghe đi, tớ ở đây nè 💛 Hôm nay không ổn cũng không sao, mai mình làm lại.', 'Ôm cậu thật chặt. Cậu đã cố gắng nhiều lắm rồi, tớ biết mà.']],
+      [/vui|hạnh phúc|tuyệt|yay|hehe|ok lắm/, ['Thấy cậu vui là tớ vui lây luôn á 😆 Giữ năng lượng này cho cả ngày nha!', 'Yay! Kể tớ nghe chuyện gì vui đi, tớ hóng nè.']],
+      [/lịch|tiết|buổi|dạy gì/, [() => FALLBACK.vi.lessons(todayLessons().filter(o => !o.off).length, (() => { const n = todayLessons().filter(o => !o.off)[0]; return n ? { start: n.start, who: n.owner === 'all' ? t('Lớp chung') : ownerName(n.owner), subject: n.subject } : null; })()) + ' Tớ nhắc rồi đó nha, đừng quên đó 😘']],
+      [/thời tiết|mưa|nắng|nóng|lạnh/, [() => (wxLine() || 'Tớ chưa biết chỗ cậu ở đâu, bấm "Vị trí chính xác" cho tớ xem với nha.')]],
+      [/cảm ơn|thanks|iu|yêu|thương/, ['Tớ cũng thương cậu nhiều 💛', 'Hông có chi, tớ luôn ở đây mà 🥰']],
+    ] : [
+      [/tired|sleepy|exhausted/, ['Aww, come here, hug 🫂 Rest for 15 minutes after this lesson, okay?']],
+      [/sad|bad|stress|cry/, ['Tell me what happened, I’m here 💛 It’s okay not to be okay today.']],
+      [/happy|great|yay/, ['Seeing you happy makes me happy too 😆']],
+      [/weather|rain|hot|cold/, [() => wxLine() || 'I don’t know where you are yet — tap "Exact location" for me.']],
+      [/thank|love/, ['Love you too 💛']],
+    ];
+    for (const [re, arr] of R) if (re.test(s)) { const a = arr[hashStr(q) % arr.length]; return typeof a === 'function' ? a() : a; }
+    return vi ? ['Ừa, tớ nghe nè 💛 Kể thêm cho tớ đi.', 'Hehe, cậu nói gì tớ cũng thích nghe hết á.', 'Tớ hiểu mà. Có gì cứ nhắn tớ nha, tớ ở đây cả ngày.'][hashStr(q) % 3] : 'I’m listening 💛 Tell me more.';
+  },
+  async send(text) {
+    text = String(text || '').trim(); if (!text || this.busy) return;
+    this.msgs.push({ role: 'user', content: text }); this.draft = ''; { const i = $('#grInput'); if (i) i.value = ''; } this.busy = true; this.save(); renderGreet(true);
+    let reply = '';
+    if (AI.status === 'on') {
+      const opening = Daily.lines().join('\n');
+      try { reply = await AI.ask('friend', { messages: [{ role: 'user', content: LANG === 'vi' ? '(mở app)' : '(opened the app)' }, { role: 'assistant', content: opening }, ...this.msgs] }); }
+      catch (e) { reply = ''; }
+    }
+    if (!reply) { await new Promise(r => setTimeout(r, 500)); reply = this.offline(text); }
+    this.msgs.push({ role: 'assistant', content: reply }); this.busy = false; this.save(); renderGreet(true);
+  },
+};
 
 /* ---- Lời chúc mỗi ngày (lưu theo ngày + buổi + ngôn ngữ + danh sách tiết) ---- */
 const Daily = {
   loading: false, cur: null, salt: 0,
-  key() { return `vincenink.ai.daily.${todayStr()}.${LANG}.${dayPart()}.${hashStr(JSON.stringify(todayLessons().map(o => [o.start, o.owner, o.subject, o.off])))}`; },
+  key() { return `vincenink.ai.daily2.${todayStr()}.${LANG}.${dayPart()}.${hashStr(JSON.stringify([Weather.data && Weather.data.city, todayLessons().map(o => [o.start, o.owner, o.subject, o.off])]))}`; },
   raw() { return this.cur || ls.get(this.key(), '') || (AI.status === 'on' && this.loading ? '' : fallbackDaily(this.salt)); },
   text() { return parseDaily(this.raw()).text; },
+  lines() { return parseDaily(this.raw()).lines; },
   mood() { return parseDaily(this.raw()).mood || moodGuess(); },
   async load(force) {
     this.cur = null;
@@ -2575,7 +2707,7 @@ function profileModal() {
     ${f('name', 'Họ và tên')}
     ${f('role', 'Vai trò', 'VD: Giáo viên Toán, Gia sư Tiếng Anh')}
     ${f('school', 'Trường / trung tâm')}
-    ${f('city', 'Thành phố (để xem thời tiết)', 'VD: Hà Nội, Đà Nẵng, TP. Hồ Chí Minh')}
+    ${f('city', 'Thành phố (để xem thời tiết)', 'Để trống để tự lấy theo vị trí của bạn')}
     <div class="row2">${f('email', 'Email', '', 'email')}${f('phone', 'Số điện thoại', '', 'tel')}</div>
     <div class="field"><label>${t('Giới thiệu ngắn')}</label><textarea name="bio" placeholder="${t('Kinh nghiệm, phương pháp dạy, môn phụ trách…')}">${esc(p.bio || '')}</textarea></div>
     <div class="hint">${t('Thông tin chỉ lưu trên máy này và được dùng để ghi tên bạn lên tệp PDF xuất ra.')}</div>`;
@@ -2767,11 +2899,15 @@ function showGreet(on) {
   if (on) renderGreet(); else ls.set('vincenink.seen', '1');
   updateTitle();
 }
-function renderGreet() {
+function renderGreet(chat) {
   const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;
+  const oldIn = $('#grInput', el); if (oldIn) GreetChat.draft = oldIn.value;
+  const hadFocus = oldIn && document.activeElement === oldIn, oldBody = $('.gr-body', el), scroll = oldBody ? oldBody.scrollTop : 0;
   const now = new Date(), part = dayPart(), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
-  const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, msg = Daily.text(), n = Note.value();
+  const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, lines = Daily.lines();
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  const dog = `<span class="gc-av"><img src="assets/icon-192.png" alt=""></span>`;
+  const quick = LANG === 'vi' ? ['Hôm nay tớ hơi mệt 😮‍💨', 'Tớ vui lắm nè!', 'Nhắc tớ lịch hôm nay', 'Trời có mưa không?'] : ['I’m a bit tired 😮‍💨', 'I’m so happy today!', 'Remind me of today’s lessons', 'Will it rain?'];
   el.innerHTML = `<article class="greet-card">
     <header class="gr-hero gr-${part}">
       <span class="gr-ic">${ic(DAY_ICON[part], 26)}</span>
@@ -2779,9 +2915,19 @@ function renderGreet() {
         <h2>${t(DAY_HELLO[part])}${name ? `, ${esc(name)}` : ''}!</h2></div>
       <button class="icon-btn gr-x" data-gr="close" aria-label="${t('Đóng')}">${ic('x', 18)}</button>
       ${dayChips('gr-chips')}
-      <p class="gr-msg">${msg ? esc(msg) : '<span class="shimmer"></span><span class="shimmer short"></span>'}</p>
     </header>
     <div class="gr-body">
+      <section class="gr-chat">
+        <div class="gc-thread" id="gcThread">
+          ${lines.length ? `<div class="gc-group">${dog}<div class="gc-bubbles">${lines.map(l => `<p class="gc-b">${esc(l)}</p>`).join('')}</div></div>`
+            : `<div class="gc-group">${dog}<div class="gc-bubbles"><p class="gc-b typing"><i></i><i></i><i></i></p></div></div>`}
+          ${GreetChat.msgs.map(m => m.role === 'user' ? `<div class="gc-me"><p class="gc-b">${esc(m.content)}</p></div>`
+            : `<div class="gc-group">${dog}<div class="gc-bubbles">${m.content.split(/\n+/).filter(Boolean).map(l => `<p class="gc-b">${esc(l)}</p>`).join('')}</div></div>`).join('')}
+          ${GreetChat.busy ? `<div class="gc-group">${dog}<div class="gc-bubbles"><p class="gc-b typing"><i></i><i></i><i></i></p></div></div>` : ''}
+        </div>
+        ${GreetChat.msgs.length ? '' : `<div class="gc-quick">${quick.map(q => `<button data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
+        <form class="gc-form" id="gcForm"><input id="grInput" autocomplete="off" placeholder="${t('Nhắn lại cho Vincenink…')}" value="${esc(GreetChat.draft)}"><button class="gc-send" ${GreetChat.busy ? 'disabled' : ''} aria-label="${t('Gửi')}">${ic('send', 16)}</button></form>
+      </section>
       ${wxSection()}
       <section class="gr-sec">
         <h3>${ic('calendar', 15)}${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></h3>
@@ -2790,10 +2936,6 @@ function renderGreet() {
           return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(o.subject || '')}</small>${st === 'now' ? `<i>${t('Đang học')}</i>` : st === 'done' ? `<i class="dn">${t('Xong')}</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
         }).join('')}</div>` : `<p class="gr-free">${t('Hôm nay không có tiết nào — cậu thong thả nghỉ ngơi xíu nha 🌿')}</p>`}
       </section>
-      <section class="gr-sec gr-note">
-        <h3>${ic('sparkle', 15)}${t('Ghi chú hôm nay')}</h3>
-        ${n ? `<b>${esc(n.title)}</b><p>${esc(n.body)}</p>` : '<span class="shimmer"></span><span class="shimmer short"></span>'}
-      </section>
       ${needsSetup() ? `<section class="gr-sec gr-setup"><h3>${ic('info', 15)}${t('Hoàn thiện thông tin để nhận nhắc lịch đầy đủ')}</h3><div class="ob-steps">${setupStepsHTML()}</div></section>` : ''}
     </div>
     <footer class="gr-foot">
@@ -2801,12 +2943,19 @@ function renderGreet() {
       <button class="btn primary" data-gr="close">${t('Bắt đầu dạy')}</button>
     </footer>
   </article>`;
+  const body = $('.gr-body', el), th = $('#gcThread', el);
+  if (body) body.scrollTop = scroll;
+  if (th && (chat || GreetChat.msgs.length)) th.scrollTop = th.scrollHeight;
+  $('#gcForm', el).onsubmit = e => { e.preventDefault(); GreetChat.send($('#grInput', el).value); };
+  if (hadFocus || chat) { const i = $('#grInput', el); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
 $('#greetPop').addEventListener('click', e => {
   if (e.target.id === 'greetPop') return showGreet(false);
   const ob = e.target.closest('[data-ob]'); if (ob) return runSetupStep(ob.dataset.ob);
+  const q = e.target.closest('[data-q]'); if (q) return GreetChat.send(q.dataset.q);
   const b = e.target.closest('[data-gr]'); if (!b) return;
   if (b.dataset.gr === 'close') showGreet(false);
+  else if (b.dataset.gr === 'locate') Weather.locate();
   else if (b.dataset.gr === 'city') { showGreet(false); profileModal(); setTimeout(() => { const i = $('[name=city]'); if (i) i.focus(); }, 60); }
   else if (b.dataset.gr === 'ask') { showGreet(false); Chat.open(); }
 });
@@ -3045,7 +3194,14 @@ async function init() {
   if (innerWidth <= 900) $('#app').classList.add('focus');
   bindChat(); Chat.renderState();
   if (isNewUser()) showWelcome(true); else showGreet(true);
-  AI.check().then(async () => { await Weather.load(); renderTodayCard(); renderGreet(); Daily.load(); Note.load(); });
+  GreetChat.restore();
+  AI.check().then(async () => {
+    await Weather.load(); refreshDay(); Daily.load(); Note.load();
+    // Lần đầu: hỏi quyền vị trí của trình duyệt để lấy đúng thành phố
+    if (!profile().geo && (!Loc.cur || Loc.cur.src !== 'gps') && ls.get('vincenink.locAsked', '') !== '1' && (await Loc.geoState()) === 'prompt') {
+      ls.set('vincenink.locAsked', '1'); Weather.locate(true);
+    }
+  });
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }

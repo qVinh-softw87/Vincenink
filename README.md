@@ -88,9 +88,13 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 
 ## Lời chào, thời tiết & tâm trạng
 
-- Mỗi lần mở app, Vincenink chào bạn bằng giọng thân mật như bạn thân/người thương (xưng "tớ – cậu"), đổi theo buổi sáng/trưa/chiều/tối/khuya.
-- **Thời tiết 3 ngày** lấy miễn phí từ [Open-Meteo](https://open-meteo.com) (không cần khoá API). Nhập **Thành phố** trong *Hồ sơ* để xem đúng nơi bạn ở; nếu chưa nhập, app dùng vị trí trình duyệt (nếu đã cho phép) hoặc múi giờ Việt Nam → TP. Hồ Chí Minh. Dữ liệu được lưu tạm 1 giờ.
-- **Đoán tâm trạng** hôm nay dựa trên số tiết, thứ trong tuần, buổi và thời tiết — AI viết (dòng `MOOD:`), nếu chưa kết nối AI thì app tự đoán.
+- Mỗi lần mở app, Vincenink nhắn cho bạn một **chuỗi tin nhắn** thân mật như bạn thân/người thương (xưng "tớ – cậu"). Lời chào nhắc tên thành phố, thời tiết và loại ngày (ngày thường, cuối tuần, ngày lễ, Ngày Nhà giáo…), đoán tâm trạng của bạn và nhắc lịch dạy. Bạn có thể **nhắn lại** ngay trong cửa sổ chào; có AI thì AI trả lời, không có AI thì app tự đáp.
+- **Vị trí** được lấy theo thứ tự:
+  1. Thành phố bạn nhập trong *Hồ sơ*.
+  2. GPS của trình duyệt (lần đầu app sẽ hỏi quyền; cũng có nút **Vị trí chính xác**).
+  3. Ước tính theo IP: trên Vercel dùng `api/geo.js`, nơi khác dùng BigDataCloud.
+- Tên khu vực lấy từ BigDataCloud (miễn phí, không cần khoá).
+- **Thời tiết 3 ngày** lấy từ [Open-Meteo](https://open-meteo.com) (miễn phí, không cần khoá) và được lưu tạm 1 giờ.
 
 ## Học phí
 
