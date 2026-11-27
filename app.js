@@ -457,7 +457,18 @@ const EN = {
   "Đóng trang là mất dữ liệu — hãy đăng nhập": "Closing the page loses data, so sign in",
   "Được sao lưu: hồ sơ, lớp học, lịch, học phí, bảng vẽ và giờ nhắc. Tài liệu tải lên (PDF/ảnh lớn) chỉ nằm trên máy này.": "Backed up: profile, classes, schedule, fees, boards and reminders. Uploaded documents (PDFs, large images) stay on this device only.",
   "Không đăng nhập vẫn dùng được (chế độ khách), nhưng đóng trang là dữ liệu bị xoá. Đăng nhập một lần, trình duyệt sẽ nhớ — dữ liệu được lưu và sao lưu đầy đủ.": "You can use it without signing in (guest mode), but closing the page deletes your data. Sign in once and your browser remembers you, with everything saved and backed up.",
-  "Máy chủ chưa có bảng sao lưu bảng vẽ — chủ trang cần chạy supabase/fix-02-boards.sql": "The server has no table for board backups yet. The site owner needs to run supabase/fix-02-boards.sql"
+  "Máy chủ chưa có bảng sao lưu bảng vẽ — chủ trang cần chạy supabase/fix-02-boards.sql": "The server has no table for board backups yet. The site owner needs to run supabase/fix-02-boards.sql",
+  "Bạn muốn dùng Vincenink theo cách nào?": "How would you like to use Vincenink?",
+  "Khuyên dùng": "Recommended",
+  "Dùng thử với tư cách khách": "Try it as a guest",
+  "Đóng tab hoặc tắt trình duyệt là <b>mất toàn bộ dữ liệu</b> vừa tạo": "Closing the tab or browser <b>deletes everything</b> you created",
+  "Không sao lưu, không mở được trên máy khác": "No backup, not available on other devices",
+  "Không nhận thông báo nhắc lịch khi đã đóng trang": "No reminders once the page is closed",
+  "Tải lại trang (F5) thì vẫn còn.": "Reloading the page (F5) keeps it.",
+  "Tiếp tục với tư cách khách": "Continue as guest",
+  "Chọn cách sử dụng": "Choose how to continue",
+  "Đang dùng chế độ khách — nhớ đăng nhập trước khi đóng trang để không mất dữ liệu": "Guest mode: sign in before closing the page so you don't lose data",
+  "Bạn chưa đăng nhập — đóng trang sẽ mất dữ liệu.": "You're not signed in. Closing the page will delete your data."
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3134,7 +3145,7 @@ function remindersModal() {
 const AUTH_KEY = 'vincenink.auth';
 const isMemberSync = () => { try { return !!localStorage.getItem(AUTH_KEY) || !!(window.Cloud && Cloud.user); } catch (e) { return false; } };
 const Guest = {
-  tabId: Math.random().toString(36).slice(2),
+  tabId: Math.random().toString(36).slice(2), leaving: false,
   legacyAt: () => +ls.get('vincenink.legacyAt', '0') || 0,
   /* Có tab Vincenink nào khác đang mở không? (để không xoá dữ liệu khi người dùng chỉ mở thêm tab) */
   othersOpen() {
@@ -3189,7 +3200,7 @@ const Guest = {
     return S.students.some(newer) || S.files.some(newer) || S.boards.some(b => newer(b) && (b.updatedAt || 0) - (b.createdAt || 0) > 1000);
   },
 };
-window.addEventListener('beforeunload', e => { if (typeof Cloud !== 'undefined' && Cloud.configured() && Guest.atRisk()) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (typeof Cloud !== 'undefined' && Cloud.configured() && !isMemberSync() && !Guest.leaving) { e.preventDefault(); e.returnValue = t('Bạn chưa đăng nhập — đóng trang sẽ mất dữ liệu.'); return e.returnValue; } });
 
 /* ---- Sao lưu bảng vẽ: nén ảnh dán trong bảng trước khi gửi lên ---- */
 async function shrinkSrc(src) {
@@ -3447,7 +3458,7 @@ var Cloud = window.Cloud = {
     const { data, error } = await this.sb.auth.signUp({ email, password, options: { emailRedirectTo: location.href.split('#')[0] } });
     return error || (data.session ? null : 'confirm');
   },
-  async google() { const { error } = await this.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } }); return error; },
+  async google() { Guest.leaving = true; const { error } = await this.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } }); if (error) Guest.leaving = false; return error; },
   async reset(email) { const { error } = await this.sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0].split('?')[0] }); return error; },
   async newPassword(pw) { const { error } = await this.sb.auth.updateUser({ password: pw }); if (!error) this.recovery = false; return error; },
   async signOut() {
@@ -3829,22 +3840,38 @@ async function maybeBackupPrompt() {
   for (let i = 0; i < 40 && !Cloud.ready; i++) await new Promise(r => setTimeout(r, 150));
   if (!Cloud.configured() || Cloud.user || $('.modal-back')) return;
   backupAsked = true;
-  const body = document.createElement('div'); body.className = 'mail-pop backup-pop';
-  body.innerHTML = `<div class="mp-ic">☁️</div>
-    <h3>${t('Đăng nhập để sao lưu dữ liệu')}</h3>
-    <p class="mp-lead">${t('Bạn đang dùng Vincenink ở <b>chế độ khách</b> (chưa đăng nhập).')}</p>
-    <div class="bk-warn">${ic('info', 16)}<span>${t('Ở chế độ khách, <b>đóng trang hoặc trình duyệt là dữ liệu bị xoá</b> (tải lại trang thì vẫn còn).')}</span></div>
-    <ul class="bk-list">
-      <li>✓ ${t('Lưu toàn bộ: lớp, lịch, học phí và bảng vẽ')}</li>
-      <li>✓ ${t('Trình duyệt nhớ đăng nhập — lần sau mở là dùng tiếp, không phải đăng nhập lại')}</li>
-      <li>✓ ${t('Mở trên máy khác vẫn thấy đủ dữ liệu')}</li>
-      <li>✓ ${t('Nhận thông báo nhắc lịch kể cả khi đã đóng trang')}</li>
-    </ul>
-    ${Guest.legacyAt() ? `<p class="hint">${t('Dữ liệu bạn có từ trước vẫn được giữ trên máy này; chỉ những gì tạo mới khi chưa đăng nhập mới bị xoá khi đóng trang. Đăng nhập để sao lưu tất cả.')}</p>` : `<p class="hint">${t('Tài liệu tải lên (PDF/ảnh lớn) chỉ lưu trên máy đang dùng.')}</p>`}`;
-  openModal({ title: t('Sao lưu dữ liệu'), body, width: 440, actions: [
-    { label: t('Để sau') },
-    { label: t('Đăng nhập / Đăng ký'), kind: 'primary', onClick: () => setTimeout(accountModal, 60) },
-  ] });
+  const body = document.createElement('div'); body.className = 'mode-pick';
+  body.innerHTML = `<p class="mpk-lead">${t('Bạn muốn dùng Vincenink theo cách nào?')}</p>
+    <button class="mpk-card acc" data-pick="login">
+      <span class="mpk-badge">${t('Khuyên dùng')}</span>
+      <span class="mpk-ic">☁️</span>
+      <b>${t('Đăng nhập / Đăng ký')}</b>
+      <ul>
+        <li>✓ ${t('Lưu toàn bộ: lớp, lịch, học phí và bảng vẽ')}</li>
+        <li>✓ ${t('Trình duyệt nhớ đăng nhập — lần sau mở là dùng tiếp, không phải đăng nhập lại')}</li>
+        <li>✓ ${t('Mở trên máy khác vẫn thấy đủ dữ liệu')}</li>
+        <li>✓ ${t('Nhận thông báo nhắc lịch kể cả khi đã đóng trang')}</li>
+      </ul>
+      <span class="mpk-go">${t('Đăng nhập / Đăng ký')} ›</span>
+    </button>
+    <button class="mpk-card guest" data-pick="guest">
+      <span class="mpk-ic">👤</span>
+      <b>${t('Dùng thử với tư cách khách')}</b>
+      <ul class="bad">
+        <li>✕ ${t('Đóng tab hoặc tắt trình duyệt là <b>mất toàn bộ dữ liệu</b> vừa tạo')}</li>
+        <li>✕ ${t('Không sao lưu, không mở được trên máy khác')}</li>
+        <li>✕ ${t('Không nhận thông báo nhắc lịch khi đã đóng trang')}</li>
+      </ul>
+      <small>${t('Tải lại trang (F5) thì vẫn còn.')}${Guest.legacyAt() ? ' ' + t('Dữ liệu bạn có từ trước vẫn được giữ trên máy này; chỉ những gì tạo mới khi chưa đăng nhập mới bị xoá khi đóng trang. Đăng nhập để sao lưu tất cả.') : ''}</small>
+      <span class="mpk-go">${t('Tiếp tục với tư cách khách')} ›</span>
+    </button>`;
+  const m = openModal({ title: t('Chọn cách sử dụng'), body, width: 640 });
+  body.addEventListener('click', e => {
+    const c = e.target.closest('[data-pick]'); if (!c) return;
+    m.close();
+    if (c.dataset.pick === 'login') setTimeout(accountModal, 60);
+    else toast(t('Đang dùng chế độ khách — nhớ đăng nhập trước khi đóng trang để không mất dữ liệu'));
+  });
 }
 function renderBackupNudge() {
   const el = $('#backupNudge'); if (!el) return;
@@ -3923,7 +3950,7 @@ async function importBackup(file) {
     for (const f of data.files) { const { data: u, driveId, driveLink, ...rest } = f; await DB.put('files', { ...rest, blob: await dataURLToBlob(u) }); }
     S.settings.classNote = data.classNote || ''; if (data.profile) S.settings.profile = data.profile;
     S.settings.lastBoard = null; S.settings.lastStudent = 'all'; await saveSettings();
-    contentDirty = viewDirty = false; location.reload();
+    contentDirty = viewDirty = false; Guest.leaving = true; location.reload();
   } catch (err) { toast(t('Không khôi phục được: {m}', { m: err.message }), true); }
 }
 

@@ -40,8 +40,9 @@ async def main():
         p = await opn(ctx, errs)
         assert await names(p) == [] and await p.evaluate("(async()=>(await DB.all('boardData')).filter(d=>d.items.length).length)()") == 0; ok('Đóng hết tab rồi mở lại → dữ liệu khách đã bị xoá (cả bảng vẽ)')
         await p.evaluate("showWelcome(false); showGreet(false)"); await p.wait_for_timeout(1000)
-        txt = await p.evaluate("document.querySelector('.backup-pop')?.innerText || ''")
-        assert 'chế độ khách' in txt and 'đóng trang' in txt.lower(); ok('Lần đầu vào: nhắc đăng nhập, nói rõ đóng trang là mất dữ liệu')
+        txt = await p.evaluate("document.querySelector('.mode-pick')?.innerText || ''")
+        assert 'Đăng nhập' in txt and 'khách' in txt and 'mất toàn bộ dữ liệu' in txt; ok('Sau giới thiệu: chọn Đăng nhập hoặc Khách, ghi rõ khách sẽ mất dữ liệu khi đóng')
+        assert await p.evaluate("(()=>{ const e=new Event('beforeunload',{cancelable:true}); window.dispatchEvent(e); return e.defaultPrevented })()"); ok('Khách bấm đóng trang → trình duyệt hỏi lại (có thể mất dữ liệu)')
         await ctx.close()
 
         # 2) Trình duyệt đã có dữ liệu từ trước (legacy) → giữ dữ liệu cũ
@@ -63,7 +64,7 @@ async def main():
         await p.evaluate(ADD % ('m1', 'Lớp thành viên')); await p.close()
         p = await opn(ctx, errs); await p.wait_for_timeout(1500)
         assert await p.evaluate("!!Cloud.user") and 'Lớp thành viên' in await names(p); ok('Đã đăng nhập: đóng rồi mở lại → vẫn đăng nhập, dữ liệu còn nguyên')
-        assert not await p.evaluate("!!document.querySelector('.backup-pop')") and await p.evaluate("document.querySelector('#backupNudge').classList.contains('hidden')"); ok('Đã đăng nhập: không còn nhắc sao lưu')
+        assert not await p.evaluate("(()=>{ const e=new Event('beforeunload',{cancelable:true}); window.dispatchEvent(e); return e.defaultPrevented })()") and not await p.evaluate("!!document.querySelector('.mode-pick')") and await p.evaluate("document.querySelector('#backupNudge').classList.contains('hidden')"); ok('Đã đăng nhập: không còn nhắc sao lưu')
         await ctx.close()
 
         assert not errs, errs; ok('Không có lỗi JavaScript')

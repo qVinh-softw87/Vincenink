@@ -1560,3 +1560,20 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 [data-theme="dark"] .backup-nudge .bn-t small, [data-theme="chalk"] .backup-nudge .bn-t small { color: #E2B49A; }
 .bk-warn { display: flex; gap: 8px; align-items: flex-start; text-align: left; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; color: #8A3E20; background: rgba(217,120,80,.12); }
 .bk-list { list-style: none; text-align: left; margin: 0 0 8px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; line-height: 1.8; color: var(--ink-soft); }
+
+/* ---- Chọn cách dùng: Đăng nhập hoặc Khách (v35) ---- */
+.mode-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mode-pick .mpk-lead { grid-column: 1 / -1; margin: 0 0 2px; color: var(--ink-2, #6b5d4f); text-align: center; }
+.mpk-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 18px 16px 14px; border-radius: 16px; border: 1.5px solid var(--line-strong); background: var(--surface, #fffaf3); color: inherit; font: inherit; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; }
+.mpk-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(90, 60, 30, .12); }
+.mpk-card.acc { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft), transparent 70%); }
+.mpk-card.guest { border-style: dashed; }
+.mpk-card > b { font-size: 16px; }
+.mpk-ic { font-size: 26px; line-height: 1; }
+.mpk-badge { position: absolute; top: 12px; right: 12px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; background: var(--accent); color: #fff; }
+.mpk-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; line-height: 1.45; }
+.mpk-card ul.bad li { color: #9a4a2e; }
+.mpk-card small { font-size: 12px; color: var(--ink-3, #8f8172); line-height: 1.4; }
+.mpk-go { margin-top: auto; padding-top: 6px; font-weight: 600; font-size: 13.5px; color: var(--accent-ink); }
+.mpk-card.guest .mpk-go { color: var(--ink-2, #6b5d4f); }
+@media (max-width: 560px) { .mode-pick { grid-template-columns: 1fr; } }
