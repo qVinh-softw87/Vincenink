@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Vincenink – Nhắc lịch dạy",
+  "short_name": "Vincenink",
+  "version": "1.0.0",
+  "description": "Hiện thông báo nhắc lịch dạy của Vincenink ngay cả khi bạn không mở trang — chỉ cần Chrome đang chạy.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Vincenink – Nhắc lịch dạy",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "alarms",
+    "notifications",
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://vincenink.vercel.app/*",
+        "https://*.vercel.app/*",
+        "https://qvinh-softw87.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "https://vincenink.vercel.app/*",
+    "https://*.vercel.app/*",
+    "https://qvinh-softw87.github.io/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ]
+}

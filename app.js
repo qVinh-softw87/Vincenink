@@ -323,6 +323,15 @@ const EN = {
   '“Đã dạy” = số buổi đã qua theo lịch (không tính buổi nghỉ) cộng “Buổi cộng thêm”. “Dự kiến cả tháng” mặc định 8 buổi, bấm − / + để chỉnh riêng từng tháng.': '“Taught” = past scheduled lessons (excluding cancelled) plus “Extra lessons”. “Planned this month” defaults to 8; use − / + to change it per month.',
   'GPS ±{m} m': 'GPS ±{m} m', 'Vị trí theo mạng có thể lệch vài chục km — cho phép GPS để chính xác.': 'Network location can be off by tens of km — allow GPS for accuracy.',
   'Vincenink nhắn cậu': 'A note from Vincenink', 'Đang lấy vị trí và thời tiết chỗ cậu…': 'Finding your location and weather…', 'Đang viết lời nhắn…': 'Writing your note…',
+  'Nhắc lịch & thông báo': 'Reminders & notifications', 'Tiện ích Chrome đang chạy': 'Chrome extension active', 'Thông báo cả khi đóng trang': 'Notify even when the page is closed',
+  'Thông báo sẽ hiện cả khi không mở Vincenink — chỉ cần Chrome đang chạy.': 'Notifications show even when Vincenink is closed — as long as Chrome is running.',
+  'Chưa cài tiện ích nhắc lịch': 'Reminder extension not installed', 'Hiện chỉ nhắc được khi trang đang mở. Cài tiện ích để nhận thông báo cả khi đóng trang.': 'Right now reminders only work while the page is open. Install the extension to get them when it’s closed.',
+  'Tải tiện ích (.zip)': 'Download extension (.zip)', 'rồi giải nén.': 'and unzip it.', 'Mở': 'Open', 'bật': 'turn on', 'Chế độ dành cho nhà phát triển': 'Developer mode', 'Bấm': 'Click', 'Tải tiện ích đã giải nén': 'Load unpacked', 'và chọn thư mục vừa giải nén.': 'and choose the unzipped folder.', 'Tải lại trang Vincenink — xong!': 'Reload Vincenink — done!',
+  'Bật nhắc lịch dạy': 'Enable lesson reminders', 'Nhắc trước mỗi buổi': 'Remind before each lesson', '{m} phút': '{m} min', 'Tóm tắt lịch buổi sáng': 'Morning summary', 'Báo trước lịch ngày mai': 'Tomorrow’s preview',
+  'Chỉ nhắc những ngày có tiết, bỏ qua buổi nghỉ. Mở Chrome muộn vẫn được nhắc bù lịch hôm nay.': 'Only on days with lessons, skipping cancelled ones. Opening Chrome late still catches up on today.',
+  'Thử thông báo': 'Test notification', 'Cho phép thông báo trên trang': 'Allow page notifications', 'Đã gửi thông báo thử': 'Test notification sent', 'Trình duyệt này không hỗ trợ thông báo': 'This browser doesn’t support notifications',
+  'Bạn đã chặn thông báo — bật lại trong biểu tượng ổ khoá cạnh địa chỉ web': 'Notifications are blocked — re-enable them via the lock icon in the address bar',
+  '🐶 Vincenink đã sẵn sàng': '🐶 Vincenink is ready', 'Thông báo nhắc lịch sẽ hiện như thế này.': 'Lesson reminders will look like this.', '⏰ {m} phút nữa: {w}': '⏰ In {m} min: {w}',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -383,6 +392,7 @@ const ICONS = {
   grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
   calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
@@ -1616,6 +1626,7 @@ function renderTodayCard() {
   const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
   const msg = Daily.lines()[0] || '';
+  Reminders.queue();
   el.innerHTML = `
     <div class="dc-top">
       <span class="dc-ic dc-${part}">${ic(DAY_ICON[part], 16)}</span>
@@ -1624,7 +1635,7 @@ function renderTodayCard() {
     </div>
     ${dayChips('dc-chips')}
     <p class="dc-msg ${Daily.loading && !msg ? 'loading' : ''}">${msg ? esc(msg) : '<span class="shimmer"></span><span class="shimmer short"></span>'}</p>
-    <div class="dc-sec"><span>${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></span><button class="add-link" id="tcAdd">${ic('plus', 13)}${t('Ghi lịch')}</button></div>
+    <div class="dc-sec"><span>${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></span><span class="dc-acts"><button class="icon-btn sm" id="tcBell" title="${t('Nhắc lịch & thông báo')}">${ic('bell', 14)}</button><button class="add-link" id="tcAdd">${ic('plus', 13)}${t('Ghi lịch')}</button></span></div>
     ${list.length ? `<div class="tc-list">${list.map(o => {
       const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
       return `<button class="tc-item ${st}" data-owner="${o.owner}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
@@ -1635,6 +1646,7 @@ function renderTodayCard() {
       : `<div class="dc-free">${ic('calendar', 14)}${t('Hôm nay không có tiết nào.')}</div>`}`;
   el.onclick = e => {
     if (e.target.closest('#dcRefresh')) return Daily.load(true);
+    if (e.target.closest('#tcBell')) return remindersModal();
     if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds, true);
     const it = e.target.closest('.tc-item'); if (it) { S.tab = 'sched'; S.week = weekStart(now); selectStudent(it.dataset.owner); }
   };
@@ -2683,6 +2695,119 @@ function renderProfileCard() {
   $('#topProfile').innerHTML = `${profileAvatarHTML('round')}<span class="tp-name">${esc(first || t('Hồ sơ'))}</span><span class="chev">${ic('chev', 12)}</span>`;
   $('#topProfile').title = p.name ? `${p.name}${p.role ? ' · ' + p.role : ''}` : t('Hồ sơ của bạn');
 }
+/* =====================================================================
+   Nhắc lịch bằng thông báo
+   - Có tiện ích Chrome "Vincenink – Nhắc lịch dạy": thông báo hiện cả khi KHÔNG mở trang
+     (miễn là Chrome đang chạy). Trang chỉ việc chuẩn bị lịch 5 tuần tới vào localStorage.
+   - Chưa cài tiện ích: vẫn nhắc bằng thông báo của trình duyệt khi trang đang mở.
+   ===================================================================== */
+const REM_DEF = { enabled: true, lead: [15], morning: true, morningAt: '07:00', evening: true, eveningAt: '21:00' };
+const Reminders = {
+  ext: document.documentElement.dataset.vinExt || '', timer: null,
+  settings() { return { ...REM_DEF, ...(S.settings.reminders || {}) }; },
+  save(patch) { S.settings.reminders = { ...this.settings(), ...patch }; saveSettings(); this.sync(); },
+  upcoming(days = 35) {
+    const now = new Date(), from = dstr(now), end = dstr(addDays(now, days)), out = [];
+    for (let ws = weekStart(now); dstr(ws) <= end; ws = addDays(ws, 7)) {
+      for (const day of weekOccurrences('all', ws)) {
+        if (day.date < from || day.date > end) continue;
+        day.list.forEach(o => out.push({
+          id: `${o.owner}:${o.kind}:${(o.ref && o.ref.id) || ''}:${o.date}:${o.start}`, date: o.date, start: o.start, end: o.end,
+          who: o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), subject: o.subject || '', note: String(o.note || '').slice(0, 120), off: !!o.off,
+        }));
+      }
+    }
+    return out;
+  },
+  queue() { clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 400); },
+  sync() {
+    try {
+      const data = { v: 1, updated: Date.now(), lang: LANG, settings: this.settings(), lessons: this.upcoming() };
+      ls.set('vincenink.reminders', JSON.stringify(data));
+      window.dispatchEvent(new Event('vincenink:reminders'));
+    } catch (e) { /* */ }
+  },
+  /* Thông báo ngay trong trang (khi chưa có tiện ích) */
+  canLocal() { return 'Notification' in window && Notification.permission === 'granted'; },
+  tick() {
+    const set = this.settings();
+    if (this.ext || !set.enabled || !this.canLocal()) return;
+    const now = Date.now(), ds = todayStr();
+    let fired = {}; try { fired = JSON.parse(ls.get('vincenink.firedLocal', '{}')) || {}; } catch (e) { /* */ }
+    for (const o of todayLessons().filter(o => !o.off)) {
+      const start = parseD(ds).getTime() + (+o.start.slice(0, 2)) * 36e5 + (+o.start.slice(3, 5)) * 6e4;
+      for (const lead of set.lead) {
+        const key = `${ds}:${o.owner}:${o.start}:${lead}`;
+        if (fired[key] || now < start - lead * 6e4 || now >= start) continue;
+        fired[key] = now;
+        const who = o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), mins = Math.max(1, Math.round((start - now) / 6e4));
+        try { new Notification(t('⏰ {m} phút nữa: {w}', { m: mins, w: who }), { body: `${o.start}–${o.end}${o.subject ? ' · ' + o.subject : ''}`, icon: 'assets/icon-192.png', tag: key }); } catch (e) { /* */ }
+      }
+    }
+    for (const k in fired) if (!k.startsWith(ds)) delete fired[k];
+    ls.set('vincenink.firedLocal', JSON.stringify(fired));
+  },
+  async test() {
+    if (this.ext) { window.dispatchEvent(new Event('vincenink:test')); return toast(t('Đã gửi thông báo thử')); }
+    if (!('Notification' in window)) return toast(t('Trình duyệt này không hỗ trợ thông báo'), true);
+    const p = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+    if (p !== 'granted') return toast(t('Bạn đã chặn thông báo — bật lại trong biểu tượng ổ khoá cạnh địa chỉ web'), true);
+    new Notification(t('🐶 Vincenink đã sẵn sàng'), { body: t('Thông báo nhắc lịch sẽ hiện như thế này.'), icon: 'assets/icon-192.png' });
+  },
+};
+window.addEventListener('vincenink:ext', e => { Reminders.ext = String(e.detail || '1'); Reminders.sync(); const m = $('#remModal'); if (m) remModalPaint(m); });
+setInterval(() => Reminders.tick(), 30000);
+
+function remModalPaint(body) {
+  const s = Reminders.settings(), ext = Reminders.ext, perm = 'Notification' in window ? Notification.permission : 'denied';
+  const leads = [5, 10, 15, 30, 60];
+  body.innerHTML = `
+    <div class="rem-status ${ext ? 'ok' : ''}">
+      <span class="rs-ic">${ic(ext ? 'check' : 'bell', 18)}</span>
+      <div>${ext ? `<b>${t('Tiện ích Chrome đang chạy')}</b><small>${t('Thông báo sẽ hiện cả khi không mở Vincenink — chỉ cần Chrome đang chạy.')}</small>`
+        : `<b>${t('Chưa cài tiện ích nhắc lịch')}</b><small>${t('Hiện chỉ nhắc được khi trang đang mở. Cài tiện ích để nhận thông báo cả khi đóng trang.')}</small>`}</div>
+    </div>
+    ${ext ? '' : `<ol class="rem-steps">
+      <li><a class="btn outline sm" href="vincenink-nhac-lich.zip" download>${ic('download', 15)}${t('Tải tiện ích (.zip)')}</a> ${t('rồi giải nén.')}</li>
+      <li>${t('Mở')} <code>chrome://extensions</code>, ${t('bật')} <b>${t('Chế độ dành cho nhà phát triển')}</b>.</li>
+      <li>${t('Bấm')} <b>${t('Tải tiện ích đã giải nén')}</b> ${t('và chọn thư mục vừa giải nén.')}</li>
+      <li>${t('Tải lại trang Vincenink — xong!')}</li>
+    </ol>`}
+    <label class="switch rem-row"><input type="checkbox" data-r="enabled" ${s.enabled ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Bật nhắc lịch dạy')}</span></label>
+    <div class="rem-block ${s.enabled ? '' : 'dim'}">
+      <div class="rem-lab">${ic('clock', 14)}${t('Nhắc trước mỗi buổi')}</div>
+      <div class="rem-chips">${leads.map(m => `<button data-lead="${m}" class="${s.lead.includes(m) ? 'on' : ''}">${t('{m} phút', { m })}</button>`).join('')}</div>
+      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="morning" ${s.morning ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Tóm tắt lịch buổi sáng')}</span></label><input type="time" data-t="morningAt" value="${s.morningAt}" ${s.morning ? '' : 'disabled'}></div>
+      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="evening" ${s.evening ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Báo trước lịch ngày mai')}</span></label><input type="time" data-t="eveningAt" value="${s.eveningAt}" ${s.evening ? '' : 'disabled'}></div>
+      <p class="hint">${t('Chỉ nhắc những ngày có tiết, bỏ qua buổi nghỉ. Mở Chrome muộn vẫn được nhắc bù lịch hôm nay.')}</p>
+    </div>
+    <div class="rem-foot">
+      <button class="btn ghost sm" data-rtest>${ic('bell', 15)}${t('Thử thông báo')}</button>
+      ${!ext && perm !== 'granted' ? `<button class="btn outline sm" data-rperm>${t('Cho phép thông báo trên trang')}</button>` : ''}
+    </div>`;
+}
+function remindersModal() {
+  const body = document.createElement('div'); body.id = 'remModal'; remModalPaint(body);
+  body.addEventListener('change', e => {
+    const r = e.target.dataset.r, tm = e.target.dataset.t;
+    if (r) Reminders.save({ [r]: e.target.checked });
+    if (tm && e.target.value) Reminders.save({ [tm]: e.target.value });
+    remModalPaint(body);
+  });
+  body.addEventListener('click', async e => {
+    const l = e.target.closest('[data-lead]');
+    if (l) {
+      const m = +l.dataset.lead, cur = Reminders.settings().lead;
+      let next = cur.includes(m) ? cur.filter(x => x !== m) : [...cur, m].sort((a, b) => b - a).slice(0, 2);
+      if (!next.length) next = [m];
+      Reminders.save({ lead: next.sort((a, b) => b - a) }); return remModalPaint(body);
+    }
+    if (e.target.closest('[data-rtest]')) return Reminders.test();
+    if (e.target.closest('[data-rperm]')) { await Notification.requestPermission(); remModalPaint(body); }
+  });
+  openModal({ title: t('Nhắc lịch & thông báo'), body, width: 480, actions: [{ label: t('Xong'), kind: 'primary' }] });
+}
+
 function profileMenu() {
   const p = profile();
   setTimeout(() => { if (menuAnchor === $('#topProfile')) $('#topProfile').classList.add('menu-open'); }, 0);
@@ -2690,6 +2815,7 @@ function profileMenu() {
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
     '-',
+    { icon: 'bell', label: t('Nhắc lịch & thông báo'), sub: t(Reminders.ext ? 'Tiện ích Chrome đang chạy' : 'Thông báo cả khi đóng trang'), onClick: remindersModal },
     { icon: 'settings', label: t('Cài đặt & sao lưu'), onClick: settingsModal },
     { icon: 'info', label: t('Giới thiệu Vincenink'), onClick: () => showWelcome(true) },
   ]);

@@ -1344,3 +1344,36 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 [data-theme="dark"] .ft-proj, [data-theme="chalk"] .ft-proj { color: #C9B8A6; }
 [data-theme="dark"] .fee-total.paid, [data-theme="chalk"] .fee-total.paid { background: linear-gradient(140deg, #34402F, #263022); }
 .fee-stats > div { justify-content: center; }
+
+/* ===== v19: nhắc lịch & thông báo ===== */
+.dc-acts { display: inline-flex; align-items: center; gap: 2px; }
+.dc-acts .icon-btn { width: 26px; height: 26px; color: var(--muted); }
+.dc-acts .icon-btn:hover { color: var(--accent-ink); background: var(--accent-soft); }
+.rem-status { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: linear-gradient(140deg, #FBF6EF, #F1E5D5); border: 1px solid rgba(140,105,70,.16); margin-bottom: 12px; color: #4A3A2C; }
+.rem-status.ok { background: linear-gradient(140deg, #F4F6EE, #E4EBD8); border-color: rgba(95,130,85,.2); color: #36502F; }
+.rem-status .rs-ic { width: 34px; height: 34px; flex: none; border-radius: 11px; display: grid; place-items: center; background: rgba(255,255,255,.7); color: #9A6A44; }
+.rem-status.ok .rs-ic { color: #4C6E44; }
+.rem-status b { display: block; font-size: 14px; }
+.rem-status small { display: block; font-size: 12.5px; line-height: 1.5; opacity: .85; margin-top: 2px; }
+[data-theme="dark"] .rem-status, [data-theme="chalk"] .rem-status { background: linear-gradient(140deg, #3E352C, #2E2721); color: #F1E6D8; border-color: rgba(255,240,220,.08); }
+[data-theme="dark"] .rem-status.ok, [data-theme="chalk"] .rem-status.ok { background: linear-gradient(140deg, #34402F, #263022); color: #E3EEDB; }
+[data-theme="dark"] .rem-status .rs-ic, [data-theme="chalk"] .rem-status .rs-ic { background: rgba(255,240,220,.08); color: #E2B98F; }
+.rem-steps { margin: 0 0 14px; padding-left: 20px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+.rem-steps li { margin-bottom: 4px; }
+.rem-steps .btn { display: inline-flex; vertical-align: middle; margin-right: 4px; }
+.rem-steps code { font-size: 12px; padding: 1px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-ink); }
+.rem-row { margin: 4px 0 12px; }
+.rem-block { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); transition: opacity .15s; }
+.rem-block.dim { opacity: .45; pointer-events: none; }
+.rem-lab { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
+.rem-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.rem-chips button { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-soft); transition: background .15s, border-color .15s, color .15s; }
+.rem-chips button:hover { border-color: var(--accent); color: var(--accent-ink); }
+.rem-chips button.on { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+.rem-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px dashed var(--line); }
+.rem-line .switch { margin: 0; }
+.rem-line input[type=time] { font: inherit; font-size: 13.5px; padding: 5px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-variant-numeric: tabular-nums; }
+.rem-line input[type=time]:disabled { opacity: .45; }
+.rem-block .hint { margin: 8px 0 0; }
+.rem-foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.dc-sec { gap: 4px; } .dc-sec > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; } .dc-acts { flex: none; } .dc-acts .add-link { padding-left: 2px; padding-right: 2px; }
