@@ -554,7 +554,60 @@ function resize() {
 const pos = e => ({ x: e.clientX - rect.left, y: e.clientY - rect.top });
 const toWorld = p => ({ x: (p.x - E.view.x) / E.view.s, y: (p.y - E.view.y) / E.view.s });
 const toScreen = (x, y) => ({ x: x * E.view.s + E.view.x, y: y * E.view.s + E.view.y });
-function requestRender(dirty) { if (dirty) baseDirty = true; if (!rafId) rafId = requestAnimationFrame(frame); }
+function requestRender(dirty) { if (dirty) { baseDirty = true; clampView(); } if (!rafId) rafId = requestAnimationFrame(frame); }
+
+/* ---- Trang dạy cố định phía trên, chỉ kéo vô hạn xuống dưới + thanh cuộn tự ẩn ---- */
+let bndCache = { key: '', at: 0, b: null };
+function contentBounds() {
+  const key = E.items.length + ':' + S.boardId;
+  if (key !== bndCache.key || Date.now() - bndCache.at > 700) bndCache = { key, at: Date.now(), b: unionBounds(E.items) };
+  return bndCache.b;
+}
+const boardTop = () => { const b = contentBounds(); return Math.min(0, b ? b.y - 40 : 0); };
+let lastViewY = null, sbTimer = null;
+function clampView() {
+  if (!E.view) return;
+  const maxY = -boardTop() * E.view.s;
+  if (E.view.y > maxY) E.view.y = maxY;
+  if (lastViewY !== null && Math.abs(E.view.y - lastViewY) > 0.5) showScrollbar();
+  lastViewY = E.view.y;
+}
+function scrollMetrics() {
+  const s = E.view.s, top = boardTop(), vh = H / s, viewTop = -E.view.y / s, b = contentBounds();
+  const bottom = Math.max(b ? b.y + b.h : 0, viewTop + vh) + vh * 0.6;   // luôn còn chỗ để kéo xuống
+  return { top, vh, viewTop, doc: Math.max(bottom - top, vh) };
+}
+function showScrollbar() {
+  const bar = $('#vScroll'); if (!bar || !H) return;
+  const m = scrollMetrics(), track = bar.clientHeight;
+  const th = Math.max(36, track * m.vh / m.doc), y = (track - th) * Math.min(1, (m.viewTop - m.top) / Math.max(1, m.doc - m.vh));
+  const thumb = bar.firstElementChild; thumb.style.height = th + 'px'; thumb.style.transform = `translateY(${y}px)`;
+  bar.classList.add('show'); clearTimeout(sbTimer);
+  if (!bar.classList.contains('drag')) sbTimer = setTimeout(() => bar.classList.remove('show'), 1100);
+}
+function initScrollbar() {
+  const wrap = $('#canvasWrap'); if (!wrap || $('#vScroll')) return;
+  const bar = document.createElement('div'); bar.id = 'vScroll'; bar.innerHTML = '<i></i>'; wrap.appendChild(bar);
+  let drag = null;
+  bar.addEventListener('pointerenter', () => { clearTimeout(sbTimer); showScrollbar(); clearTimeout(sbTimer); });
+  bar.addEventListener('pointerleave', () => { if (!drag) sbTimer = setTimeout(() => bar.classList.remove('show'), 900); });
+  bar.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); bar.setPointerCapture(e.pointerId); bar.classList.add('drag');
+    const m = scrollMetrics(), thumb = bar.firstElementChild, r = thumb.getBoundingClientRect();
+    if (e.target !== thumb) { // bấm vào rãnh: nhảy tới đó
+      const track = bar.clientHeight, th = thumb.offsetHeight, rel = (e.clientY - bar.getBoundingClientRect().top - th / 2) / Math.max(1, track - th);
+      E.view.y = -(m.top + Math.max(0, rel) * (m.doc - m.vh)) * E.view.s; requestRender(true);
+    }
+    drag = { y: e.clientY, vy: E.view.y, m: scrollMetrics(), track: bar.clientHeight - thumb.offsetHeight };
+  });
+  bar.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dy = (e.clientY - drag.y) / Math.max(1, drag.track) * (drag.m.doc - drag.m.vh) * E.view.s;
+    E.view.y = drag.vy - dy; requestRender(true); scheduleSave(false);
+  });
+  const end = () => { drag = null; bar.classList.remove('drag'); sbTimer = setTimeout(() => bar.classList.remove('show'), 900); };
+  bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
+}
 
 const fontStr = fs => `${fs}px "Be Vietnam Pro", system-ui, sans-serif`;
 function textMetrics(it) {
@@ -1546,7 +1599,7 @@ async function openBoard(id) {
   commitTextEdit(); await doSave();
   const b = S.boards.find(x => x.id === id); if (!b) return;
   const data = (await DB.get('boardData', id)) || { items: [], bg: 'grid', view: { x: 0, y: 0, s: 1 } };
-  S.boardId = id; E.items = data.items || []; E.bg = data.bg || 'grid'; E.view = data.view || { x: 0, y: 0, s: 1 };
+  S.boardId = id; E.items = data.items || []; E.bg = data.bg || 'grid'; E.view = data.view || { x: 0, y: 0, s: 1 }; lastViewY = null;
   E.undo = []; E.redo = []; E.sel.clear(); E.cur = null; E.drag = null; bbCache = new WeakMap();
   S.settings.lastBoard = id; S.settings.lastStudent = S.studentId; saveSettings();
   renderTopbar(); updateUndoBtns(); updateZoomLabel(); setStatus(false); requestRender(true);
@@ -3428,7 +3481,7 @@ $('#fileImport').onchange = e => { const f = e.target.files[0]; e.target.value =
    ===================================================================== */
 async function init() {
   $$('[data-icon]').forEach(el => el.insertAdjacentHTML('afterbegin', ic(el.dataset.icon, el.classList.contains('icon-btn') ? 19 : 16)));
-  loadPrefs(); applyStaticI18n();
+  loadPrefs(); applyStaticI18n(); initScrollbar();
   try { await DB.open(); } catch (err) { toast(t('Trình duyệt không cho lưu dữ liệu (IndexedDB). Hãy mở bằng Chrome/Safari bản mới.'), true); return; }
   const [st, bo, fi, sc, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.all('schedule'), DB.get('settings', 'main')]);
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
