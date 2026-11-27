@@ -33,7 +33,7 @@ async function reschedule() {
   await chrome.alarms.clearAll();
   const { data, set } = await state();
   chrome.alarms.create('tick', { periodInMinutes: 60 });
-  if (!set.enabled) return;
+  if (!set.enabled || data.serverPush) return; // đã có thông báo qua tài khoản → tránh báo trùng
   const now = Date.now(), today = new Date();
   for (let i = 0; i < 2; i++) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i), ds = dstr(d);
@@ -49,7 +49,7 @@ async function reschedule() {
 
 /* Khi Chrome vừa mở / máy vừa thức dậy: bù những nhắc nhở hợp lý đã lỡ */
 async function catchUp() {
-  const { data, set } = await state(); if (!set.enabled) return;
+  const { data, set } = await state(); if (!set.enabled || data.serverPush) return;
   const now = Date.now(), ds = dstr(new Date());
   const list = lessonsOn(data, ds);
   // Tóm tắt buổi sáng: nếu đã qua giờ tóm tắt mà chưa hiện, và hôm nay còn tiết chưa dạy
@@ -84,7 +84,7 @@ async function lessonSoon(l, lead, data) {
 
 chrome.alarms.onAlarm.addListener(async a => {
   if (a.name === 'tick') return reschedule();
-  const { data, set } = await state(); if (!set.enabled) return;
+  const { data, set } = await state(); if (!set.enabled || data.serverPush) return;
   const [kind, x, lead] = a.name.split('|');
   if (kind === 'sum') return summary(x, data);
   if (kind === 'eve') return evening(x, data);

@@ -93,6 +93,13 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 - Tên khu vực lấy từ BigDataCloud (miễn phí, không cần khoá).
 - **Thời tiết 3 ngày** lấy từ [Open-Meteo](https://open-meteo.com) (miễn phí, không cần khoá) và được lưu tạm 30 phút.
 
+## Tài khoản, đồng bộ & thông báo đẩy (tuỳ chọn, miễn phí với Supabase)
+
+- **Đăng nhập / đăng ký** bằng email hoặc Google (Hồ sơ → Đăng nhập / Đăng ký). Không bắt buộc.
+- Đồng bộ **lịch học, hồ sơ, tên lớp, giờ nhắc** giữa các máy. Học phí, bảng vẽ, tài liệu vẫn chỉ ở trên máy.
+- **Thông báo đẩy (Web Push)**: bấm “Bật thông báo” → “Cho phép” một lần; máy chủ gửi nhắc lịch cả khi đã đóng trang.
+- Cài đặt: xem [HUONG-DAN-SUPABASE.md](HUONG-DAN-SUPABASE.md) và [`supabase/setup.sql`](supabase/setup.sql). Mã máy chủ: `api/config.js`, `api/push-cron.js`, `sw.js`.
+
 ## Nhắc lịch bằng thông báo (kể cả khi không mở trang)
 
 Trang web không thể tự hiện thông báo khi đã đóng, nên Vincenink đi kèm một **tiện ích Chrome nhỏ** (thư mục `extension/`, hoặc tệp `vincenink-nhac-lich.zip`):

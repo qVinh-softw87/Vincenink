@@ -1,0 +1,8 @@
+{
+  "name": "vincenink",
+  "private": true,
+  "description": "Vincenink – bảng trắng dạy học trực tuyến",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

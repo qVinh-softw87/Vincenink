@@ -344,6 +344,64 @@ const EN = {
   'Theo tháng': 'By month', 'chưa thu {x}': 'unpaid {x}', 'đã thu đủ': 'fully paid', 'Theo lớp học': 'By class', 'Thêm lớp học và đặt học phí để xem thu nhập.': 'Add a class and set its fee to see income.',
   'Đã nhận = các tháng đã bật “Đã thu”. Chưa thu được cộng dồn từ các tháng trước.': 'Received = months marked “Paid”. Unpaid carries over from previous months.',
   'Đã nhận · Chưa thu': 'Received · Unpaid',
+  "Thông báo qua tài khoản đang bật": "Account notifications are on",
+  "Máy chủ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink — không cần cài tiện ích.": "The server sends reminders to this browser even when Vincenink is closed — no extension needed.",
+  "Cách dễ nhất: bật thông báo qua tài khoản": "Easiest: turn on notifications with your account",
+  "Bấm “Bật thông báo” rồi chọn “Cho phép” là xong.": "Click “Turn on notifications”, then choose “Allow”.",
+  "Đăng nhập (miễn phí) rồi bấm “Cho phép” — không cần cài tiện ích.": "Sign in (free), then click “Allow” — no extension needed.",
+  "Đăng nhập để bật": "Sign in to turn on",
+  "Đã đăng nhập: {e}": "Signed in: {e}",
+  "Trình duyệt này chưa hỗ trợ thông báo đẩy": "This browser doesn’t support push notifications",
+  "Đã bật thông báo nhắc lịch trên máy này 🔔": "Lesson reminders are on for this device 🔔",
+  "Chưa bật được thông báo, thử lại sau nhé": "Couldn’t turn on notifications, please try again",
+  "Đã đăng xuất — dữ liệu trên máy này vẫn được giữ nguyên": "Signed out — data on this device is kept",
+  "Email hoặc mật khẩu chưa đúng": "Wrong email or password",
+  "Email này đã có tài khoản — hãy đăng nhập": "This email already has an account — please sign in",
+  "Mật khẩu cần ít nhất 6 ký tự": "Password needs at least 6 characters",
+  "Email chưa được xác nhận — mở hộp thư để bấm link xác nhận": "Email not confirmed yet — open your inbox and click the link",
+  "Thao tác quá nhanh, đợi một chút rồi thử lại nhé": "Too many attempts, wait a moment and try again",
+  "Đăng nhập Google chưa được bật trên máy chủ": "Google sign-in isn’t enabled on the server",
+  "Có lỗi xảy ra, thử lại nhé": "Something went wrong, please try again",
+  "Chưa bật tài khoản trên trang này": "Accounts aren’t enabled on this site",
+  "Chủ trang cần kết nối Supabase (xem HUONG-DAN-SUPABASE.md). Trong lúc đó Vincenink vẫn lưu mọi thứ trên máy bạn.": "The site owner needs to connect Supabase (see HUONG-DAN-SUPABASE.md). Meanwhile Vincenink keeps everything on your device.",
+  "Đặt mật khẩu mới cho {e}": "Set a new password for {e}",
+  "Mật khẩu mới": "New password",
+  "Lưu mật khẩu": "Save password",
+  "Đã đồng bộ": "Synced",
+  "Thông báo nhắc lịch": "Lesson reminders",
+  "Đang bật trên máy này": "On for this device",
+  "Máy chủ sẽ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink.": "The server will send reminders to this browser even when Vincenink is closed.",
+  "Bấm bật và chọn “Cho phép” — chỉ một lần, không cần cài thêm gì.": "Turn it on and choose “Allow” — just once, nothing to install.",
+  "Trình duyệt này chưa hỗ trợ thông báo đẩy, hoặc máy chủ chưa cấu hình VAPID.": "This browser doesn’t support push, or the server hasn’t set up VAPID keys.",
+  "Tắt trên máy này": "Turn off here",
+  "Giờ nhắc": "Reminder times",
+  "Bật thông báo": "Turn on notifications",
+  "Được đồng bộ: lịch học, hồ sơ, tên các lớp và cài đặt nhắc lịch. Học phí, bảng vẽ, tài liệu vẫn chỉ nằm trên máy này.": "Synced: schedule, profile, class names and reminder settings. Fees, boards and files stay on this device only.",
+  "Đồng bộ ngay": "Sync now",
+  "Đăng xuất": "Sign out",
+  "Đăng nhập": "Sign in",
+  "Đăng ký": "Sign up",
+  "Tiếp tục với Google": "Continue with Google",
+  "hoặc dùng email": "or use email",
+  "Mật khẩu": "Password",
+  "Nhập lại mật khẩu": "Confirm password",
+  "Quên mật khẩu?": "Forgot password?",
+  "Tạo tài khoản": "Create account",
+  "Không bắt buộc: không đăng nhập vẫn dùng được, dữ liệu lưu trên máy này. Đăng nhập để đồng bộ lịch học, hồ sơ giữa các máy và nhận thông báo nhắc lịch kể cả khi đã đóng trang.": "Optional: Vincenink works without an account and keeps data on this device. Sign in to sync your schedule and profile across devices and get reminders even when the page is closed.",
+  "Nhập email trước rồi bấm “Quên mật khẩu?”": "Enter your email first, then click “Forgot password?”",
+  "Đã gửi link đặt lại mật khẩu tới {e}": "Password reset link sent to {e}",
+  "Đăng xuất?": "Sign out?",
+  "Dữ liệu trên máy này vẫn được giữ nguyên. Máy này sẽ ngừng nhận thông báo đẩy.": "Data on this device is kept. This device will stop receiving push notifications.",
+  "Hai mật khẩu chưa giống nhau": "Passwords don’t match",
+  "Đã đổi mật khẩu": "Password changed",
+  "Đã gửi email xác nhận tới {e} — mở hộp thư và bấm link để hoàn tất đăng ký.": "Confirmation email sent to {e} — open it and click the link to finish signing up.",
+  "Tài khoản Vincenink": "Vincenink account",
+  "Tài khoản": "Account",
+  "Đăng nhập / Đăng ký": "Sign in / Sign up",
+  "Đồng bộ lịch & nhận thông báo": "Sync schedule & get reminders",
+  "Đã đồng bộ · Thông báo đang bật": "Synced · Notifications on",
+  "Đã đồng bộ lịch & hồ sơ": "Schedule & profile synced",
+  "Đang kết nối…": "Connecting…",
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1695,7 +1753,7 @@ async function deleteStudent(st) {
   if (!await confirmBox(t('Xoá lớp học {n}?', { n: esc(st.name) }), t('Sẽ xoá cả {b} bảng, {f} tài liệu và lịch học của lớp học này trên máy.', { b: nb, f: nf }), t('Xoá'))) return false;
   for (const b of S.boards.filter(b => b.studentId === st.id)) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
   for (const f of S.files.filter(f => f.studentId === st.id)) await DB.del('files', f.id);
-  await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id);
+  await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id); Cloud.markDeleted(st.id);
   S.boards = S.boards.filter(b => b.studentId !== st.id); S.files = S.files.filter(f => f.studentId !== st.id); S.students = S.students.filter(s => s.id !== st.id);
   if (!S.boards.find(b => b.id === S.boardId)) { S.boardId = null; contentDirty = viewDirty = false; }
   const fs = firstStudent();
@@ -1800,6 +1858,7 @@ function incomeModal() {
   body.addEventListener('click', e => { const r = e.target.closest('[data-inc]'); if (r) { md.close(); S.tab = 'fee'; selectStudent(r.dataset.inc); } });
 }
 function renderSidebar() {
+  if (typeof Cloud !== 'undefined') Cloud.queue();
   setTimeout(renderIncomeBtn, 0);
   renderTodayCard();
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
@@ -2911,16 +2970,17 @@ const Reminders = {
   queue() { clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 400); },
   sync() {
     try {
-      const data = { v: 1, updated: Date.now(), lang: LANG, settings: this.settings(), lessons: this.upcoming() };
+      const data = { v: 1, updated: Date.now(), lang: LANG, settings: this.settings(), lessons: this.upcoming(), serverPush: !!(window.Cloud && Cloud.pushOn) };
       ls.set('vincenink.reminders', JSON.stringify(data));
       window.dispatchEvent(new Event('vincenink:reminders'));
     } catch (e) { /* */ }
+    if (typeof Cloud !== 'undefined') Cloud.queue();
   },
   /* Thông báo ngay trong trang (khi chưa có tiện ích) */
   canLocal() { return 'Notification' in window && Notification.permission === 'granted'; },
   tick() {
     const set = this.settings();
-    if (this.ext || !set.enabled || !this.canLocal()) return;
+    if (this.ext || !set.enabled || !this.canLocal() || Cloud.pushOn) return;
     const now = Date.now(), ds = todayStr();
     let fired = {}; try { fired = JSON.parse(ls.get('vincenink.firedLocal', '{}')) || {}; } catch (e) { /* */ }
     for (const o of todayLessons().filter(o => !o.off)) {
@@ -2950,8 +3010,15 @@ setInterval(() => Reminders.tick(), 30000);
 function remModalPaint(body) {
   const s = Reminders.settings(), ext = Reminders.ext, perm = 'Notification' in window ? Notification.permission : 'denied';
   const leads = [5, 10, 15, 30, 60];
+  const cp = Cloud.configured() && Cloud.canPush();
   body.innerHTML = `
-    <div class="rem-status ${ext ? 'ok' : ''}">
+    ${cp ? `<div class="rem-status ${Cloud.pushOn ? 'ok' : ''}">
+      <span class="rs-ic">${ic(Cloud.pushOn ? 'check' : 'bell', 18)}</span>
+      <div>${Cloud.pushOn ? `<b>${t('Thông báo qua tài khoản đang bật')}</b><small>${t('Máy chủ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink — không cần cài tiện ích.')}</small>`
+        : `<b>${t('Cách dễ nhất: bật thông báo qua tài khoản')}</b><small>${t(Cloud.user ? 'Bấm “Bật thông báo” rồi chọn “Cho phép” là xong.' : 'Đăng nhập (miễn phí) rồi bấm “Cho phép” — không cần cài tiện ích.')}</small>
+        <button class="btn primary sm rem-cta" data-rpush>${ic('bell', 14)}${t(Cloud.user ? 'Bật thông báo' : 'Đăng nhập để bật')}</button>`}</div>
+    </div>` : ''}
+    ${cp && Cloud.pushOn ? '' : `<div class="rem-status ${ext ? 'ok' : ''}">
       <span class="rs-ic">${ic(ext ? 'check' : 'bell', 18)}</span>
       <div>${ext ? `<b>${t('Tiện ích Chrome đang chạy')}</b><small>${t('Thông báo sẽ hiện cả khi không mở Vincenink — chỉ cần Chrome đang chạy.')}</small>`
         : `<b>${t('Chưa cài tiện ích nhắc lịch')}</b><small>${t('Hiện chỉ nhắc được khi trang đang mở. Cài tiện ích để nhận thông báo cả khi đóng trang.')}</small>`}</div>
@@ -2961,7 +3028,7 @@ function remModalPaint(body) {
       <li>${t('Mở')} <code>chrome://extensions</code>, ${t('bật')} <b>${t('Chế độ dành cho nhà phát triển')}</b>.</li>
       <li>${t('Bấm')} <b>${t('Tải tiện ích đã giải nén')}</b> ${t('và chọn thư mục vừa giải nén.')}</li>
       <li>${t('Tải lại trang Vincenink — xong!')}</li>
-    </ol>`}
+    </ol>`}`}
     <label class="switch rem-row"><input type="checkbox" data-r="enabled" ${s.enabled ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Bật nhắc lịch dạy')}</span></label>
     <div class="rem-block ${s.enabled ? '' : 'dim'}">
       <div class="rem-lab">${ic('clock', 14)}${t('Nhắc trước mỗi buổi')}</div>
@@ -2991,16 +3058,257 @@ function remindersModal() {
       if (!next.length) next = [m];
       Reminders.save({ lead: next.sort((a, b) => b - a) }); return remModalPaint(body);
     }
+    if (e.target.closest('[data-rpush]')) return Cloud.user ? Cloud.enablePush() : accountModal();
     if (e.target.closest('[data-rtest]')) return Reminders.test();
     if (e.target.closest('[data-rperm]')) { await Notification.requestPermission(); remModalPaint(body); }
   });
   openModal({ title: t('Nhắc lịch & thông báo'), body, width: 480, actions: [{ label: t('Xong'), kind: 'primary' }] });
 }
 
+/* =====================================================================
+   Tài khoản (Supabase): đăng nhập / đăng ký, đồng bộ lịch + hồ sơ + danh sách lớp,
+   và thông báo đẩy (Web Push) do máy chủ gửi — kể cả khi đã đóng trang.
+   Học phí, bảng vẽ, tài liệu KHÔNG đồng bộ: vẫn chỉ nằm trên máy này.
+   ===================================================================== */
+const deviceId = (() => { let d = ls.get('vincenink.device', ''); if (!d) { d = Math.random().toString(36).slice(2, 10); ls.set('vincenink.device', d); } return d; })();
+const urlB64 = b => { const p = '='.repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
+
+var Cloud = window.Cloud = {
+  cfg: null, sb: null, user: null, ready: false, pushOn: false, timer: null, lastHash: '', syncedAt: 0, busy: false, recovery: false,
+  configured() { return !!(this.cfg && this.cfg.cloud); },
+  canPush() { return !!(this.cfg && this.cfg.push && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); },
+  async init() {
+    try { this.cfg = await getJSON('api/config', 5000); } catch (e) { this.cfg = null; }
+    if (this.configured()) {
+      try {
+        if (!window.supabase) await loadScript('vendor/supabase.js');
+        this.sb = window.supabase.createClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'vincenink.auth' } });
+        const { data } = await this.sb.auth.getSession(); this.user = (data.session && data.session.user) || null;
+        this.sb.auth.onAuthStateChange((ev, session) => {
+          const was = this.user && this.user.id; this.user = (session && session.user) || null;
+          if (ev === 'PASSWORD_RECOVERY') { this.recovery = true; setTimeout(() => accountModal(), 50); }
+          if (this.user && this.user.id !== was) setTimeout(() => this.afterLogin(), 0);
+          renderAccountUI();
+        });
+      } catch (e) { this.sb = null; }
+    }
+    this.ready = true; renderAccountUI();
+    if (this.user) { await this.pull(); await this.checkPush(); }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && this.user && Date.now() - this.syncedAt > 60e3) this.pull(); });
+  },
+  async afterLogin() {
+    toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
+    await this.pull(); await this.checkPush(); renderAccountUI();
+    const m = $('#acctModal'); if (m) acctPaint(m);
+  },
+
+  /* ---- Đồng bộ ---- */
+  deleted() { try { return JSON.parse(ls.get('vincenink.cloud.deleted', '[]')) || []; } catch (e) { return []; } },
+  markDeleted(id) { const d = this.deleted(); if (!d.includes(id)) { d.push(id); ls.set('vincenink.cloud.deleted', JSON.stringify(d.slice(-200))); } this.queue(); },
+  snapshot() {
+    const p = { ...profile() }; if (p.avatar && p.avatar.length > 160000) delete p.avatar;
+    const schedule = {};
+    S.sched.forEach((v, k) => { schedule[k] = { fixed: v.fixed || [], sessions: v.sessions || [], skips: v.skips || [], overrides: v.overrides || {}, weekNotes: v.weekNotes || {} }; });
+    return {
+      profile: p,
+      classes: S.students.map(s => ({ id: s.id, name: s.name, color: s.color || '', grade: s.grade || '', created: s.created || 0 })).concat(this.deleted().map(id => ({ id, deleted: true }))),
+      schedule,
+      reminders: { settings: Reminders.settings(), lessons: Reminders.upcoming(), lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh', serverPush: this.pushOn },
+    };
+  },
+  queue(now) { if (!this.user) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.push(), now ? 50 : 2500); },
+  async push() {
+    if (!this.user || this.busy) return;
+    const snap = this.snapshot(), h = hashStr(JSON.stringify(snap));
+    if (h === this.lastHash) return;
+    const updated_at = new Date().toISOString();
+    const { error } = await this.sb.from('user_state').upsert({ user_id: this.user.id, ...snap, updated_at, device: deviceId });
+    if (error) { console.warn('cloud push', error); return; }
+    this.lastHash = h; this.syncedAt = Date.now(); ls.set('vincenink.cloud.at', updated_at); renderAccountUI();
+  },
+  async pull() {
+    if (!this.user || this.busy) return;
+    this.busy = true;
+    try {
+      const { data, error } = await this.sb.from('user_state').select('*').eq('user_id', this.user.id).maybeSingle();
+      if (error) throw error;
+      const localAt = ls.get('vincenink.cloud.at', '');
+      if (data && data.updated_at > localAt && data.device !== deviceId) await this.apply(data);
+      if (data) ls.set('vincenink.cloud.at', data.updated_at > localAt ? data.updated_at : localAt);
+      this.syncedAt = Date.now();
+    } catch (e) { console.warn('cloud pull', e); }
+    this.busy = false; this.lastHash = ''; this.queue(true); renderAccountUI();
+  },
+  /* Gộp dữ liệu từ máy chủ vào máy này (lớp: hợp nhất; lịch: lấy bản trên máy chủ) */
+  async apply(r) {
+    const gone = new Set((r.classes || []).filter(c => c.deleted).map(c => c.id));
+    for (const c of (r.classes || []).filter(c => !c.deleted)) {
+      let st = studentById(c.id);
+      if (!st) { st = { id: c.id, name: c.name, color: c.color || '#B5835A', grade: c.grade || '', created: c.created || Date.now() }; S.students.push(st); }
+      else Object.assign(st, { name: c.name, color: c.color || st.color, grade: c.grade || '' });
+      await DB.put('students', st);
+    }
+    for (const id of gone) if (studentById(id)) { await DB.del('students', id); await DB.del('schedule', id); S.sched.delete(id); S.students = S.students.filter(s => s.id !== id); }
+    for (const [k, v] of Object.entries(r.schedule || {})) { if (gone.has(k)) continue; const s = { id: k, ...v }; S.sched.set(k, s); await DB.put('schedule', s); }
+    if (r.profile && Object.keys(r.profile).length) { const p = profile(); S.settings.profile = { ...p, ...r.profile, avatar: r.profile.avatar || p.avatar }; }
+    if (r.reminders && r.reminders.settings) S.settings.reminders = { ...r.reminders.settings };
+    saveSettings();
+    if (!studentById(S.studentId) && S.studentId !== 'all') S.studentId = (firstStudent() || { id: 'all' }).id;
+    renderSidebar(); renderPanel(); renderProfileCard(); refreshDay(); Reminders.sync();
+  },
+
+  /* ---- Thông báo đẩy ---- */
+  async reg() { return navigator.serviceWorker.register('sw.js', { scope: './' }); },
+  async checkPush() {
+    this.pushOn = false;
+    if (!this.user || !this.canPush() || Notification.permission !== 'granted') return;
+    try {
+      const reg = await this.reg(); let sub = await reg.pushManager.getSubscription();
+      if (!sub) return this.enablePush(true);
+      await this.saveSub(sub); this.pushOn = true;
+    } catch (e) { /* */ }
+    Reminders.sync(); renderAccountUI();
+  },
+  async saveSub(sub) {
+    const j = sub.toJSON();
+    const { error } = await this.sb.from('push_subscriptions').upsert({ user_id: this.user.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 200) }, { onConflict: 'endpoint' });
+    if (error) throw error;
+  },
+  async enablePush(silent) {
+    if (!this.user) return accountModal();
+    if (!this.canPush()) return silent || toast(t('Trình duyệt này chưa hỗ trợ thông báo đẩy'), true);
+    const perm = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+    if (perm !== 'granted') return silent || toast(t('Bạn đã chặn thông báo — bật lại trong biểu tượng ổ khoá cạnh địa chỉ web'), true);
+    try {
+      const reg = await this.reg(); await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(this.cfg.vapidPublicKey) });
+      await this.saveSub(sub); this.pushOn = true;
+      if (!silent) toast(t('Đã bật thông báo nhắc lịch trên máy này 🔔'));
+    } catch (e) { console.warn(e); if (!silent) toast(t('Chưa bật được thông báo, thử lại sau nhé'), true); }
+    Reminders.sync(); this.lastHash = ''; this.queue(true); renderAccountUI();
+    const m = $('#acctModal'); if (m) acctPaint(m); const r = $('#remModal'); if (r) remModalPaint(r);
+  },
+  async disablePush() {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration('./'), sub = reg && await reg.pushManager.getSubscription();
+      if (sub) { await this.sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe(); }
+    } catch (e) { /* */ }
+    this.pushOn = false; Reminders.sync(); this.lastHash = ''; this.queue(true); renderAccountUI();
+  },
+
+  /* ---- Đăng nhập ---- */
+  async signIn(email, password) { const { error } = await this.sb.auth.signInWithPassword({ email, password }); return error; },
+  async signUp(email, password) {
+    const { data, error } = await this.sb.auth.signUp({ email, password, options: { emailRedirectTo: location.href.split('#')[0] } });
+    return error || (data.session ? null : 'confirm');
+  },
+  async google() { const { error } = await this.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } }); return error; },
+  async reset(email) { const { error } = await this.sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0].split('?')[0] }); return error; },
+  async newPassword(pw) { const { error } = await this.sb.auth.updateUser({ password: pw }); if (!error) this.recovery = false; return error; },
+  async signOut() {
+    await this.disablePush();
+    await this.sb.auth.signOut(); this.user = null; this.lastHash = ''; ls.set('vincenink.cloud.at', '');
+    toast(t('Đã đăng xuất — dữ liệu trên máy này vẫn được giữ nguyên')); renderAccountUI();
+  },
+};
+
+const authErr = e => {
+  const m = String((e && (e.message || e)) || '');
+  if (/invalid login/i.test(m)) return t('Email hoặc mật khẩu chưa đúng');
+  if (/already registered|already exists/i.test(m)) return t('Email này đã có tài khoản — hãy đăng nhập');
+  if (/at least|password should/i.test(m)) return t('Mật khẩu cần ít nhất 6 ký tự');
+  if (/not confirmed/i.test(m)) return t('Email chưa được xác nhận — mở hộp thư để bấm link xác nhận');
+  if (/rate limit|too many/i.test(m)) return t('Thao tác quá nhanh, đợi một chút rồi thử lại nhé');
+  if (/provider is not enabled|unsupported provider/i.test(m)) return t('Đăng nhập Google chưa được bật trên máy chủ');
+  return m || t('Có lỗi xảy ra, thử lại nhé');
+};
+function renderAccountUI() {
+  const tp = $('#topProfile'); if (tp) tp.classList.toggle('signed', !!Cloud.user);
+}
+function acctPaint(body) {
+  const c = Cloud, u = c.user, mode = body.dataset.mode || 'in';
+  if (!c.ready) { body.innerHTML = `<p class="hint">${t('Đang kết nối…')}</p>`; return; }
+  if (!c.configured()) {
+    body.innerHTML = `<div class="acct-off">${ic('info', 18)}<div><b>${t('Chưa bật tài khoản trên trang này')}</b><small>${t('Chủ trang cần kết nối Supabase (xem HUONG-DAN-SUPABASE.md). Trong lúc đó Vincenink vẫn lưu mọi thứ trên máy bạn.')}</small></div></div>`;
+    return;
+  }
+  if (u && c.recovery) {
+    body.innerHTML = `<form class="acct-form" data-f="newpw"><p class="hint">${t('Đặt mật khẩu mới cho {e}', { e: esc(u.email || '') })}</p>
+      <div class="field"><label>${t('Mật khẩu mới')}</label><input type="password" name="pw" minlength="6" autocomplete="new-password" required></div>
+      <button class="btn primary wide">${t('Lưu mật khẩu')}</button><p class="acct-msg"></p></form>`;
+    return;
+  }
+  if (u) {
+    const at = c.syncedAt ? new Date(c.syncedAt) : null;
+    body.innerHTML = `
+      <div class="acct-me">${profileAvatarHTML('round')}<div><b>${esc(dx(profile().name) || u.email || '')}</b><small>${esc(u.email || '')}</small></div><span class="acct-ok">${ic('check', 12)}${t('Đã đồng bộ')}${at ? ` ${pad(at.getHours())}:${pad(at.getMinutes())}` : ''}</span></div>
+      <div class="acct-card">
+        <div class="ac-h">${ic('bell', 16)}<b>${t('Thông báo nhắc lịch')}</b>${c.pushOn ? `<em class="ok">${t('Đang bật trên máy này')}</em>` : ''}</div>
+        <p>${c.canPush() ? t(c.pushOn ? 'Máy chủ sẽ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink.' : 'Bấm bật và chọn “Cho phép” — chỉ một lần, không cần cài thêm gì.') : t('Trình duyệt này chưa hỗ trợ thông báo đẩy, hoặc máy chủ chưa cấu hình VAPID.')}</p>
+        ${c.canPush() ? (c.pushOn ? `<button class="btn ghost sm" data-a="pushoff">${t('Tắt trên máy này')}</button><button class="btn ghost sm" data-a="remset">${ic('settings', 14)}${t('Giờ nhắc')}</button>` : `<button class="btn primary" data-a="pushon">${ic('bell', 15)}${t('Bật thông báo')}</button>`) : ''}
+      </div>
+      <p class="hint">${t('Được đồng bộ: lịch học, hồ sơ, tên các lớp và cài đặt nhắc lịch. Học phí, bảng vẽ, tài liệu vẫn chỉ nằm trên máy này.')}</p>
+      <div class="acct-foot"><button class="btn ghost sm" data-a="sync">${ic('refresh', 14)}${t('Đồng bộ ngay')}</button><button class="btn sm danger-text" data-a="out">${t('Đăng xuất')}</button></div>`;
+    return;
+  }
+  body.innerHTML = `
+    <div class="acct-tabs"><button class="${mode === 'in' ? 'on' : ''}" data-tab="in">${t('Đăng nhập')}</button><button class="${mode === 'up' ? 'on' : ''}" data-tab="up">${t('Đăng ký')}</button></div>
+    <button class="btn google wide" data-a="google"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>${t('Tiếp tục với Google')}</button>
+    <div class="acct-or"><span>${t('hoặc dùng email')}</span></div>
+    <form class="acct-form" data-f="${mode}">
+      <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required placeholder="ban@email.com"></div>
+      <div class="field"><label>${t('Mật khẩu')}</label><input type="password" name="pw" minlength="6" autocomplete="${mode === 'in' ? 'current-password' : 'new-password'}" required></div>
+      ${mode === 'up' ? `<div class="field"><label>${t('Nhập lại mật khẩu')}</label><input type="password" name="pw2" minlength="6" autocomplete="new-password" required></div>` : ''}
+      <button class="btn primary wide">${t(mode === 'in' ? 'Đăng nhập' : 'Tạo tài khoản')}</button>
+      ${mode === 'in' ? `<button type="button" class="link-btn" data-a="forgot">${t('Quên mật khẩu?')}</button>` : ''}
+      <p class="acct-msg"></p>
+    </form>
+    <p class="hint">${t('Không bắt buộc: không đăng nhập vẫn dùng được, dữ liệu lưu trên máy này. Đăng nhập để đồng bộ lịch học, hồ sơ giữa các máy và nhận thông báo nhắc lịch kể cả khi đã đóng trang.')}</p>`;
+}
+function accountModal() {
+  const body = document.createElement('div'); body.id = 'acctModal'; body.dataset.mode = 'in'; acctPaint(body);
+  const msg = (s, ok) => { const m = $('.acct-msg', body); if (m) { m.textContent = s || ''; m.classList.toggle('ok', !!ok); } };
+  body.addEventListener('click', async e => {
+    const tb = e.target.closest('[data-tab]'); if (tb) { body.dataset.mode = tb.dataset.tab; return acctPaint(body); }
+    const a = e.target.closest('[data-a]'); if (!a) return;
+    const act = a.dataset.a;
+    if (act === 'google') { const er = await Cloud.google(); if (er) msg(authErr(er)); }
+    else if (act === 'forgot') {
+      const em = $('[name=email]', body).value.trim(); if (!em) { msg(t('Nhập email trước rồi bấm “Quên mật khẩu?”')); return $('[name=email]', body).focus(); }
+      const er = await Cloud.reset(em); msg(er ? authErr(er) : t('Đã gửi link đặt lại mật khẩu tới {e}', { e: em }), !er);
+    }
+    else if (act === 'pushon') Cloud.enablePush();
+    else if (act === 'pushoff') { await Cloud.disablePush(); acctPaint(body); }
+    else if (act === 'remset') { md && md.close && md.close(); remindersModal(); }
+    else if (act === 'sync') { a.classList.add('spin'); await Cloud.pull(); acctPaint(body); toast(t('Đã đồng bộ')); }
+    else if (act === 'out') { if (await confirmBox(t('Đăng xuất?'), t('Dữ liệu trên máy này vẫn được giữ nguyên. Máy này sẽ ngừng nhận thông báo đẩy.'), t('Đăng xuất'))) { await Cloud.signOut(); acctPaint(body); } }
+  });
+  body.addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target, kind = f.dataset.f, btn = $('button.primary', f);
+    const em = f.email ? f.email.value.trim() : '', pw = f.pw.value;
+    btn.disabled = true; msg('');
+    if (kind === 'up' && pw !== f.pw2.value) { btn.disabled = false; return msg(t('Hai mật khẩu chưa giống nhau')); }
+    let er = null;
+    if (kind === 'in') er = await Cloud.signIn(em, pw);
+    else if (kind === 'up') er = await Cloud.signUp(em, pw);
+    else if (kind === 'newpw') { er = await Cloud.newPassword(pw); if (!er) { toast(t('Đã đổi mật khẩu')); acctPaint(body); return; } }
+    btn.disabled = false;
+    if (er === 'confirm') msg(t('Đã gửi email xác nhận tới {e} — mở hộp thư và bấm link để hoàn tất đăng ký.', { e: em }), true);
+    else if (er) msg(authErr(er));
+  });
+  const md = openModal({ title: t('Tài khoản Vincenink'), body, width: 440, actions: [] });
+  if (!Cloud.ready) { const iv = setInterval(() => { if (Cloud.ready) { clearInterval(iv); acctPaint(body); } }, 200); }
+}
+
 function profileMenu() {
   const p = profile();
   setTimeout(() => { if (menuAnchor === $('#topProfile')) $('#topProfile').classList.add('menu-open'); }, 0);
   popMenu($('#topProfile'), [
+    Cloud.user ? { icon: 'check', label: Cloud.user.email || t('Tài khoản'), sub: t(Cloud.pushOn ? 'Đã đồng bộ · Thông báo đang bật' : 'Đã đồng bộ lịch & hồ sơ'), onClick: accountModal }
+      : { icon: 'user', label: t('Đăng nhập / Đăng ký'), sub: t('Đồng bộ lịch & nhận thông báo'), onClick: accountModal },
+    '-',
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
     '-',
@@ -3039,7 +3347,7 @@ function profileModal() {
       label: t('Lưu'), kind: 'primary', onClick: () => {
         ['name', 'role', 'school', 'email', 'phone', 'bio'].forEach(k => { p[k] = $(`[name=${k}]`, body).value.trim(); });
         delete p.city; delete p.geo;
-        S.settings.profile = p; saveSettings(); renderProfileCard(); toast(t('Đã lưu hồ sơ'));
+        S.settings.profile = p; saveSettings(); renderProfileCard(); toast(t('Đã lưu hồ sơ')); Cloud.queue();
       }
     }]
   });
@@ -3502,6 +3810,7 @@ async function init() {
   Weather.useCache(); Weather.locating = !Weather.data; refreshDay();
   const wxP = Loc.geoState().then(st => Weather.refresh({ ask: st !== 'denied' }).quick).catch(() => null);
   Promise.all([AI.check(), wxP]).then(() => { Weather.locating = false; refreshDay(); Daily.load(); Note.load(); });
+  Cloud.init();
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
