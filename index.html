@@ -44,7 +44,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
 <link rel="preconnect" href="https://api.bigdatacloud.net" crossorigin>
-<link rel="stylesheet" href="styles.css?v=32">
+<link rel="stylesheet" href="styles.css?v=33">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
@@ -144,6 +144,7 @@
     <section class="today-card day-card" id="todayCard" aria-live="polite"></section>
     <div class="side-foot">
       <div class="foot-row">
+        <button class="foot-btn backup-nudge hidden" id="backupNudge" title="Sao lưu dữ liệu"></button>
         <button class="foot-btn inc-btn" id="btnIncome" title="Tổng thu nhập"></button>
         <button class="foot-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"><span data-i18n="Về Vincenink">Về Vincenink</span><em class="fb-go">›</em></button>
       </div>
@@ -278,6 +279,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=32" defer></script>
+<script src="app.js?v=33" defer></script>
 </body>
 </html>

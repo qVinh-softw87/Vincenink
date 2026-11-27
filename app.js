@@ -435,6 +435,16 @@ const EN = {
   "Tài khoản {e} đã sẵn sàng. Lịch học và hồ sơ sẽ tự đồng bộ giữa các máy.": "Account {e} is ready. Your schedule and profile will sync across devices.",
   "Bật thông báo để được nhắc trước mỗi buổi dạy, kể cả khi đã đóng trang.": "Turn on notifications to be reminded before each lesson, even when the page is closed.",
   "Để sau": "Later",
+  "Đăng nhập để sao lưu dữ liệu": "Sign in to back up your data",
+  "Bạn đang dùng Vincenink mà <b>chưa đăng nhập</b>. Mọi dữ liệu chỉ nằm trong trình duyệt này và <b>chưa được sao lưu</b>.": "You’re using Vincenink <b>without signing in</b>. Everything lives only in this browser and is <b>not backed up</b>.",
+  "Nếu xoá lịch sử / dữ liệu trang web, dùng chế độ ẩn danh, đổi trình duyệt hoặc đổi máy, dữ liệu sẽ <b>bị mất</b> và không khôi phục được.": "If you clear browsing/site data, use private mode, switch browsers or devices, your data will be <b>lost</b> and can’t be recovered.",
+  "Sao lưu lịch học, hồ sơ và danh sách lớp lên mạng": "Back up schedules, profile and class list online",
+  "Mở trên máy khác vẫn thấy đủ lịch": "See your full schedule on any device",
+  "Nhận thông báo nhắc lịch kể cả khi đã đóng trang": "Get lesson reminders even when the page is closed",
+  "Bảng vẽ, học phí và tài liệu vẫn chỉ lưu trên máy này — hãy tải xuống (PNG/PDF) những gì quan trọng.": "Boards, fees and files still stay on this device only — download (PNG/PDF) anything important.",
+  "Chưa sao lưu": "Not backed up",
+  "Đăng nhập để không mất lịch học": "Sign in so you don’t lose your schedule",
+  "Sao lưu dữ liệu & nhận thông báo": "Back up data & get reminders",
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3153,7 +3163,7 @@ var Cloud = window.Cloud = {
     if (!await this.guardOwner()) return;
     const pend = ls.get('vincenink.pendingConfirm', '');
     await this.pull(); await this.checkPush(); renderAccountUI();
-    if (pend && pend === String(this.user.email || '').toLowerCase()) { ls.set('vincenink.pendingConfirm', ''); $$('.modal-backdrop').forEach(x => x.remove()); welcomeAccountModal(); }
+    if (pend && pend === String(this.user.email || '').toLowerCase()) { ls.set('vincenink.pendingConfirm', ''); $$('.modal-back').forEach(x => x.remove()); welcomeAccountModal(); }
     else toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
     const m = $('#acctModal'); if (m) acctPaint(m);
   },
@@ -3293,6 +3303,7 @@ const authErr = e => {
 };
 function renderAccountUI() {
   const tp = $('#topProfile'); if (tp) tp.classList.toggle('signed', !!Cloud.user);
+  renderBackupNudge();
 }
 function acctPaint(body) {
   const c = Cloud, u = c.user, mode = body.dataset.mode || 'in';
@@ -3377,6 +3388,10 @@ function welcomeAccountModal() {
   const acts = Cloud.canPush() && !Cloud.pushOn ? [{ label: t('Để sau') }, { label: t('Bật thông báo'), kind: 'primary', onClick: () => Cloud.enablePush() }] : [{ label: t('Bắt đầu'), kind: 'primary' }];
   openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: acts });
 }
+async function signOutFlow() {
+  if (!await confirmBox(t('Đăng xuất?'), t('Dữ liệu trên máy này vẫn được giữ nguyên. Máy này sẽ ngừng nhận thông báo đẩy.'), t('Đăng xuất'))) return;
+  await Cloud.signOut(); const m = $('#acctModal'); if (m) acctPaint(m);
+}
 function accountModal() {
   const body = document.createElement('div'); body.id = 'acctModal'; body.dataset.mode = 'in'; acctPaint(body);
   const msg = (s, ok) => { const m = $('.acct-msg', body); if (m) { m.textContent = s || ''; m.classList.toggle('ok', !!ok); } };
@@ -3395,7 +3410,7 @@ function accountModal() {
     else if (act === 'pushoff') { await Cloud.disablePush(); acctPaint(body); }
     else if (act === 'remset') { md && md.close && md.close(); remindersModal(); }
     else if (act === 'sync') { a.classList.add('spin'); await Cloud.pull(); acctPaint(body); toast(t('Đã đồng bộ')); }
-    else if (act === 'out') { if (await confirmBox(t('Đăng xuất?'), t('Dữ liệu trên máy này vẫn được giữ nguyên. Máy này sẽ ngừng nhận thông báo đẩy.'), t('Đăng xuất'))) { await Cloud.signOut(); acctPaint(body); } }
+    else if (act === 'out') { await signOutFlow(); acctPaint(body); }
   });
   body.addEventListener('submit', async e => {
     e.preventDefault();
@@ -3421,7 +3436,8 @@ function profileMenu() {
   setTimeout(() => { if (menuAnchor === $('#topProfile')) $('#topProfile').classList.add('menu-open'); }, 0);
   popMenu($('#topProfile'), [
     Cloud.user ? { icon: 'check', label: Cloud.user.email || t('Tài khoản'), sub: t(Cloud.pushOn ? 'Đã đồng bộ · Thông báo đang bật' : 'Đã đồng bộ lịch & hồ sơ'), onClick: accountModal }
-      : { icon: 'user', label: t('Đăng nhập / Đăng ký'), sub: t('Đồng bộ lịch & nhận thông báo'), onClick: accountModal },
+      : { icon: 'user', label: t('Đăng nhập / Đăng ký'), sub: t('Sao lưu dữ liệu & nhận thông báo'), onClick: accountModal },
+    ...(Cloud.user ? [{ icon: 'x', label: t('Đăng xuất'), onClick: signOutFlow }] : []),
     '-',
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
@@ -3562,6 +3578,7 @@ function bindTopbar() {
   $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
   $('#btnIncome').onclick = incomeModal;
+  $('#backupNudge').onclick = accountModal;
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
   $('#btnStart').onclick = () => showWelcome(false);
 }
@@ -3599,7 +3616,7 @@ function toggleFocus() { $('#app').classList.toggle('focus'); setTimeout(resize,
 function showWelcome(on) {
   $('#welcome').classList.toggle('hidden', !on);
   if (on) renderOnboard();
-  if (!on) ls.set('vincenink.seen', '1');
+  if (!on) { ls.set('vincenink.seen', '1'); setTimeout(maybeBackupPrompt, 350); }
   updateTitle();
 }
 /* Người mới: chưa từng đóng trang giới thiệu, chưa có học sinh và hồ sơ */
@@ -3635,8 +3652,37 @@ function renderOnboard() {
 /* ---- Cửa sổ chào khi vào trang (người đã dùng) ---- */
 function showGreet(on) {
   const el = $('#greetPop'); el.classList.toggle('hidden', !on);
-  if (on) renderGreet(); else ls.set('vincenink.seen', '1');
+  if (on) renderGreet(); else { ls.set('vincenink.seen', '1'); setTimeout(maybeBackupPrompt, 350); }
   updateTitle();
+}
+/* ---- Nhắc đăng nhập để sao lưu: hiện sau khi đóng trang giới thiệu / lời chào, mỗi lần mở web khi chưa đăng nhập ---- */
+let backupAsked = false;
+async function maybeBackupPrompt() {
+  if (backupAsked || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
+  for (let i = 0; i < 40 && !Cloud.ready; i++) await new Promise(r => setTimeout(r, 150));
+  if (!Cloud.configured() || Cloud.user || $('.modal-back')) return;
+  backupAsked = true;
+  const body = document.createElement('div'); body.className = 'mail-pop backup-pop';
+  body.innerHTML = `<div class="mp-ic">☁️</div>
+    <h3>${t('Đăng nhập để sao lưu dữ liệu')}</h3>
+    <p class="mp-lead">${t('Bạn đang dùng Vincenink mà <b>chưa đăng nhập</b>. Mọi dữ liệu chỉ nằm trong trình duyệt này và <b>chưa được sao lưu</b>.')}</p>
+    <div class="bk-warn">${ic('info', 16)}<span>${t('Nếu xoá lịch sử / dữ liệu trang web, dùng chế độ ẩn danh, đổi trình duyệt hoặc đổi máy, dữ liệu sẽ <b>bị mất</b> và không khôi phục được.')}</span></div>
+    <ul class="bk-list">
+      <li>✓ ${t('Sao lưu lịch học, hồ sơ và danh sách lớp lên mạng')}</li>
+      <li>✓ ${t('Mở trên máy khác vẫn thấy đủ lịch')}</li>
+      <li>✓ ${t('Nhận thông báo nhắc lịch kể cả khi đã đóng trang')}</li>
+    </ul>
+    <p class="hint">${t('Bảng vẽ, học phí và tài liệu vẫn chỉ lưu trên máy này — hãy tải xuống (PNG/PDF) những gì quan trọng.')}</p>`;
+  openModal({ title: t('Sao lưu dữ liệu'), body, width: 440, actions: [
+    { label: t('Để sau') },
+    { label: t('Đăng nhập / Đăng ký'), kind: 'primary', onClick: () => setTimeout(accountModal, 60) },
+  ] });
+}
+function renderBackupNudge() {
+  const el = $('#backupNudge'); if (!el) return;
+  const show = Cloud.ready && Cloud.configured() && !Cloud.user;
+  el.classList.toggle('hidden', !show);
+  if (show) el.innerHTML = `<span class="bn-ic">⚠</span><span class="bn-t"><b>${t('Chưa sao lưu')}</b><small>${t('Đăng nhập để không mất lịch học')}</small></span><em class="fb-go">›</em>`;
 }
 function renderGreet() {
   const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;

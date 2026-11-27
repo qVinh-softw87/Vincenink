@@ -1548,3 +1548,15 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .mail-pop .mp-msg { min-height: 18px; margin: 8px 0 0; font-size: 12.5px; color: #B25A35; }
 .mail-pop .mp-msg.ok { color: #4C6E44; }
 .mail-pop .hint { margin-top: 6px; }
+
+/* ===== v32: nhắc sao lưu ===== */
+.backup-nudge { display: flex !important; align-items: center; gap: 10px; padding: 9px 12px !important; text-align: left; border-radius: 14px; background: linear-gradient(140deg, #FCEFE6, #F5DCCB) !important; border: 1px solid rgba(190,110,70,.22) !important; color: #6B3A22 !important; margin-bottom: 6px; transition: transform .15s, box-shadow .15s; }
+.backup-nudge.hidden { display: none !important; }
+.backup-nudge:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(190,110,70,.18); }
+.backup-nudge .bn-ic { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.75); color: #C0612E; font-weight: 800; }
+.backup-nudge .bn-t { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.3; }
+.backup-nudge .bn-t b { font-size: 13px; } .backup-nudge .bn-t small { font-size: 11.5px; color: #9A5A3A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-theme="dark"] .backup-nudge, [data-theme="chalk"] .backup-nudge { background: linear-gradient(140deg, #4A3328, #33251E) !important; color: #F6DCCB !important; border-color: rgba(255,200,170,.12) !important; }
+[data-theme="dark"] .backup-nudge .bn-t small, [data-theme="chalk"] .backup-nudge .bn-t small { color: #E2B49A; }
+.bk-warn { display: flex; gap: 8px; align-items: flex-start; text-align: left; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; color: #8A3E20; background: rgba(217,120,80,.12); }
+.bk-list { list-style: none; text-align: left; margin: 0 0 8px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; line-height: 1.8; color: var(--ink-soft); }

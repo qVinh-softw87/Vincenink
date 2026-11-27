@@ -77,7 +77,7 @@ async def page(b, name):
     return ctx, p
 
 async def open_acct(p):
-    await p.evaluate("document.querySelectorAll('.modal-backdrop, .modal').forEach(x=>x.remove()); accountModal()"); await p.wait_for_timeout(300)
+    await p.evaluate("document.querySelectorAll('.modal-back').forEach(x=>x.remove()); accountModal()"); await p.wait_for_timeout(300)
 async def login(p, email, pw, tab='in'):
     await open_acct(p)
     if tab == 'up': await p.click('#acctModal [data-tab=up]')
@@ -163,4 +163,5 @@ async def main():
         await b.close()
     print(f'\n{n} kiểm thử trình duyệt đều đạt')
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
