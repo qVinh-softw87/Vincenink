@@ -519,7 +519,11 @@ function loadPrefs() {
 function savePrefs() { const p = {}; PREF_KEYS.forEach(k => p[k] = E[k]); ls.set('vincenink.prefs', JSON.stringify(p)); }
 const saveSettings = () => DB.put('settings', S.settings).catch(() => {});
 const studentById = id => S.students.find(s => s.id === id);
-const ownerName = id => id === 'all' ? t('Lớp chung') : (studentById(id)?.name || t('Lớp học'));
+/* Chế độ tiếng Anh: chữ hiển thị không dấu (chỉ đổi lúc hiện, dữ liệu gốc giữ nguyên) */
+function unaccent(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'); }
+const dx = x => LANG === 'en' ? unaccent(x) : (x == null ? '' : String(x));
+const boardTitle = b => { if (!b) return ''; const m = /^Buổi học (\d{1,2}\/\d{1,2})(.*)$/.exec(b.title || ''); return m && LANG === 'en' ? `Lesson ${m[1]}${unaccent(m[2])}` : dx(b.title); };
+const ownerName = id => id === 'all' ? t('Lớp chung') : dx(studentById(id)?.name || t('Lớp học'));
 const ownerColor = id => id === 'all' ? null : (studentById(id)?.color || STUDENT_COLORS[0]);
 const avatarHTML = (id, cls = '') => id === 'all'
   ? `<span class="avatar class ${cls}">${ic('book', cls.includes('lg') ? 20 : 16)}</span>`
@@ -1372,7 +1376,7 @@ async function exportPdf(o) {
     g.setTransform(k, 0, 0, k, 0, 0); g.fillStyle = THEMES.light.paper; g.fillRect(0, 0, b.w, headH);
     const fs = headH * 0.36, prof = S.settings.profile || {};
     g.fillStyle = '#3B332B'; g.font = `600 ${fs}px "Be Vietnam Pro", system-ui, sans-serif`; g.textBaseline = 'top';
-    g.fillText(board ? board.title : 'Vincenink', m, headH * 0.12);
+    g.fillText(board ? boardTitle(board) : 'Vincenink', m, headH * 0.12);
     const sub = [ownerName(board?.studentId || 'all'), board ? fmtDateLong(board.date) : '', prof.name ? t('Giáo viên: {n}', { n: prof.name }) : ''].filter(Boolean).join('  ·  ');
     g.fillStyle = '#8A7D6D'; g.font = `${fs * 0.62}px "Be Vietnam Pro", system-ui, sans-serif`; g.fillText(sub, m, headH * 0.58);
     g.strokeStyle = '#E2D6C3'; g.lineWidth = Math.max(1, headH * 0.02); g.beginPath(); g.moveTo(m, headH * 0.97); g.lineTo(b.w - m, headH * 0.97); g.stroke();
@@ -1522,7 +1526,7 @@ function updateTitle() {
   if (!$('#welcome').classList.contains('hidden')) { document.title = `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`; return; }
   if (!$('#greetPop').classList.contains('hidden')) { document.title = `${t(DAY_HELLO[dayPart()])}! · Vincenink`; return; }
   const b = S.boards.find(x => x.id === S.boardId);
-  document.title = b ? `${b.title} · ${ownerName(b.studentId)} | Vincenink` : `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`;
+  document.title = b ? `${boardTitle(b)} · ${ownerName(b.studentId)} | Vincenink` : `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`;
 }
 
 /* =====================================================================
@@ -1588,7 +1592,7 @@ async function editBoardMeta(id) {
   const r = await formBox(t('Sửa thông tin bảng'), [
     { name: 'title', label: t('Tên bảng'), value: b.title },
     { name: 'date', label: t('Ngày'), type: 'date', value: b.date },
-    { name: 'owner', label: t('Thuộc về'), type: 'select', value: b.studentId, options: [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])] },
+    { name: 'owner', label: t('Thuộc về'), type: 'select', value: b.studentId, options: [['all', t('Lớp chung')], ...S.students.map(s => [s.id, dx(s.name)])] },
   ], t('Lưu'));
   if (!r) return;
   b.title = r.title.trim() || b.title; b.date = r.date || b.date; b.studentId = r.owner;
@@ -1662,7 +1666,7 @@ function renderTodayCard() {
   const el = $('#todayCard'); if (!el) return;
   const now = new Date(), ds = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   const list = todayLessons(), part = dayPart(), p = profile();
-  const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const name = p.name ? dx(p.name.trim().split(/\s+/).pop()) : '';
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
   const msg = Daily.lines()[0] || '';
   Reminders.queue();
@@ -1678,7 +1682,7 @@ function renderTodayCard() {
       const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
       return `<button class="tc-item ${st}" data-owner="${o.owner}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
         <span class="tc-time">${o.start}<small>${o.end}</small></span>
-        <span class="tc-body"><b>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</b><small>${esc(o.subject || t('Buổi học'))}</small></span>
+        <span class="tc-body"><b>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</b><small>${esc(dx(o.subject) || t('Buổi học'))}</small></span>
         ${st === 'now' ? `<span class="tc-badge">${t('Đang dạy')}</span>` : st === 'done' ? `<span class="tc-done">${ic('check', 11)}Done</span>` : st === 'off' ? `<span class="tc-badge off">${t('Nghỉ')}</span>` : ''}
       </button>`; }).join('')}</div>`
       : `<div class="dc-free">${ic('calendar', 14)}${t('Hôm nay không có tiết nào.')}</div>`}`;
@@ -1736,7 +1740,7 @@ function incomeModal() {
       <span class="im-bar"><i class="g" style="width:${(x.got / max * 100).toFixed(1)}%"></i><i class="d" style="width:${(x.due / max * 100).toFixed(1)}%"></i></span>
       <span class="im-v"><b>${fmtMoney(x.got + x.due)}</b>${x.due ? `<em>${t('chưa thu {x}', { x: fmtMoney(x.due) })}</em>` : `<em class="ok">${t('đã thu đủ')}</em>`}</span></div>`).join('')}</div>` : ''}
     <div class="sec-h">${ic('user', 15)}${t('Theo lớp học')}</div>
-    <div class="fee-sum">${I.rows.length ? I.rows.map(({ s, L }) => `<button class="fs-row" data-inc="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${!s.fee ? t('Chưa đặt học phí') : L.unpaid.length ? t('Chưa thu: {m}', { m: L.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã nhận {x}', { x: fmtMoney(L.got) })}</small></span><span class="fs-a"><b>${fmtMoney(L.due)}</b><em class="${L.due ? '' : 'ok'}">${t(L.due ? 'Chưa thu' : 'Đã thu đủ')}</em></span></button>`).join('')
+    <div class="fee-sum">${I.rows.length ? I.rows.map(({ s, L }) => `<button class="fs-row" data-inc="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(dx(s.name))}<small>${!s.fee ? t('Chưa đặt học phí') : L.unpaid.length ? t('Chưa thu: {m}', { m: L.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã nhận {x}', { x: fmtMoney(L.got) })}</small></span><span class="fs-a"><b>${fmtMoney(L.due)}</b><em class="${L.due ? '' : 'ok'}">${t(L.due ? 'Chưa thu' : 'Đã thu đủ')}</em></span></button>`).join('')
       : `<div class="hint">${t('Thêm lớp học và đặt học phí để xem thu nhập.')}</div>`}</div>
     <p class="hint">${t('Đã nhận = các tháng đã bật “Đã thu”. Chưa thu được cộng dồn từ các tháng trước.')}</p>`;
   const md = openModal({ title: t('Tổng thu nhập'), body, width: 520, actions: [{ label: t('Đóng'), kind: 'primary' }] });
@@ -1749,7 +1753,7 @@ function renderSidebar() {
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
     <div class="side-label"><span>${t('Lớp học · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm lớp học')}" aria-label="${t('Thêm lớp học')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
-    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
+    ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(dx(s.name))}">${avatarHTML(s.id)}<span class="name"><span>${esc(dx(s.name))}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có lớp học nào.')}<br>${t('Bấm + để thêm — mỗi lớp có bảng, tài liệu, lịch học và học phí riêng.')}</div>`}`;
 }
 $('#studentNav').addEventListener('click', e => {
@@ -1821,7 +1825,7 @@ function renderBoardsTab(body) {
       ${groups[d].map(b => `
         <div class="board-card ${b.id === S.boardId ? 'active' : ''}" data-board="${b.id}">
           <div class="thumb">${b.thumb ? `<img src="${b.thumb}" alt="">` : ''}</div>
-          <div class="meta"><div class="t">${esc(b.title)}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
+          <div class="meta"><div class="t">${esc(boardTitle(b))}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
           <button class="icon-btn sm more" data-bmenu="${b.id}" title="${t('Tuỳ chọn')}">${ic('more', 18)}</button>
         </div>`).join('')}`).join('')
     || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
@@ -1866,7 +1870,7 @@ function renderFilesTab(body) {
     ${list.map(f => { const [k, lbl] = fileKind(f); return `
       <div class="file-row" data-file="${f.id}">
         <div class="ficon" style="background:${FILE_COLORS[k]}">${lbl}</div>
-        <div class="fmeta"><div class="fname" title="${esc(f.name)}">${esc(f.name)}</div><div class="fsub">${fmtSize(f.size)} · ${fmtDT(f.createdAt)}</div></div>
+        <div class="fmeta"><div class="fname" title="${esc(dx(f.name))}">${esc(dx(f.name))}</div><div class="fsub">${fmtSize(f.size)} · ${fmtDT(f.createdAt)}</div></div>
         <div class="factions">
           ${canBoard(f) ? `<button class="icon-btn sm" data-fact="board" title="${t('Đưa lên bảng')}">${ic('toBoard', 17)}</button>` : ''}
           <button class="icon-btn sm" data-fact="menu" title="${t('Tuỳ chọn')}">${ic('more', 17)}</button>
@@ -1889,7 +1893,7 @@ function renderFilesTab(body) {
       { icon: 'download', label: t('Tải về máy'), onClick: () => download(f.blob, f.name) },
       { icon: 'edit', label: t('Đổi tên'), onClick: async () => { const r = await formBox(t('Đổi tên tài liệu'), [{ name: 'n', label: t('Tên'), value: f.name }], t('Lưu')); if (r && r.n.trim()) { f.name = r.n.trim(); await DB.put('files', f); renderPanel(); } } },
       '-', { icon: 'trash', label: t('Xoá khỏi máy'), danger: true, onClick: async () => {
-        if (!await confirmBox(t('Xoá tài liệu?'), t('“{n}” sẽ bị xoá khỏi trình duyệt.', { n: esc(f.name) }), t('Xoá'))) return;
+        if (!await confirmBox(t('Xoá tài liệu?'), t('“{n}” sẽ bị xoá khỏi trình duyệt.', { n: esc(dx(f.name)) }), t('Xoá'))) return;
         await DB.del('files', f.id); S.files = S.files.filter(x => x.id !== f.id); renderPanel(); } },
     ]);
   };
@@ -1988,7 +1992,7 @@ function renderFeeTab(body) {
     <div class="sec-h">${ic('calendar', 15)}${t('Các buổi trong tháng')} <span class="muted">${f.list.length}</span></div>
     ${f.list.length ? `<div class="fee-list">${f.list.map(o => {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
-      return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(o.subject || '')}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
+      return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(dx(o.subject))}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
     }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
 `;
   const inp = $('#feeInput', body);
@@ -2064,7 +2068,7 @@ function nextLesson(sid) {
       if (o) {
         const who = sid === 'all' && o.owner !== 'all' ? ` · ${ownerName(o.owner)}` : '';
         const when = day.date === nowS ? t('Hôm nay') : `${WD[LANG][dow(day.d)]} ${shortDate(day.date)}`;
-        return `${when}, ${o.start}${o.subject ? ' – ' + o.subject : ''}${who}`;
+        return `${when}, ${o.start}${o.subject ? ' – ' + dx(o.subject) : ''}${who}`;
       }
     }
   }
@@ -2084,7 +2088,7 @@ function renderSchedTab(body) {
     <div class="sess ${o.off ? 'off' : ''} ${o.kind === 'moved' ? 'moved' : ''}" data-owner="${o.owner}" data-kind="${o.kind}" data-ref="${o.ref.id}" data-orig="${o.orig}" style="border-left-color:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}" title="${t('Bấm để sửa, đổi lịch tuần này, mở bảng…')}">
       ${sid === 'all' && o.owner !== 'all' ? avatarHTML(o.owner) : ''}
       <div class="st">${o.start}<br><span class="muted" style="font-weight:500">${o.end}</span></div>
-      <div class="sm"><div class="sj">${esc(o.subject || t('Buổi học'))}${sid === 'all' && o.owner !== 'all' ? ` · ${esc(ownerName(o.owner))}` : ''}</div>
+      <div class="sm"><div class="sj">${esc(dx(o.subject) || t('Buổi học'))}${sid === 'all' && o.owner !== 'all' ? ` · ${esc(ownerName(o.owner))}` : ''}</div>
         ${o.note ? `<div class="sn">${esc(o.note)}</div>` : ''}
         <span class="tag ${o.kind === 'moved' ? 'warn' : ''}">${KIND_TAG[o.off ? 'off' : o.kind]()}${o.kind === 'moved' && o.orig !== o.date ? ' · ' + t('từ {d}', { d: `${WDS[LANG][dow(parseD(o.orig))]} ${shortDate(o.orig)}` }) : ''}</span></div>
       ${ic('more', 16)}
@@ -2107,7 +2111,7 @@ function renderSchedTab(body) {
     <div class="sec-h">${ic('repeat', 15)}${t('Lịch cố định hằng tuần')}</div>
     ${sid === 'all' && !sc.fixed.length ? `<div class="hint">${t('Lịch cố định của từng lớp nằm trong trang của lớp đó; tuần ở trên đã gộp lịch của tất cả các lớp.')}</div>` : ''}
     ${sc.fixed.length ? [...sc.fixed].sort((a, b) => a.dow - b.dow || a.start.localeCompare(b.start)).map(f => `
-      <div class="fixed-row"><span class="fd">${WD[LANG][f.dow]}</span><span class="ft">${f.start}–${f.end}</span><span class="fj">${esc(f.subject || '')}</span>
+      <div class="fixed-row"><span class="fd">${WD[LANG][f.dow]}</span><span class="ft">${f.start}–${f.end}</span><span class="fj">${esc(dx(f.subject))}</span>
         <button class="icon-btn sm" data-fedit="${f.id}" title="${t('Sửa lịch cố định (mọi tuần)')}">${ic('edit', 15)}</button></div>`).join('')
       : (sid === 'all' ? '' : `<div class="hint">${t('Chưa có lịch cố định. Bấm “Ghi lịch học” và chọn “Cố định hằng tuần” để buổi học tự lặp lại mỗi tuần.')}</div>`)}`;
   body.onclick = e => {
@@ -2141,7 +2145,7 @@ function sessionMenu(el) {
     items.push({ icon: off ? 'repeat' : 'ban', label: t(off ? 'Học lại buổi này' : 'Nghỉ buổi này (chỉ tuần này)'), onClick: () => { if (off) sc.skips = sc.skips.filter(k => k !== key); else { sc.skips.push(key); delete sc.overrides[key]; } after(); } });
     items.push({ icon: 'edit', label: t('Sửa lịch cố định (mọi tuần)'), onClick: () => sessionModal(owner, { kind: 'fixed', ref }) }, '-',
       { icon: 'trash', label: t('Xoá lịch cố định'), danger: true, onClick: async () => {
-        if (!await confirmBox(t('Xoá lịch cố định?'), t('Buổi “{s}” sẽ không còn lặp lại mỗi tuần.', { s: esc(`${fixedLabel(ref)} ${ref.subject || ''}`.trim()) }), t('Xoá'))) return;
+        if (!await confirmBox(t('Xoá lịch cố định?'), t('Buổi “{s}” sẽ không còn lặp lại mỗi tuần.', { s: esc(`${fixedLabel(ref)} ${dx(ref.subject)}`.trim()) }), t('Xoá'))) return;
         sc.fixed = sc.fixed.filter(f => f !== ref); sc.skips = sc.skips.filter(k => !k.startsWith(ref.id + '@'));
         Object.keys(sc.overrides).forEach(k => { if (k.startsWith(ref.id + '@')) delete sc.overrides[k]; }); after(); } });
   }
@@ -2160,7 +2164,7 @@ function overrideModal(owner, f, orig) {
   const ws = weekStart(parseD(orig)), body = document.createElement('div');
   body.className = 'sess-form'; bindTimeFields(body);
   body.innerHTML = `
-    <div class="info-box">${ic('repeat', 15)}<div>${t('Lịch cố định: {x}', { x: `<b>${fixedLabel(f)}</b>${f.subject ? ' · ' + esc(f.subject) : ''}` })}<br>
+    <div class="info-box">${ic('repeat', 15)}<div>${t('Lịch cố định: {x}', { x: `<b>${fixedLabel(f)}</b>${f.subject ? ' · ' + esc(dx(f.subject)) : ''}` })}<br>
       ${t('Thay đổi dưới đây <b>chỉ áp dụng tuần {a} – {b}</b>. Các tuần khác vẫn học như lịch cố định.', { a: shortDate(dstr(ws)), b: shortDate(dstr(addDays(ws, 6))) })}</div></div>
     <div class="field"><label>${t('Học vào ngày')}</label><select name="date">${[0, 1, 2, 3, 4, 5, 6].map(i => { const d = dstr(addDays(ws, i)); return `<option value="${d}" ${d === cur.date ? 'selected' : ''}>${WD[LANG][i]} · ${shortDate(d)}</option>`; }).join('')}</select></div>
     <div class="field"><label>${t('Thời gian')}</label><div class="time-row">${timeField('start', cur.start, t('Bắt đầu'), true)}<span class="time-arrow">→</span>${timeField('end', cur.end, t('Kết thúc'), false)}</div></div>
@@ -2224,7 +2228,7 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
   let kind = existing?.kind || 'fixed';
   const pd = presetDate ? parseD(presetDate) : null, body = document.createElement('div');
   body.className = 'sess-form';
-  const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, s.name])];
+  const ownerOpts = [['all', t('Lớp chung')], ...S.students.map(s => [s.id, dx(s.name)])];
   const curDow = ref.dow ?? dow(pd || new Date());
   const DUR = [[45, t('45 phút')], [60, t('1 giờ')], [90, t('1,5 giờ')], [120, t('2 giờ')]];
   body.innerHTML = `
@@ -2314,14 +2318,14 @@ function aiContext() {
   const ws = weekStart(now);
   return {
     date: fmtDateLong(todayStr()), time: `${pad(now.getHours())}:${pad(now.getMinutes())}`, dayPart: dayPart(),
-    teacher: { name: p.name || '', role: p.role || '', school: p.school || '' },
-    students: S.students.slice(0, 40).map(s => ({ name: s.name, grade: s.grade || '' })),
-    todayLessons: todayLessons().map(o => ({ time: `${o.start}-${o.end}`, student: o.owner === 'all' ? 'Lớp chung' : ownerName(o.owner), subject: o.subject || '', cancelled: o.off })),
+    teacher: { name: dx(p.name), role: dx(p.role), school: dx(p.school) },
+    students: S.students.slice(0, 40).map(s => ({ name: dx(s.name), grade: dx(s.grade) })),
+    todayLessons: todayLessons().map(o => ({ time: `${o.start}-${o.end}`, student: o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), subject: dx(o.subject), cancelled: o.off })),
     currentStudent: cur ? {
-      name: cur.name, grade: cur.grade || '', note: (cur.note || '').slice(0, 600),
-      thisWeek: weekOccurrences(cur.id, ws).flatMap(d => d.list.map(o => `${WD.vi[dow(d.d)]} ${shortDate(d.date)} ${o.start}-${o.end} ${o.subject || ''}${o.off ? ' (nghỉ)' : ''}`)),
+      name: dx(cur.name), grade: dx(cur.grade), note: dx((cur.note || '').slice(0, 600)),
+      thisWeek: weekOccurrences(cur.id, ws).flatMap(d => d.list.map(o => `${WD[LANG][dow(d.d)]} ${shortDate(d.date)} ${o.start}-${o.end} ${dx(o.subject)}${o.off ? (LANG === 'vi' ? ' (nghỉ)' : ' (cancelled)') : ''}`)),
     } : null,
-    currentBoard: board ? board.title : '',
+    currentBoard: boardTitle(board),
     weather: wxContext(),
     dayType: (dt => dt.holiday ? `${dt.weekday}, ${dt.holiday}` : `${dt.weekday}, ${dt.weekend ? (LANG === 'vi' ? 'cuối tuần' : 'weekend') : (LANG === 'vi' ? 'ngày thường' : 'weekday')}`)(dayType()),
     moodHint: moodGuess().label,
@@ -2333,7 +2337,7 @@ const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCod
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const getJSON = async (url, ms = 7000) => { const r = await withTimeout(fetch(url, { cache: 'no-store' }), ms); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
 /* Tiếng Anh: tên địa danh không dấu */
-const noAccent = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+const noAccent = unaccent;
 const cityName = w => w && w.city ? (LANG === 'en' ? noAccent(w.city) : w.city) : '';
 function placeName(j) {
   const clean = x => String(x || '').replace(/\s*\([^)]*\)/g, '').replace(/^(Thành phố|TP\.?|Tỉnh|Phường|Xã|Thị trấn|Quận|Huyện|Thị xã|City of)\s+/i, '').replace(/\s+/g, ' ').trim();
@@ -2538,7 +2542,7 @@ function wxSection() {
   const lc = Loc.cur || {}, src = w.src === 'gps' ? (lc.acc ? t('GPS ±{m} m', { m: lc.acc }) : t('theo GPS')) : t('ước tính theo mạng');
   return `<section class="gr-sec">
     <h3>${ic('sun2', 15)}${t('Thời tiết')}
-      <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(cityName(w) || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
+      <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(cityName(w) || t('Vị trí của bạn'))}</span></h3>
     <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
       <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
       <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
@@ -2635,7 +2639,7 @@ function fallbackDaily(salt = 0) {
   const vi = LANG === 'vi', F = FALLBACK[LANG], C = CHEER[LANG], part = dayPart();
   const list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
   const next = list.find(o => o.end > hm) || list[0];
-  const o = next ? { start: next.start, who: next.owner === 'all' ? t('Lớp chung') : ownerName(next.owner), subject: next.subject } : null;
+  const o = next ? { start: next.start, who: next.owner === 'all' ? t('Lớp chung') : ownerName(next.owner), subject: dx(next.subject) } : null;
   const dt = dayType(), w = Weather.data, d = wxToday();
   const p1 = [rnd(F.hello[part], salt * 7 + 11)];
   if (w && d) {
@@ -2737,7 +2741,7 @@ const Chat = {
   },
   renderCtx() {
     const cur = studentById(S.studentId), n = todayLessons().filter(o => !o.off).length;
-    $('#aiCtx').innerHTML = `${cur ? `<span class="ctx-chip">${avatarHTML(cur.id)}${esc(cur.name)}${cur.grade ? ` · ${esc(cur.grade)}` : ''}</span>` : ''}<span class="ctx-chip">${ic('calendar', 12)}${t('{n} tiết hôm nay', { n })}</span>`;
+    $('#aiCtx').innerHTML = `${cur ? `<span class="ctx-chip">${avatarHTML(cur.id)}${esc(dx(cur.name))}${cur.grade ? ` · ${esc(cur.grade)}` : ''}</span>` : ''}<span class="ctx-chip">${ic('calendar', 12)}${t('{n} tiết hôm nay', { n })}</span>`;
   },
   suggestions() {
     const cur = studentById(S.studentId), g = cur?.grade ? ` ${cur.grade}` : '';
@@ -2757,7 +2761,7 @@ const Chat = {
   },
   render() {
     this.renderState(); this.renderCtx();
-    const box = $('#aiMsgs'), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+    const box = $('#aiMsgs'), p = profile(), name = p.name ? dx(p.name.trim().split(/\s+/).pop()) : '';
     let html = '';
     if (AI.status !== 'on' && AI.status !== 'unknown') {
       html += `<div class="ai-setup">${ic('info', 16)}<div>${AI.status === 'off'
@@ -2823,7 +2827,7 @@ function profileAvatarHTML(cls = '') {
 }
 function renderProfileCard() {
   const p = profile();
-  const first = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const first = p.name ? dx(p.name.trim().split(/\s+/).pop()) : '';
   $('#topProfile').innerHTML = `${profileAvatarHTML('round')}<span class="tp-name">${esc(first || t('Hồ sơ'))}</span><span class="chev">${ic('chev', 12)}</span>`;
   $('#topProfile').title = p.name ? `${p.name}${p.role ? ' · ' + p.role : ''}` : t('Hồ sơ của bạn');
 }
@@ -2845,7 +2849,7 @@ const Reminders = {
         if (day.date < from || day.date > end) continue;
         day.list.forEach(o => out.push({
           id: `${o.owner}:${o.kind}:${(o.ref && o.ref.id) || ''}:${o.date}:${o.start}`, date: o.date, start: o.start, end: o.end,
-          who: o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), subject: o.subject || '', note: String(o.note || '').slice(0, 120), off: !!o.off,
+          who: o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), subject: dx(o.subject), note: String(o.note || '').slice(0, 120), off: !!o.off,
         }));
       }
     }
@@ -2873,7 +2877,7 @@ const Reminders = {
         if (fired[key] || now < start - lead * 6e4 || now >= start) continue;
         fired[key] = now;
         const who = o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner), mins = Math.max(1, Math.round((start - now) / 6e4));
-        try { new Notification(t('⏰ {m} phút nữa: {w}', { m: mins, w: who }), { body: `${o.start}–${o.end}${o.subject ? ' · ' + o.subject : ''}`, icon: 'assets/icon-192.png', tag: key }); } catch (e) { /* */ }
+        try { new Notification(t('⏰ {m} phút nữa: {w}', { m: mins, w: who }), { body: `${o.start}–${o.end}${o.subject ? ' · ' + dx(o.subject) : ''}`, icon: 'assets/icon-192.png', tag: key }); } catch (e) { /* */ }
       }
     }
     for (const k in fired) if (!k.startsWith(ds)) delete fired[k];
@@ -3064,13 +3068,13 @@ function renderTopbar() {
   const b = S.boards.find(x => x.id === S.boardId); if (!b) return;
   $('#ownerChip').innerHTML = `${avatarHTML(b.studentId)}<span>${esc(ownerName(b.studentId))}</span>`;
   $('#ownerChip').title = t('Mở trang của {n}', { n: ownerName(b.studentId) });
-  $('#boardTitle').value = b.title; $('#boardDate').value = b.date; renderBgUI();
+  $('#boardTitle').value = boardTitle(b); $('#boardDate').value = b.date; renderBgUI();
   updateTitle();
 }
 function bindTopbar() {
   $('#btnBgPick').onclick = e => bgPopover(e.currentTarget);
   const title = $('#boardTitle');
-  title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; b.title = title.value.trim() || b.title; title.value = b.title; await DB.put('boards', b); renderPanel(); renderTopbar(); };
+  title.onchange = async () => { const b = S.boards.find(x => x.id === S.boardId); if (!b) return; if (title.value.trim() && title.value.trim() !== boardTitle(b)) b.title = title.value.trim(); title.value = boardTitle(b); await DB.put('boards', b); renderPanel(); renderTopbar(); };
   title.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') title.blur(); };
   $('#boardDate').onchange = async e => { const b = S.boards.find(x => x.id === S.boardId); if (!b || !e.target.value) return; b.date = e.target.value; await DB.put('boards', b); renderPanel(); };
   $('#ownerChip').onclick = () => { const b = S.boards.find(x => x.id === S.boardId); if (b) { $('#app').classList.remove('focus'); setTimeout(resize, 0); selectStudent(b.studentId); } };
@@ -3162,7 +3166,7 @@ function showGreet(on) {
 function renderGreet() {
   const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;
   const oldBody = $('.gr-body', el), scroll = oldBody ? oldBody.scrollTop : 0;
-  const now = new Date(), part = dayPart(), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const now = new Date(), part = dayPart(), p = profile(), name = p.name ? dx(p.name.trim().split(/\s+/).pop()) : '';
   const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   const paras = Daily.lines();
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -3176,7 +3180,7 @@ function renderGreet() {
     </header>
     <div class="gr-body">
       <section class="gr-letter">
-        <div class="gl-from"><span class="gc-av"><img src="assets/icon-192.png" alt=""></span><b>${t('Vincenink nhắn cậu')}</b><small>${pad(now.getHours())}:${pad(now.getMinutes())}</small></div>
+        <div class="gl-from"><span class="gc-av"><img src="assets/icon-192.png" alt=""></span><b>${t('Vincenink nhắn cậu')}</b></div>
         ${paras.length ? paras.map(l => `<p>${esc(l)}</p>`).join('')
           : `<p class="gl-wait">${Weather.locating ? t('Đang lấy vị trí và thời tiết chỗ cậu…') : t('Đang viết lời nhắn…')}</p><span class="shimmer"></span><span class="shimmer"></span><span class="shimmer short"></span>`}
       </section>
@@ -3185,7 +3189,7 @@ function renderGreet() {
         <h3>${ic('calendar', 15)}${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></h3>
         ${list.length ? `<div class="gr-lessons">${list.map(o => {
           const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
-          return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(o.subject || '')}</small>${st === 'now' ? `<i>${t('Đang dạy')}</i>` : st === 'done' ? `<i class="done">${ic('check', 11)}Done</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
+          return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(dx(o.subject))}</small>${st === 'now' ? `<i>${t('Đang dạy')}</i>` : st === 'done' ? `<i class="done">${ic('check', 11)}Done</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
         }).join('')}</div>` : `<p class="gr-free">${t('Hôm nay không có tiết nào — cậu thong thả nghỉ ngơi xíu nha 🌿')}</p>`}
       </section>
       ${needsSetup() ? `<section class="gr-sec gr-setup"><h3>${ic('info', 15)}${t('Hoàn thiện thông tin để nhận nhắc lịch đầy đủ')}</h3><div class="ob-steps">${setupStepsHTML()}</div></section>` : ''}
