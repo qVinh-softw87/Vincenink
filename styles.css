@@ -1377,3 +1377,41 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .rem-block .hint { margin: 8px 0 0; }
 .rem-foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .dc-sec { gap: 4px; } .dc-sec > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; } .dc-acts { flex: none; } .dc-acts .add-link { padding-left: 2px; padding-right: 2px; }
+
+/* ===== v20: chữ gợi ý chạy chậm + học phí cộng dồn ===== */
+.mq-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; }
+.mq-wrap input { width: 100%; }
+.mq-ph { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; color: var(--muted); white-space: nowrap; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+.mq-ph > span { display: inline-block; will-change: transform; }
+.mq-wrap.run .mq-ph > span { animation: mqRun var(--mq-t, 8s) ease-in-out infinite alternate; }
+.mq-wrap.run .mq-ph { -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 92%, transparent); }
+@keyframes mqRun { 0%, 12% { transform: translateX(0); } 88%, 100% { transform: translateX(var(--mq, 0)); } }
+.mq-wrap input:not(:placeholder-shown) + .mq-ph { display: none; }
+@media (prefers-reduced-motion: reduce) { .mq-wrap.run .mq-ph > span { animation: none; } }
+
+.fee-stats { grid-template-columns: 1fr 1fr !important; }
+.fee-stats .adj-ctl button:disabled { opacity: .35; cursor: default; }
+.ft-carry { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(140,105,70,.28); }
+.ftc-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; font-weight: 700; color: #9A6A44; margin-bottom: 6px; }
+.ftc-h b { font-size: 15px; color: #8A4E2A; }
+.ftc-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 5px 8px; margin: 0 -8px; border-radius: 10px; font-size: 13px; transition: background .15s; }
+.ftc-row:hover { background: rgba(255,255,255,.45); }
+.ftc-row small { color: #8A7462; font-size: 11.5px; margin-left: 4px; }
+.ftc-row b { font-variant-numeric: tabular-nums; }
+.ftc-row button, .ft-due button { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 14px; background: rgba(255,255,255,.7); color: #6B4A2E; border: 1px solid rgba(140,105,70,.18); transition: background .15s, color .15s; }
+.ftc-row button:hover, .ft-due button:hover { background: #7FA272; color: #fff; border-color: transparent; }
+.ft-due { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.6); border: 1px solid rgba(140,105,70,.16); }
+.ft-due span { font-size: 12.5px; font-weight: 700; color: #9A6A44; text-transform: uppercase; letter-spacing: .04em; display: inline-flex; align-items: center; gap: 6px; }
+.ft-due b { margin-left: auto; font-size: 19px; color: #8A4E2A; font-variant-numeric: tabular-nums; }
+.ft-due.ok span { color: #4C6E44; text-transform: none; letter-spacing: 0; font-size: 13px; }
+[data-theme="dark"] .ftc-h, [data-theme="dark"] .ft-due span, [data-theme="chalk"] .ftc-h, [data-theme="chalk"] .ft-due span { color: #E2B98F; }
+[data-theme="dark"] .ftc-h b, [data-theme="dark"] .ft-due b, [data-theme="chalk"] .ftc-h b, [data-theme="chalk"] .ft-due b { color: #F6D8B8; }
+[data-theme="dark"] .ft-due, [data-theme="dark"] .ftc-row button, [data-theme="dark"] .ft-due button, [data-theme="chalk"] .ft-due, [data-theme="chalk"] .ftc-row button, [data-theme="chalk"] .ft-due button { background: rgba(255,240,220,.06); border-color: rgba(255,240,220,.1); color: #F1E6D8; }
+[data-theme="dark"] .ftc-row small, [data-theme="chalk"] .ftc-row small { color: #C9B8A6; }
+.ft-due { flex-wrap: wrap; row-gap: 4px; }
+.ft-due span { flex-basis: 100%; }
+.ft-due b { margin-left: 0; white-space: nowrap; }
+.ft-due button { margin-left: auto; white-space: nowrap; }
+.ft-due.ok span { flex-basis: auto; }
+.ftc-row small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ftc-row b, .ftc-h b { white-space: nowrap; }

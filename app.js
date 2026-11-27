@@ -332,6 +332,8 @@ const EN = {
   'Thử thông báo': 'Test notification', 'Cho phép thông báo trên trang': 'Allow page notifications', 'Đã gửi thông báo thử': 'Test notification sent', 'Trình duyệt này không hỗ trợ thông báo': 'This browser doesn’t support notifications',
   'Bạn đã chặn thông báo — bật lại trong biểu tượng ổ khoá cạnh địa chỉ web': 'Notifications are blocked — re-enable them via the lock icon in the address bar',
   '🐶 Vincenink đã sẵn sàng': '🐶 Vincenink is ready', 'Thông báo nhắc lịch sẽ hiện như thế này.': 'Lesson reminders will look like this.', '⏰ {m} phút nữa: {w}': '⏰ In {m} min: {w}',
+  'Còn nợ các tháng trước': 'Owed from previous months', '{n} buổi': '{n} lessons', 'Tổng chưa thu': 'Total unpaid', 'Đã thu hết': 'Mark all paid', 'Đã thu đủ tất cả các tháng': 'All months paid',
+  'Tổng học phí các học sinh': 'All students’ fees', 'Chưa thu: {m}': 'Unpaid: {m}', 'Đã thu đủ': 'Fully paid', 'Đã ghi nhận đã thu': 'Marked as paid',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1700,6 +1702,17 @@ function studentMenu(anchor, id) {
 }
 
 /* ---- Cột học sinh ---- */
+/* Ô nhập có chữ gợi ý chạy qua lại chậm khi dài hơn khung */
+const mqInput = (id, ph, val = '') => `<span class="mq-wrap"><input id="${id}" placeholder=" " aria-label="${esc(ph)}" value="${esc(val)}"><span class="mq-ph" aria-hidden="true"><span>${esc(ph)}</span></span></span>`;
+const mqRO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => mqMeasure(e.target))) : null;
+function mqMeasure(w) {
+  const sp = w.querySelector('.mq-ph > span'); if (!sp) return;
+  const over = Math.ceil(sp.scrollWidth - w.clientWidth + 6);
+  w.classList.toggle('run', over > 0);
+  w.style.setProperty('--mq', `-${Math.max(0, over)}px`);
+  w.style.setProperty('--mq-t', `${Math.max(5, over / 14 + 3).toFixed(1)}s`);
+}
+function mqFit(root) { $$('.mq-wrap', root).forEach(w => { mqMeasure(w); if (mqRO) mqRO.observe(w); }); }
 function renderPanel() {
   const sid = S.studentId, st = studentById(sid);
   const nb = S.boards.filter(b => b.studentId === sid).length, nf = S.files.filter(f => f.studentId === sid).length;
@@ -1730,7 +1743,7 @@ function renderBoardsTab(body) {
   const today = todayStr();
   body.innerHTML = `
     <button class="btn primary block" id="btnNewBoard">${ic('plus', 17)}${t('Bảng mới hôm nay')}</button>
-    <div class="search" style="margin-top:10px">${ic('search', 16)}<input id="boardSearch" placeholder="${t('Tìm bảng theo tên hoặc ngày…')}" value="${esc(S.search)}"></div>
+    <div class="search" style="margin-top:10px">${ic('search', 16)}${mqInput('boardSearch', t('Tìm bảng theo tên hoặc ngày…'), S.search)}</div>
     ${Object.keys(groups).sort().reverse().map(d => `
       <div class="group-label ${d === today ? 'today' : ''}"><span class="dot"></span>${d === today ? t('Hôm nay · ') : ''}${fmtDateLong(d)}</div>
       ${groups[d].map(b => `
@@ -1741,6 +1754,7 @@ function renderBoardsTab(body) {
         </div>`).join('')}`).join('')
     || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
   $('#btnNewBoard', body).onclick = () => createBoard(S.studentId, true);
+  mqFit(body);
   const si = $('#boardSearch', body);
   si.oninput = () => { S.search = si.value; const p = si.selectionStart; renderBoardsTab(body); const n = $('#boardSearch', body); n.focus(); n.setSelectionRange(p, p); };
   body.onclick = e => {
@@ -1843,14 +1857,37 @@ function feeStats(st, y, m) {
   const billable = Math.max(0, taught + adj);
   return { list, taughtFn, taught, scheduled, planned: plan, adj, fee, key, billable, amount: fee * billable, projected: fee * plan, paid: !!(st.feePaid && st.feePaid[key]) };
 }
+/* Sổ học phí: cộng dồn các tháng chưa thu (tính đến tháng y/m) */
+function feeStartMonth(st) {
+  const ds = [];
+  if (st.created) ds.push(dstr(new Date(st.created)));
+  Object.keys(st.feeAdj || {}).concat(Object.keys(st.feePaid || {})).forEach(k => ds.push(k + '-01'));
+  const sc = S.sched.get(st.id);
+  if (sc) { sc.fixed.forEach(f => f.from && ds.push(f.from)); sc.sessions.forEach(x => ds.push(x.date)); }
+  const min = ds.filter(Boolean).sort()[0] || todayStr();
+  return new Date(+min.slice(0, 4), +min.slice(5, 7) - 1, 1);
+}
+function feeLedger(st, y, m) {
+  const end = new Date(y, m, 1); let d = feeStartMonth(st);
+  const lo = new Date(y, m - 35, 1); if (d < lo) d = lo;
+  const months = [];
+  for (; d <= end; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    const f = feeStats(st, d.getFullYear(), d.getMonth());
+    if (f.amount > 0) months.push({ key: f.key, label: `${f.key.slice(5)}/${f.key.slice(0, 4)}`, amount: f.amount, n: f.billable, paid: f.paid });
+  }
+  const unpaid = months.filter(x => !x.paid), cur = `${y}-${pad(m + 1)}`;
+  const prev = unpaid.filter(x => x.key !== cur);
+  return { months, unpaid, prev, prevSum: prev.reduce((a, x) => a + x.amount, 0), due: unpaid.reduce((a, x) => a + x.amount, 0), got: months.filter(x => x.paid).reduce((a, x) => a + x.amount, 0) };
+}
 function renderFeeTab(body) {
   const st = studentById(S.studentId);
   if (!st) { body.innerHTML = `<div class="empty"><div class="big">${t('Học phí')}</div>${t('Thêm học sinh để tính học phí.')}</div>`; return; }
   if (!S.feeMonth) S.feeMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const y = S.feeMonth.getFullYear(), m = S.feeMonth.getMonth(), isThis = ymKey(S.feeMonth) === ymKey(new Date());
   const f = feeStats(st, y, m), mLabel = `${pad(m + 1)}/${y}`, today = todayStr();
-  const all = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map(s => ({ s, f: feeStats(s, y, m) }));
-  const sum = all.reduce((a, x) => a + x.f.amount, 0), got = all.filter(x => x.f.paid).reduce((a, x) => a + x.f.amount, 0);
+  const L = feeLedger(st, y, m), now = new Date();
+  const all = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map(s => ({ s, L: feeLedger(s, now.getFullYear(), now.getMonth()) }));
+  const sum = all.reduce((a, x) => a + x.L.due, 0), got = all.reduce((a, x) => a + x.L.got, 0);
   body.innerHTML = `
     <div class="fee-rate">
       <label for="feeInput">${ic('wallet', 15)}${t('Học phí mỗi buổi')}</label>
@@ -1862,9 +1899,8 @@ function renderFeeTab(body) {
       <button class="icon-btn sm" data-fm="1" title="${t('Tháng sau')}">${ic('right', 18)}</button>
     </div>
     <div class="fee-stats">
-      <div class="taught"><b>${f.billable}</b><small>${t('Đã dạy')}</small></div>
+      <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1" ${f.billable ? '' : 'disabled'}>−</button><b>${f.billable}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Đã dạy')}</small></div>
       <div class="adj"><span class="adj-ctl"><button data-plan="-1" aria-label="-1">−</button><b>${f.planned}</b><button data-plan="1" aria-label="+1">+</button></span><small>${t('Dự kiến cả tháng')}</small></div>
-      <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1">−</button><b>${f.adj > 0 ? '+' + f.adj : f.adj}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Buổi cộng thêm')}</small></div>
     </div>
     <div class="fee-total ${f.paid ? 'paid' : ''}">
       <small>${t('Thành tiền')} · ${t('Tháng {m}', { m: mLabel })}</small>
@@ -1872,16 +1908,21 @@ function renderFeeTab(body) {
       <div class="ft-formula">${f.fee ? t('{f} × {n} buổi', { f: fmtMoney(f.fee), n: f.billable }) : t('Chưa đặt học phí')}</div>
       <div class="ft-proj">${t('Dự kiến cả tháng: {x}', { x: fmtMoney(f.projected) })}</div>
       <label class="switch ft-paid"><input type="checkbox" id="feePaid" ${f.paid ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Đã thu tiền tháng này')}</span></label>
+      ${L.prev.length ? `<div class="ft-carry">
+        <div class="ftc-h"><span>${t('Còn nợ các tháng trước')}</span><b>${fmtMoney(L.prevSum)}</b></div>
+        ${L.prev.map(x => `<div class="ftc-row"><span>${t('Tháng {m}', { m: x.label })} <small>${t('{n} buổi', { n: x.n })}</small></span><b>${fmtMoney(x.amount)}</b><button data-paid="${x.key}">${ic('check', 13)}${t('Đã thu')}</button></div>`).join('')}
+      </div>` : ''}
+      ${L.due ? `<div class="ft-due"><span>${t('Tổng chưa thu')}</span><b>${fmtMoney(L.due)}</b>${L.unpaid.length > 1 ? `<button data-paidall>${t('Đã thu hết')}</button>` : ''}</div>` : (L.months.length ? `<div class="ft-due ok"><span>${ic('check', 14)}${t('Đã thu đủ tất cả các tháng')}</span></div>` : '')}
     </div>
     <div class="sec-h">${ic('calendar', 15)}${t('Các buổi trong tháng')} <span class="muted">${f.list.length}</span></div>
     ${f.list.length ? `<div class="fee-list">${f.list.map(o => {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
       return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(o.subject || '')}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
     }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
-    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các học sinh · tháng {m}', { m: mLabel })}</div>
+    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các học sinh')}</div>
     <div class="fee-sum">
-      ${all.map(({ s, f: x }) => `<button class="fs-row ${s.id === st.id ? 'cur' : ''}" data-fs="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${x.fee ? t('{f} × {n} buổi', { f: fmtMoney(x.fee), n: x.billable }) : t('Chưa đặt học phí')}</small></span><span class="fs-a"><b>${fmtMoney(x.amount)}</b><em class="${x.paid ? 'ok' : ''}">${t(x.paid ? 'Đã thu' : 'Chưa thu')}</em></span></button>`).join('')}
-      <div class="fs-total"><span>${t('Tổng cộng')}</span><b>${fmtMoney(sum)}</b><small>${t('Đã thu {x}', { x: fmtMoney(got) })}</small></div>
+      ${all.map(({ s, L: x }) => `<button class="fs-row ${s.id === st.id ? 'cur' : ''}" data-fs="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${!s.fee ? t('Chưa đặt học phí') : x.unpaid.length ? t('Chưa thu: {m}', { m: x.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã thu đủ')}</small></span><span class="fs-a"><b>${fmtMoney(x.due)}</b><em class="${x.due ? '' : 'ok'}">${t(x.due ? 'Chưa thu' : 'Đã thu')}</em></span></button>`).join('')}
+      <div class="fs-total"><span>${t('Tổng chưa thu')}</span><b>${fmtMoney(sum)}</b><small>${t('Đã thu {x}', { x: fmtMoney(got) })}</small></div>
     </div>`;
   const inp = $('#feeInput', body);
   inp.addEventListener('input', () => { const n = parseMoney(inp.value); inp.value = n ? n.toLocaleString('vi-VN') : ''; });
@@ -1891,10 +1932,12 @@ function renderFeeTab(body) {
   body.onclick = async e => {
     const fm = e.target.closest('[data-fm]');
     if (fm) { e.preventDefault(); const v = +fm.dataset.fm; S.feeMonth = v === 0 ? new Date(new Date().getFullYear(), new Date().getMonth(), 1) : new Date(y, m + v, 1); return renderFeeTab(body); }
+    const pd = e.target.closest('[data-paid]'), pa = e.target.closest('[data-paidall]');
+    if (pd || pa) { st.feePaid = st.feePaid || {}; (pa ? L.unpaid.map(x => x.key) : [pd.dataset.paid]).forEach(k => { st.feePaid[k] = true; }); await DB.put('students', st); toast(t('Đã ghi nhận đã thu')); return renderFeeTab(body); }
     const a = e.target.closest('[data-adj]');
     const pl = e.target.closest('[data-plan]');
     if (pl) { st.feePlan = st.feePlan || {}; const v = Math.max(0, f.planned + +pl.dataset.plan); if (v === FEE_PLAN_DEFAULT) delete st.feePlan[f.key]; else st.feePlan[f.key] = v; await DB.put('students', st); return renderFeeTab(body); }
-    if (a) { st.feeAdj = st.feeAdj || {}; const v = (st.feeAdj[f.key] || 0) + +a.dataset.adj; if (v) st.feeAdj[f.key] = Math.max(-f.taught, v); else delete st.feeAdj[f.key]; await DB.put('students', st); return renderFeeTab(body); }
+    if (a) { st.feeAdj = st.feeAdj || {}; const v = (st.feeAdj[f.key] || 0) + +a.dataset.adj; if (v) st.feeAdj[f.key] = Math.max(-f.taught, v); else delete st.feeAdj[f.key]; if (!st.feeAdj[f.key]) delete st.feeAdj[f.key]; await DB.put('students', st); return renderFeeTab(body); }
     const fs = e.target.closest('[data-fs]'); if (fs && fs.dataset.fs !== st.id) { S.tab = 'fee'; selectStudent(fs.dataset.fs); }
   };
 }

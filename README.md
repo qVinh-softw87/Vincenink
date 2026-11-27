@@ -114,9 +114,10 @@ Chưa cài tiện ích thì Vincenink vẫn nhắc bằng thông báo trình duy
 
 - Thẻ **Học phí** của mỗi học sinh:
   - Nhập **học phí mỗi buổi**; số buổi trong tháng được **tự đếm từ lịch học** (không tính buổi nghỉ).
-  - **Đã dạy** = số buổi đã qua theo lịch + **Buổi cộng thêm** (buổi ngoài lịch).
-  - **Thành tiền = học phí × số buổi đã dạy**.
-  - **Dự kiến cả tháng** mặc định **8 buổi**, có thể bấm − / + để chỉnh riêng từng tháng. Tiền dự kiến = học phí × số buổi dự kiến.
+  - **Đã dạy**: tự đếm các buổi đã qua theo lịch, bấm − / + để cộng hoặc bớt buổi ngoài lịch. **Thành tiền = học phí × số buổi đã dạy**.
+  - **Dự kiến cả tháng**: mặc định **8 buổi**, bấm − / + để chỉnh riêng từng tháng.
+  - Vẫn tính theo từng tháng, nhưng tháng nào **chưa thu sẽ được cộng dồn**: thẻ Thành tiền hiện *Còn nợ các tháng trước* (có nút **Đã thu** cho từng tháng) và **Tổng chưa thu** (nút **Đã thu hết**).
+  - **Tổng học phí các học sinh** không chia theo tháng: hiện số tiền chưa thu cộng dồn của từng em, tổng chưa thu và tổng đã thu.
   - Công tắc **Đã thu tiền tháng này**.
 - Bên dưới là bảng **tổng học phí của tất cả học sinh** trong tháng, cùng số tiền đã thu.
 
