@@ -416,6 +416,25 @@ const EN = {
   "Gửi thử chưa được ({e})": "Test failed ({e})",
   "Gửi thử từ máy chủ": "Send test from server",
   "Chưa đồng bộ": "Not synced",
+  "Kiểm tra hộp thư của bạn": "Check your inbox",
+  "Vincenink vừa gửi email xác nhận tới": "Vincenink just sent a confirmation email to",
+  "Email chưa được xác nhận": "Email not confirmed yet",
+  "Bạn cần bấm link xác nhận trong email đã gửi tới": "Please click the confirmation link in the email sent to",
+  "Đã gửi link đặt lại mật khẩu": "Password reset link sent",
+  "Mở email vừa gửi tới": "Open the email just sent to",
+  "Mở hộp thư, tìm thư từ Supabase / Vincenink (xem cả mục Spam, Quảng cáo).": "Open your inbox and look for the email from Supabase / Vincenink (check Spam and Promotions too).",
+  "Bấm link trong thư — Vincenink sẽ mở ra để bạn đặt mật khẩu mới.": "Click the link — Vincenink will open so you can set a new password.",
+  "Bấm “Confirm your mail” — Vincenink tự mở lại và đăng nhập cho bạn.": "Click “Confirm your mail” — Vincenink reopens and signs you in.",
+  "Mở {m}": "Open {m}",
+  "Gửi lại email": "Resend email",
+  "Đã bấm link trên máy/trình duyệt khác? Quay lại đây và đăng nhập bằng email + mật khẩu là được.": "Clicked the link on another device or browser? Just come back here and sign in with your email and password.",
+  "Đợi {s} giây rồi gửi lại nhé": "Wait {s}s before resending",
+  "Đã gửi lại — kiểm tra hộp thư nhé": "Sent again — check your inbox",
+  "Đã xác nhận, đăng nhập": "Confirmed — sign in",
+  "Xác nhận email thành công!": "Email confirmed!",
+  "Tài khoản {e} đã sẵn sàng. Lịch học và hồ sơ sẽ tự đồng bộ giữa các máy.": "Account {e} is ready. Your schedule and profile will sync across devices.",
+  "Bật thông báo để được nhắc trước mỗi buổi dạy, kể cả khi đã đóng trang.": "Turn on notifications to be reminded before each lesson, even when the page is closed.",
+  "Để sau": "Later",
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3132,8 +3151,10 @@ var Cloud = window.Cloud = {
   },
   async afterLogin() {
     if (!await this.guardOwner()) return;
-    toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
+    const pend = ls.get('vincenink.pendingConfirm', '');
     await this.pull(); await this.checkPush(); renderAccountUI();
+    if (pend && pend === String(this.user.email || '').toLowerCase()) { ls.set('vincenink.pendingConfirm', ''); $$('.modal-backdrop').forEach(x => x.remove()); welcomeAccountModal(); }
+    else toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
     const m = $('#acctModal'); if (m) acctPaint(m);
   },
 
@@ -3314,6 +3335,48 @@ function acctPaint(body) {
     </form>
     <p class="hint">${t('Không bắt buộc: không đăng nhập vẫn dùng được, dữ liệu lưu trên máy này. Đăng nhập để đồng bộ lịch học, hồ sơ giữa các máy và nhận thông báo nhắc lịch kể cả khi đã đóng trang.')}</p>`;
 }
+/* Cửa sổ báo đã gửi email (xác nhận đăng ký / đặt lại mật khẩu / chưa xác nhận) */
+const mailLink = em => { const d = String(em).split('@')[1] || ''; return /gmail|googlemail/.test(d) ? ['Gmail', 'https://mail.google.com/mail/u/0/#inbox'] : /outlook|hotmail|live|msn/.test(d) ? ['Outlook', 'https://outlook.live.com/mail/'] : /yahoo/.test(d) ? ['Yahoo Mail', 'https://mail.yahoo.com'] : /icloud|me\.com|mac\.com/.test(d) ? ['iCloud Mail', 'https://www.icloud.com/mail'] : null; };
+function emailSentModal(kind, email) {
+  const ml = mailLink(email), body = document.createElement('div'); body.className = 'mail-pop';
+  const T = {
+    signup: [t('Kiểm tra hộp thư của bạn'), t('Vincenink vừa gửi email xác nhận tới')],
+    unconfirmed: [t('Email chưa được xác nhận'), t('Bạn cần bấm link xác nhận trong email đã gửi tới')],
+    reset: [t('Đã gửi link đặt lại mật khẩu'), t('Mở email vừa gửi tới')],
+  }[kind];
+  body.innerHTML = `
+    <div class="mp-ic">${kind === 'reset' ? '🔑' : '✉️'}</div>
+    <h3>${T[0]}</h3>
+    <p class="mp-lead">${T[1]}<br><b>${esc(email)}</b></p>
+    <ol class="mp-steps">
+      <li>${t('Mở hộp thư, tìm thư từ Supabase / Vincenink (xem cả mục Spam, Quảng cáo).')}</li>
+      <li>${kind === 'reset' ? t('Bấm link trong thư — Vincenink sẽ mở ra để bạn đặt mật khẩu mới.') : t('Bấm “Confirm your mail” — Vincenink tự mở lại và đăng nhập cho bạn.')}</li>
+    </ol>
+    <div class="mp-acts">
+      ${ml ? `<a class="btn primary" href="${ml[1]}" target="_blank" rel="noopener">${t('Mở {m}', { m: ml[0] })}</a>` : ''}
+      ${kind !== 'reset' ? `<button class="btn ghost" data-m="resend">${t('Gửi lại email')}</button>` : ''}
+    </div>
+    <p class="mp-msg"></p>
+    <p class="hint">${kind === 'reset' ? '' : t('Đã bấm link trên máy/trình duyệt khác? Quay lại đây và đăng nhập bằng email + mật khẩu là được.')}</p>`;
+  let wait = 0;
+  body.addEventListener('click', async e => {
+    if (!e.target.closest('[data-m=resend]')) return;
+    const msg = $('.mp-msg', body);
+    if (Date.now() < wait) { msg.textContent = t('Đợi {s} giây rồi gửi lại nhé', { s: Math.ceil((wait - Date.now()) / 1000) }); return; }
+    const { error } = await Cloud.sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.href.split('#')[0].split('?')[0] } });
+    wait = Date.now() + 60e3;
+    msg.textContent = error ? authErr(error) : t('Đã gửi lại — kiểm tra hộp thư nhé'); msg.classList.toggle('ok', !error);
+  });
+  openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: [{ label: kind === 'reset' ? t('Đóng') : t('Đã xác nhận, đăng nhập'), kind: 'primary', onClick: () => { if (kind !== 'reset') setTimeout(accountModal, 50); } }] });
+}
+function welcomeAccountModal() {
+  const body = document.createElement('div'); body.className = 'mail-pop';
+  body.innerHTML = `<div class="mp-ic">🎉</div><h3>${t('Xác nhận email thành công!')}</h3>
+    <p class="mp-lead">${t('Tài khoản {e} đã sẵn sàng. Lịch học và hồ sơ sẽ tự đồng bộ giữa các máy.', { e: `<b>${esc(Cloud.user.email || '')}</b>` })}</p>
+    ${Cloud.canPush() && !Cloud.pushOn ? `<p class="hint">${t('Bật thông báo để được nhắc trước mỗi buổi dạy, kể cả khi đã đóng trang.')}</p>` : ''}`;
+  const acts = Cloud.canPush() && !Cloud.pushOn ? [{ label: t('Để sau') }, { label: t('Bật thông báo'), kind: 'primary', onClick: () => Cloud.enablePush() }] : [{ label: t('Bắt đầu'), kind: 'primary' }];
+  openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: acts });
+}
 function accountModal() {
   const body = document.createElement('div'); body.id = 'acctModal'; body.dataset.mode = 'in'; acctPaint(body);
   const msg = (s, ok) => { const m = $('.acct-msg', body); if (m) { m.textContent = s || ''; m.classList.toggle('ok', !!ok); } };
@@ -3324,7 +3387,8 @@ function accountModal() {
     if (act === 'google') { const er = await Cloud.google(); if (er) msg(authErr(er)); }
     else if (act === 'forgot') {
       const em = $('[name=email]', body).value.trim(); if (!em) { msg(t('Nhập email trước rồi bấm “Quên mật khẩu?”')); return $('[name=email]', body).focus(); }
-      const er = await Cloud.reset(em); msg(er ? authErr(er) : t('Đã gửi link đặt lại mật khẩu tới {e}', { e: em }), !er);
+      const er = await Cloud.reset(em); if (er) return msg(authErr(er));
+      md.close(); emailSentModal('reset', em);
     }
     else if (act === 'pushon') Cloud.enablePush();
     else if (act === 'pushtest') { a.disabled = true; await Cloud.testPush(); a.disabled = false; }
@@ -3344,7 +3408,8 @@ function accountModal() {
     else if (kind === 'up') er = await Cloud.signUp(em, pw);
     else if (kind === 'newpw') { er = await Cloud.newPassword(pw); if (!er) { toast(t('Đã đổi mật khẩu')); acctPaint(body); return; } }
     btn.disabled = false;
-    if (er === 'confirm') msg(t('Đã gửi email xác nhận tới {e} — mở hộp thư và bấm link để hoàn tất đăng ký.', { e: em }), true);
+    if (er === 'confirm') { ls.set('vincenink.pendingConfirm', em.toLowerCase()); md.close(); emailSentModal('signup', em); }
+    else if (er && /not confirmed/i.test(String(er.message || er))) { md.close(); emailSentModal('unconfirmed', em); }
     else if (er) msg(authErr(er));
   });
   const md = openModal({ title: t('Tài khoản Vincenink'), body, width: 440, actions: [] });
