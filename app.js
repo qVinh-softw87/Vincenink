@@ -343,6 +343,7 @@ const EN = {
   'Tổng thu nhập': 'Total income', 'Chưa thu {x}': 'Unpaid {x}', 'Đã nhận {x}': 'Received {x}', 'Đã nhận': 'Received', 'Chưa thu': 'Unpaid', 'Tháng này: {x}': 'This month: {x}',
   'Theo tháng': 'By month', 'chưa thu {x}': 'unpaid {x}', 'đã thu đủ': 'fully paid', 'Theo lớp học': 'By class', 'Thêm lớp học và đặt học phí để xem thu nhập.': 'Add a class and set its fee to see income.',
   'Đã nhận = các tháng đã bật “Đã thu”. Chưa thu được cộng dồn từ các tháng trước.': 'Received = months marked “Paid”. Unpaid carries over from previous months.',
+  'Đã nhận · Chưa thu': 'Received · Unpaid',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1723,8 +1724,7 @@ function incomeStats() {
 }
 function renderIncomeBtn() {
   const b = $('#btnIncome'); if (!b) return;
-  const I = incomeStats();
-  b.innerHTML = `<span class="ib-ic">${ic('wallet', 16)}</span><span class="ib-t"><b>${t('Tổng thu nhập')}</b><small>${I.due ? t('Chưa thu {x}', { x: fmtMoney(I.due) }) : t('Đã nhận {x}', { x: fmtMoney(I.got) })}</small></span><em class="fb-go">›</em>`;
+  b.innerHTML = `<span class="ib-ic">${ic('wallet', 16)}</span><span class="ib-t"><b>${t('Tổng thu nhập')}</b><small>${t('Đã nhận · Chưa thu')}</small></span><em class="fb-go">›</em>`;
 }
 function incomeModal() {
   const I = incomeStats(), max = Math.max(1, ...I.months.map(x => x.got + x.due));
