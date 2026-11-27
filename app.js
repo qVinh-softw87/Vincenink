@@ -335,6 +335,14 @@ const EN = {
   'Còn nợ các tháng trước': 'Owed from previous months', '{n} buổi': '{n} lessons', 'Tổng chưa thu': 'Total unpaid', 'Đã thu hết': 'Mark all paid', 'Đã thu đủ tất cả các tháng': 'All months paid',
   'Tổng học phí các lớp học': 'All classes’ fees', 'Chưa thu: {m}': 'Unpaid: {m}', 'Đã thu đủ': 'Fully paid', 'Đã ghi nhận đã thu': 'Marked as paid',
   'Vừa khít nội dung': 'Fits the content', 'Xem trọn bảng một lần': 'Whole board at once', 'Chia nhiều trang': 'Split into pages', 'Chữ to, dễ in': 'Larger text, print-friendly',
+  'Giấy be': 'Warm paper', 'Giấy be ấm như vở cũ': 'Warm beige, like an old notebook',
+  'Đã tự xoá {n} bảng cũ hơn 7 ngày chưa tải xuống': 'Auto-deleted {n} board(s) older than 7 days that were never downloaded',
+  'Đã giữ lại bảng — sẽ không tự xoá': 'Board kept — it won’t be auto-deleted', 'Bảng sẽ tự xoá sau 7 ngày nếu chưa tải xuống': 'Board will auto-delete after 7 days unless downloaded',
+  'Đã tải xuống — không tự xoá': 'Downloaded — won’t auto-delete', 'Đã giữ lại': 'Kept', 'Tự xoá nếu chưa tải xuống': 'Auto-deletes unless downloaded', 'còn {d} ngày': '{d}d left',
+  'Bỏ giữ lại (tự xoá sau 7 ngày)': 'Unkeep (auto-delete after 7 days)', 'Giữ lại, không tự xoá': 'Keep, don’t auto-delete',
+  'Tổng thu nhập': 'Total income', 'Chưa thu {x}': 'Unpaid {x}', 'Đã nhận {x}': 'Received {x}', 'Đã nhận': 'Received', 'Chưa thu': 'Unpaid', 'Tháng này: {x}': 'This month: {x}',
+  'Theo tháng': 'By month', 'chưa thu {x}': 'unpaid {x}', 'đã thu đủ': 'fully paid', 'Theo lớp học': 'By class', 'Thêm lớp học và đặt học phí để xem thu nhập.': 'Add a class and set its fee to see income.',
+  'Đã nhận = các tháng đã bật “Đã thu”. Chưa thu được cộng dồn từ các tháng trước.': 'Received = months marked “Paid”. Unpaid carries over from previous months.',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -440,9 +448,10 @@ const TOOLS = [
 const THEMES = {
   light: { paper: '#FFFCF6', line: 'rgba(140,105,60,0.13)', strong: 'rgba(140,105,60,0.27)', dot: 'rgba(140,105,60,0.38)', margin: 'rgba(196,92,80,0.28)', ph: '#EFE6D8', sel: '#A86B3C', dark: false },
   dark: { paper: '#1F1C18', line: 'rgba(230,205,170,0.08)', strong: 'rgba(230,205,170,0.17)', dot: 'rgba(230,205,170,0.24)', margin: 'rgba(230,120,100,0.3)', ph: '#2E2923', sel: '#D79A63', dark: true },
+  sepia: { paper: '#F2E6D3', line: 'rgba(120,85,45,0.15)', strong: 'rgba(120,85,45,0.3)', dot: 'rgba(120,85,45,0.42)', margin: 'rgba(180,80,60,0.32)', ph: '#E6D6BE', sel: '#9A5E30', dark: false },
   chalk: { paper: '#233B31', line: 'rgba(235,245,230,0.09)', strong: 'rgba(235,245,230,0.19)', dot: 'rgba(235,245,230,0.26)', margin: 'rgba(250,150,130,0.35)', ph: '#2D473C', sel: '#E8C07A', dark: true },
 };
-const THEME_OPTS = [['light', 'Sáng'], ['dark', 'Tối'], ['chalk', 'Bảng phấn xanh']];
+const THEME_OPTS = [['light', 'Sáng'], ['sepia', 'Giấy be'], ['dark', 'Tối'], ['chalk', 'Bảng phấn xanh']];
 // Màu mực tối được làm sáng khi hiển thị trên nền tối (dữ liệu gốc giữ nguyên để in/xuất)
 const DARK_INK = { '#2F2A25': '#EEE6D9', '#1F4E8C': '#79A7E6', '#7B4FA0': '#B88CDD', '#2E7D4F': '#62C08A', '#C0392B': '#F0705F', '#5B8DB8': '#8FB9E0' };
 let RT = THEMES.light;
@@ -1389,7 +1398,7 @@ async function exportPdf(o) {
     }
   }
   download(buildPDF(pages), safeName(board ? `${board.date} - ${board.title}` : 'vincenink') + (o.mode === 'scan' ? ' (scan)' : '') + '.pdf');
-  toast(t('Đã tải PDF ({n} trang)', { n: pages.length }));
+  toast(t('Đã tải PDF ({n} trang)', { n: pages.length })); markExported();
 }
 
 /* =====================================================================
@@ -1545,6 +1554,23 @@ async function duplicateBoard(id) {
   await DB.put('boards', b); await DB.put('boardData', { ...data, id: b.id });
   S.boards.push(b); await openBoard(b.id); renderPanel(); renderSidebar(); toast(t('Đã nhân bản bảng'));
 }
+/* ---- Bảng tự xoá sau 7 ngày nếu chưa tải xuống (PNG/PDF) và chưa bấm Giữ lại ---- */
+const BOARD_TTL = 7 * 864e5;
+const boardExpiry = b => (b.keep || b.exportedAt) ? 0 : Math.max(b.updatedAt || 0, b.createdAt || 0) + BOARD_TTL;
+const boardDaysLeft = b => { const e = boardExpiry(b); return e ? Math.max(0, Math.ceil((e - Date.now()) / 864e5)) : null; };
+async function purgeOldBoards() {
+  const old = S.boards.filter(b => { const e = boardExpiry(b); return e && e < Date.now() && b.id !== S.settings.lastBoard; });
+  for (const b of old) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
+  if (old.length) { S.boards = S.boards.filter(b => !old.includes(b)); setTimeout(() => toast(t('Đã tự xoá {n} bảng cũ hơn 7 ngày chưa tải xuống', { n: old.length })), 1200); }
+}
+async function markExported() {
+  const b = S.boards.find(x => x.id === S.boardId); if (!b || b.exportedAt) return;
+  b.exportedAt = Date.now(); await DB.put('boards', b); if (S.tab === 'boards') renderPanel();
+}
+async function toggleKeep(id) {
+  const b = S.boards.find(x => x.id === id); b.keep = !b.keep; await DB.put('boards', b); renderPanel();
+  toast(t(b.keep ? 'Đã giữ lại bảng — sẽ không tự xoá' : 'Bảng sẽ tự xoá sau 7 ngày nếu chưa tải xuống'));
+}
 async function deleteBoard(id) {
   const b = S.boards.find(x => x.id === id);
   if (!await confirmBox(t('Xoá bảng này?'), t('“{t}” sẽ bị xoá vĩnh viễn và không thể khôi phục.', { t: esc(b.title) }), t('Xoá'))) return;
@@ -1683,7 +1709,43 @@ function renderAiNote() {
 }
 
 const firstStudent = () => [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'))[0];
+/* ---- Tổng thu nhập: đã nhận + chưa thu của tất cả các lớp ---- */
+function incomeStats() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), cur = `${y}-${pad(m + 1)}`;
+  const rows = [...S.students].map(s => ({ s, L: feeLedger(s, y, m) })).sort((a, b) => (b.L.due - a.L.due) || a.s.name.localeCompare(b.s.name, 'vi'));
+  const months = {};
+  rows.forEach(({ L }) => L.months.forEach(x => { const o = months[x.key] || (months[x.key] = { key: x.key, label: x.label, got: 0, due: 0 }); o[x.paid ? 'got' : 'due'] += x.amount; }));
+  const got = rows.reduce((a, x) => a + x.L.got, 0), due = rows.reduce((a, x) => a + x.L.due, 0);
+  const thisM = months[cur] || { got: 0, due: 0 };
+  return { rows, got, due, total: got + due, thisMonth: thisM.got + thisM.due, months: Object.values(months).sort((a, b) => b.key.localeCompare(a.key)).slice(0, 6) };
+}
+function renderIncomeBtn() {
+  const b = $('#btnIncome'); if (!b) return;
+  const I = incomeStats();
+  b.innerHTML = `<span class="ib-ic">${ic('wallet', 16)}</span><span class="ib-t"><b>${t('Tổng thu nhập')}</b><small>${I.due ? t('Chưa thu {x}', { x: fmtMoney(I.due) }) : t('Đã nhận {x}', { x: fmtMoney(I.got) })}</small></span><em class="fb-go">›</em>`;
+}
+function incomeModal() {
+  const I = incomeStats(), max = Math.max(1, ...I.months.map(x => x.got + x.due));
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="inc-cards">
+      <div class="inc-c got"><small>${t('Đã nhận')}</small><b>${fmtMoney(I.got)}</b></div>
+      <div class="inc-c due"><small>${t('Chưa thu')}</small><b>${fmtMoney(I.due)}</b></div>
+      <div class="inc-c all"><small>${t('Tổng thu nhập')}</small><b>${fmtMoney(I.total)}</b><span>${t('Tháng này: {x}', { x: fmtMoney(I.thisMonth) })}</span></div>
+    </div>
+    ${I.months.length ? `<div class="sec-h">${ic('calendar', 15)}${t('Theo tháng')}</div>
+    <div class="inc-months">${I.months.map(x => `<div class="im-row"><span class="im-l">${t('Tháng {m}', { m: x.label })}</span>
+      <span class="im-bar"><i class="g" style="width:${(x.got / max * 100).toFixed(1)}%"></i><i class="d" style="width:${(x.due / max * 100).toFixed(1)}%"></i></span>
+      <span class="im-v"><b>${fmtMoney(x.got + x.due)}</b>${x.due ? `<em>${t('chưa thu {x}', { x: fmtMoney(x.due) })}</em>` : `<em class="ok">${t('đã thu đủ')}</em>`}</span></div>`).join('')}</div>` : ''}
+    <div class="sec-h">${ic('user', 15)}${t('Theo lớp học')}</div>
+    <div class="fee-sum">${I.rows.length ? I.rows.map(({ s, L }) => `<button class="fs-row" data-inc="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${!s.fee ? t('Chưa đặt học phí') : L.unpaid.length ? t('Chưa thu: {m}', { m: L.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã nhận {x}', { x: fmtMoney(L.got) })}</small></span><span class="fs-a"><b>${fmtMoney(L.due)}</b><em class="${L.due ? '' : 'ok'}">${t(L.due ? 'Chưa thu' : 'Đã thu đủ')}</em></span></button>`).join('')
+      : `<div class="hint">${t('Thêm lớp học và đặt học phí để xem thu nhập.')}</div>`}</div>
+    <p class="hint">${t('Đã nhận = các tháng đã bật “Đã thu”. Chưa thu được cộng dồn từ các tháng trước.')}</p>`;
+  const md = openModal({ title: t('Tổng thu nhập'), body, width: 520, actions: [{ label: t('Đóng'), kind: 'primary' }] });
+  body.addEventListener('click', e => { const r = e.target.closest('[data-inc]'); if (r) { md.close(); S.tab = 'fee'; selectStudent(r.dataset.inc); } });
+}
 function renderSidebar() {
+  setTimeout(renderIncomeBtn, 0);
   renderTodayCard();
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
@@ -1761,7 +1823,7 @@ function renderBoardsTab(body) {
       ${groups[d].map(b => `
         <div class="board-card ${b.id === S.boardId ? 'active' : ''}" data-board="${b.id}">
           <div class="thumb">${b.thumb ? `<img src="${b.thumb}" alt="">` : ''}</div>
-          <div class="meta"><div class="t">${esc(b.title)}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}</div></div>
+          <div class="meta"><div class="t">${esc(b.title)}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
           <button class="icon-btn sm more" data-bmenu="${b.id}" title="${t('Tuỳ chọn')}">${ic('more', 18)}</button>
         </div>`).join('')}`).join('')
     || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
@@ -1775,6 +1837,7 @@ function renderBoardsTab(body) {
       e.stopPropagation(); const id = m.dataset.bmenu;
       popMenu(m, [{ icon: 'edit', label: t('Đổi tên, ngày, chủ sở hữu'), onClick: () => editBoardMeta(id) },
         { icon: 'copy', label: t('Nhân bản (dùng làm mẫu)'), onClick: () => duplicateBoard(id) },
+        ...(S.boards.find(x => x.id === id)?.exportedAt ? [] : [{ icon: 'check', label: t(S.boards.find(x => x.id === id)?.keep ? 'Bỏ giữ lại (tự xoá sau 7 ngày)' : 'Giữ lại, không tự xoá'), onClick: () => toggleKeep(id) }]),
         '-', { icon: 'trash', label: t('Xoá bảng'), danger: true, onClick: () => deleteBoard(id) }]);
       return;
     }
@@ -1897,9 +1960,7 @@ function renderFeeTab(body) {
   if (!S.feeMonth) S.feeMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const y = S.feeMonth.getFullYear(), m = S.feeMonth.getMonth(), isThis = ymKey(S.feeMonth) === ymKey(new Date());
   const f = feeStats(st, y, m), mLabel = `${pad(m + 1)}/${y}`, today = todayStr();
-  const L = feeLedger(st, y, m), now = new Date();
-  const all = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map(s => ({ s, L: feeLedger(s, now.getFullYear(), now.getMonth()) }));
-  const sum = all.reduce((a, x) => a + x.L.due, 0), got = all.reduce((a, x) => a + x.L.got, 0);
+  const L = feeLedger(st, y, m); setTimeout(renderIncomeBtn, 0);
   body.innerHTML = `
     <div class="fee-rate">
       <label for="feeInput">${ic('wallet', 15)}${t('Học phí mỗi buổi')}</label>
@@ -1931,11 +1992,7 @@ function renderFeeTab(body) {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
       return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(o.subject || '')}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
     }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
-    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các lớp học')}</div>
-    <div class="fee-sum">
-      ${all.map(({ s, L: x }) => `<button class="fs-row ${s.id === st.id ? 'cur' : ''}" data-fs="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${!s.fee ? t('Chưa đặt học phí') : x.unpaid.length ? t('Chưa thu: {m}', { m: x.unpaid.map(u => u.label.replace(/\/\d{4}$/, '')).join(', ') }) : t('Đã thu đủ')}</small></span><span class="fs-a"><b>${fmtMoney(x.due)}</b><em class="${x.due ? '' : 'ok'}">${t(x.due ? 'Chưa thu' : 'Đã thu')}</em></span></button>`).join('')}
-      <div class="fs-total"><span>${t('Tổng chưa thu')}</span><b>${fmtMoney(sum)}</b><small>${t('Đã thu {x}', { x: fmtMoney(got) })}</small></div>
-    </div>`;
+`;
   const inp = $('#feeInput', body);
   inp.addEventListener('input', () => { const n = parseMoney(inp.value); inp.value = n ? n.toLocaleString('vi-VN') : ''; });
   inp.addEventListener('change', async () => { st.fee = parseMoney(inp.value); await DB.put('students', st); renderFeeTab(body); });
@@ -2278,9 +2335,9 @@ const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCod
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const getJSON = async (url, ms = 7000) => { const r = await withTimeout(fetch(url, { cache: 'no-store' }), ms); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
 function placeName(j) {
-  const tidy = s => String(s || '').replace(/^Thành phố\s+/i, 'TP. ').replace(/^Tỉnh\s+/i, '').replace(/^City of\s+/i, '').trim();
-  const city = tidy(j.city || j.principalSubdivision), loc = tidy(j.locality);
-  return city || loc.replace(/^(Phường|Xã|Thị trấn)\s+/i, '') || '';
+  const clean = x => String(x || '').replace(/\s*\([^)]*\)/g, '').replace(/^(Thành phố|TP\.?|Tỉnh|Phường|Xã|Thị trấn|Quận|Huyện|Thị xã|City of)\s+/i, '').replace(/\s+/g, ' ').trim();
+  const prov = clean(j.principalSubdivision), area = [clean(j.locality), clean(j.city)].find(x => x && x !== prov) || '';
+  return area && prov ? `${area}, ${prov}` : (prov || area);
 }
 const Loc = {
   cur: null,
@@ -2323,7 +2380,7 @@ const Loc = {
   /* Tên khu vực: nhớ theo toạ độ (~100 m) để khỏi gọi lại */
   async placeFor(loc) {
     if (loc.named && loc.name) return loc.name;
-    const k = `vincenink.place2.${LANG}.${(+loc.lat).toFixed(3)},${(+loc.lon).toFixed(3)}`, hit = ls.get(k, '');
+    const k = `vincenink.place3.${LANG}.${(+loc.lat).toFixed(3)},${(+loc.lon).toFixed(3)}`, hit = ls.get(k, '');
     if (hit) return hit;
     const n = await this.nameOf(loc.lat, loc.lon); if (n) ls.set(k, n);
     return n || loc.name || '';
@@ -2917,6 +2974,7 @@ function profileModal() {
 const THEME_LOOK = {
   light: { paper: '#FFFCF6', line: 'rgba(140,105,60,.16)', ink: '#2F2A25', ui: '#F3ECE0' },
   dark: { paper: '#1F1C18', line: 'rgba(230,205,170,.12)', ink: '#EEE6D9', ui: '#1A1714' },
+  sepia: { paper: '#F2E6D3', line: 'rgba(120,85,45,.18)', ink: '#3A2A1C', ui: '#EADCC7' },
   chalk: { paper: '#233B31', line: 'rgba(235,245,230,.14)', ink: '#EEF2E8', ui: '#17251F' },
 };
 function themePreview(v) {
@@ -2938,7 +2996,7 @@ function themePopover(anchor) {
   const m = document.createElement('div'); m.className = 'popmenu theme-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Chế độ màu')}</div><div class="tpop-grid">${THEME_OPTS.map(([v, l]) => `
     <button class="tpop-card ${v === cur ? 'active' : ''}" data-theme-v="${v}">${themePreview(v)}<span class="tpop-l">${t(l)}${v === cur ? ic('check', 14) : ''}</span>
-    <small>${t({ light: 'Nền sáng dịu mắt', dark: 'Đỡ chói buổi tối', chalk: 'Như bảng lớp học' }[v])}</small></button>`).join('')}</div>`;
+    <small>${t({ light: 'Nền sáng dịu mắt', sepia: 'Giấy be ấm như vở cũ', dark: 'Đỡ chói buổi tối', chalk: 'Như bảng lớp học' }[v])}</small></button>`).join('')}</div>`;
   m.addEventListener('click', e => { const b = e.target.closest('[data-theme-v]'); if (b) { setTheme(b.dataset.themeV); closeMenu(); } });
   document.body.append(m); menuEl = m;
   const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
@@ -2997,12 +3055,13 @@ function bindTopbar() {
   $('#ownerChip').onclick = () => { const b = S.boards.find(x => x.id === S.boardId); if (b) { $('#app').classList.remove('focus'); setTimeout(resize, 0); selectStudent(b.studentId); } };
   $('#btnFocus').onclick = toggleFocus;
   $('#btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); };
-  $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); };
+  $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); markExported(); };
   $('#btnPdf').onclick = exportPdfDialog;
   $('#btnLogo').onclick = () => showWelcome(true);
   $('#btnThemePick').onclick = e => themePopover(e.currentTarget);
   $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
+  $('#btnIncome').onclick = incomeModal;
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
   $('#btnStart').onclick = () => showWelcome(false);
 }
@@ -3349,6 +3408,7 @@ async function init() {
   const [st, bo, fi, sc, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.all('schedule'), DB.get('settings', 'main')]);
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
   if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
+  await purgeOldBoards();
   S.studentId = studentById(S.settings.lastStudent) ? S.settings.lastStudent : (firstStudent()?.id || 'all');
   renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool); initResizers();
   renderSidebar(); renderPanel(); renderProfileCard();

@@ -110,6 +110,11 @@ Mặc định:
 
 Chưa cài tiện ích thì Vincenink vẫn nhắc bằng thông báo trình duyệt khi trang đang mở.
 
+## Bảng tự xoá & tổng thu nhập
+
+- Mỗi bảng được tự lưu. Bảng **chưa tải xuống** (PNG/PDF) sẽ **tự xoá sau 7 ngày** kể từ lần sửa cuối. Thẻ bảng hiện "còn N ngày"; bảng đã tải xuống hiện dấu ✓ và được giữ mãi. Muốn giữ mà không tải xuống thì chọn **⋯ → Giữ lại, không tự xoá**.
+- Nút **Tổng thu nhập** ở thanh bên trái mở bảng tổng hợp: **Đã nhận**, **Chưa thu** (cộng dồn), **Tổng thu nhập**, chi tiết theo tháng và theo lớp. Thẻ Học phí của mỗi lớp chỉ hiện học phí của lớp đó.
+
 ## Học phí
 
 - Thẻ **Học phí** của mỗi học sinh:

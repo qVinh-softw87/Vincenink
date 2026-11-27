@@ -96,12 +96,12 @@ Sau đó: lời nhắn gồm ĐÚNG 3 ĐOẠN, mỗi đoạn một dòng, tổng
  Đoạn 1: chào hợp buổi (night = khuya: dỗ đi ngủ) rồi kể thời tiết THỰC TẾ ở đúng "weather.city" — gọi đúng tên khu vực, nhiệt độ hiện tại và cảm giác, cao/thấp hôm nay, khả năng mưa — kèm lời dặn cụ thể (mưa: mang ô/áo mưa; nóng: uống nước, chống nắng; lạnh: mặc ấm).
  Đoạn 2: nhận xét về loại ngày (đầu tuần, thứ 6, cuối tuần, ngày lễ — Ngày Nhà giáo thì chúc mừng thật ngọt) và nói ra tâm trạng cậu đoán, đồng cảm với nó.
  Đoạn 3: nhắc lịch (số buổi, buổi sắp tới: giờ, học sinh, môn; nếu không có thì rủ nghỉ ngơi/soạn bài thong thả) và kết bằng lời cổ vũ ngọt ngào.
-Gọi nơi ở đúng như "weather.city" (chỉ tên tỉnh/thành), KHÔNG thêm phường/quận hay mở ngoặc. Chỉ dùng số liệu có trong dữ liệu, không bịa. Nếu thiếu "weather" thì bỏ phần thời tiết. Tối đa 3 emoji cả lời nhắn.`
+Gọi nơi ở đúng như "weather.city" (dạng "Khu vực, Tỉnh/Thành", ví dụ "Từ Liêm, Hà Nội"), KHÔNG mở ngoặc, không thêm chữ phường/quận. Chỉ dùng số liệu có trong dữ liệu, không bịa. Nếu thiếu "weather" thì bỏ phần thời tiết. Tối đa 3 emoji cả lời nhắn.`
       : `\n\nTask: the teacher just opened the app — write ONE NOTE to them, like a best friend or partner writing a long good-morning/evening text. Use their first name if known. Natural and human: feelings, specific care, light teasing; tender, not cheesy; don't ask questions that need a reply. Tone this time: ${tone || 'warm and close'}.
 REQUIRED format (no markdown, no title):
 Line 1: "MOOD: <1 emoji> <2–6 words>" — guess today's mood from the real "weather", "dayType" (weekday / weekend / holiday), the number of "todayLessons" and "dayPart". Hint: "moodHint".
 Then the note in EXACTLY 3 PARAGRAPHS, one per line, 100–150 words total: 1) greeting for the time of day plus the REAL weather in "weather.city" by name (now, feels-like, high/low, rain chance) with specific advice; 2) a comment on the kind of day and the mood you guessed, with empathy; 3) the schedule (count and next lesson, or invite them to relax) and a sweet closing line.
-Name the place exactly as "weather.city", no districts or parentheses. Only use the data given. Skip weather if missing. Max 3 emoji.`);
+Name the place exactly as "weather.city" (e.g. "Tu Liem, Hanoi"), no parentheses. Only use the data given. Skip weather if missing. Max 3 emoji.`);
   }
   if (mode === 'friend') {
     return base + data + (vi
