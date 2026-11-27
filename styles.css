@@ -1479,3 +1479,7 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .bk.warn { background: rgba(217,120,80,.14); color: #B25A35; }
 .bk.ok { background: rgba(127,162,114,.14); color: #5E8155; padding: 2px 4px; }
 .im-row { grid-template-columns: 112px 1fr auto; } .im-l { white-space: nowrap; }
+
+/* ===== v23: đồng hồ trước lời chào ===== */
+.dc-clock { display: inline-block; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--accent-ink); margin-right: 2px; }
+.gr-clock { display: inline-block; font-variant-numeric: tabular-nums; font-weight: 800; margin-right: 10px; padding: 0 10px; border-radius: 12px; background: var(--hx); letter-spacing: -.5px; }

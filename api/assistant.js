@@ -80,7 +80,7 @@ function rateLimited(ip) {
 
 const clip = (s, n) => String(s == null ? '' : s).slice(0, n);
 
-function systemPrompt(mode, lang, ctx, tone) {
+function systemPrompt(mode, lang, ctx, tone, angle) {
   const vi = lang !== 'en';
   const ctxText = JSON.stringify(ctx || {}, null, 0).slice(0, 6000);
   const base = vi
@@ -89,19 +89,18 @@ function systemPrompt(mode, lang, ctx, tone) {
   const data = (vi ? '\n\nDữ liệu hiện tại của giáo viên (JSON):\n' : '\n\nTeacher context (JSON):\n') + ctxText;
   if (mode === 'daily') {
     return base + data + (vi
-      ? `\n\nNhiệm vụ: người dạy vừa mở ứng dụng — hãy tự viết MỘT LỜI NHẮN gửi họ, giọng như bạn thân hoặc người yêu viết tin nhắn dài buổi sáng/tối. Xưng "tớ", gọi "cậu" (hoặc tên riêng nếu có), KHÔNG gọi "thầy/cô", không khách sáo, không như trợ lý, không hỏi chờ trả lời. Tự nhiên như người thật: có cảm xúc, quan tâm cụ thể, trêu nhẹ; tình cảm nhưng tinh tế, không sến. Giọng lần này: ${tone || 'ấm áp, thân thiết'}.
-Định dạng BẮT BUỘC (không markdown, không tiêu đề):
-Dòng 1: "MOOD: <1 emoji> <2–6 từ>" — đoán tâm trạng hôm nay của người dạy, dựa vào thời tiết thực tế ("weather"), loại ngày ("dayType": ngày thường / cuối tuần / ngày lễ), số buổi trong "todayLessons" và buổi trong ngày ("dayPart"). Tham khảo "moodHint".
-Sau đó: lời nhắn gồm ĐÚNG 3 ĐOẠN, mỗi đoạn một dòng, tổng 100–150 từ:
- Đoạn 1: chào hợp buổi (night = khuya: dỗ đi ngủ) rồi kể thời tiết THỰC TẾ ở đúng "weather.city" — gọi đúng tên khu vực, nhiệt độ hiện tại và cảm giác, cao/thấp hôm nay, khả năng mưa — kèm lời dặn cụ thể (mưa: mang ô/áo mưa; nóng: uống nước, chống nắng; lạnh: mặc ấm).
- Đoạn 2: nhận xét về loại ngày (đầu tuần, thứ 6, cuối tuần, ngày lễ — Ngày Nhà giáo thì chúc mừng thật ngọt) và nói ra tâm trạng cậu đoán, đồng cảm với nó.
- Đoạn 3: nhắc lịch (số buổi, buổi sắp tới: giờ, học sinh, môn; nếu không có thì rủ nghỉ ngơi/soạn bài thong thả) và kết bằng lời cổ vũ ngọt ngào.
-Gọi nơi ở đúng như "weather.city" (dạng "Khu vực, Tỉnh/Thành", ví dụ "Từ Liêm, Hà Nội"), KHÔNG mở ngoặc, không thêm chữ phường/quận. Chỉ dùng số liệu có trong dữ liệu, không bịa. Nếu thiếu "weather" thì bỏ phần thời tiết. Tối đa 3 emoji cả lời nhắn.`
-      : `\n\nTask: the teacher just opened the app — write ONE NOTE to them, like a best friend or partner writing a long good-morning/evening text. Use their first name if known. Natural and human: feelings, specific care, light teasing; tender, not cheesy; don't ask questions that need a reply. Tone this time: ${tone || 'warm and close'}.
-REQUIRED format (no markdown, no title):
-Line 1: "MOOD: <1 emoji> <2–6 words>" — guess today's mood from the real "weather", "dayType" (weekday / weekend / holiday), the number of "todayLessons" and "dayPart". Hint: "moodHint".
-Then the note in EXACTLY 3 PARAGRAPHS, one per line, 100–150 words total: 1) greeting for the time of day plus the REAL weather in "weather.city" by name (now, feels-like, high/low, rain chance) with specific advice; 2) a comment on the kind of day and the mood you guessed, with empathy; 3) the schedule (count and next lesson, or invite them to relax) and a sweet closing line.
-Name the place exactly as "weather.city" (e.g. "Tu Liem, Hanoi"), no parentheses. Only use the data given. Skip weather if missing. Max 3 emoji.`);
+      ? `\n\nNhiệm vụ: người dạy vừa mở ứng dụng — hãy tự viết MỘT LỜI NHẮN thật TƯƠI VUI, LẠC QUAN gửi họ, giọng như bạn thân hoặc người yêu. Xưng "tớ", gọi "cậu" (hoặc tên riêng nếu có), KHÔNG gọi "thầy/cô", không như trợ lý, không đặt câu hỏi chờ trả lời. Giọng lần này: ${tone || 'ấm áp, lạc quan'}. Điểm nhấn lần này: ${angle || 'tiền vào như nước, sống khoẻ'}.
+Định dạng BẮT BUỘC: ĐÚNG 3 ĐOẠN, mỗi đoạn một dòng, tổng 90–140 từ, không markdown, không tiêu đề, không có dòng "MOOD".
+ Đoạn 1: chào hợp buổi trong ngày ("dayPart"; night = khuya: dỗ đi ngủ) và nói về thời tiết thực tế ở "weather.city" (gọi đúng như vậy, dạng "Khu vực, Tỉnh/Thành", không mở ngoặc) — nhiệt độ, cao/thấp. Thời tiết nào cũng phải nhìn theo hướng TÍCH CỰC, vui tươi (mưa: mát mẻ, có cớ uống trà nóng, nhớ mang ô; nắng: rực rỡ, tràn năng lượng, nhớ uống nước; lạnh: ấm áp, nhớ mặc ấm). Không than thở, không nói buồn, không đoán tâm trạng tiêu cực.
+ Đoạn 2: động viên kiếm thật nhiều tiền, sống thật khoẻ mạnh và vui tươi (có thể nhắc loại ngày trong "dayType": đầu tuần, thứ 6, cuối tuần, ngày lễ — Ngày Nhà giáo thì chúc mừng ngọt ngào).
+ Đoạn 3: nhắc lịch hôm nay (số buổi và buổi sắp tới: giờ, lớp, môn; nếu không có thì rủ thong thả soạn bài/nghỉ ngơi) rồi động viên trong công việc và học tập, luôn lạc quan, tin vào bản thân.
+Mỗi lần viết phải KHÁC hẳn lần trước (mở đầu, hình ảnh, câu chữ). Chỉ dùng số liệu có trong dữ liệu, không bịa. Tối đa 4 emoji cả lời nhắn.`
+      : `\n\nTask: the teacher just opened the app — write ONE cheerful, OPTIMISTIC note to them, like a best friend or partner. Use their first name if known; no questions that need a reply. Tone: ${tone || 'warm and upbeat'}. Focus this time: ${angle || 'prosperity and health'}.
+REQUIRED format: EXACTLY 3 PARAGRAPHS, one per line, 90–140 words, no markdown, no title, no "MOOD" line.
+ 1) greeting for the time of day + the real weather in "weather.city" (exactly as given), always framed POSITIVELY with caring advice; never gloomy.
+ 2) encourage them to earn lots of money and live healthy and happy (mention "dayType" if relevant).
+ 3) today's schedule (count and next lesson, or invite them to relax) + encouragement for work and study, staying optimistic.
+Make every note clearly different. Only use the data given. Max 4 emoji.`);
   }
   if (mode === 'friend') {
     return base + data + (vi
@@ -150,7 +149,7 @@ module.exports = async function handler(req, res) {
     messages = [{ role: 'user', content: (lang === 'vi' ? 'Viết cho hôm nay. Mã ngẫu nhiên: ' : 'Write it for today. Random seed: ') + seed }];
   }
 
-  const system = systemPrompt(mode, lang, body.context, clip(body.tone, 160));
+  const system = systemPrompt(mode, lang, body.context, clip(body.tone, 160), clip(body.angle, 160));
   const maxTokens = { chat: 1200, daily: 600, friend: 300 }[mode] || 300, temperature = mode === 'chat' ? 0.6 : mode === 'friend' ? 0.9 : 1;
   try {
     const call = prov === 'gemini' ? callGemini : prov === 'groq' ? callGroq : callAnthropic;

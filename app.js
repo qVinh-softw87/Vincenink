@@ -56,7 +56,7 @@ const EN = {
   'Ẩn/hiện thanh bên (F)': 'Show/hide sidebar (F)', 'Tên bảng': 'Board name', 'Ngày của bảng': 'Board date',
   'Nền bảng': 'Background', 'Tải bảng thành ảnh PNG': 'Download board as PNG', 'Tải bảng thành PDF (màu hoặc bản quét)': 'Download board as PDF (colour or scan)',
   'Toàn màn hình': 'Full screen', 'Thả ảnh hoặc PDF vào đây để đưa lên bảng': 'Drop an image or PDF here to put it on the board',
-  'Trơn': 'Plain', 'Ô vuông': 'Grid', 'Ô li': 'Ô li (handwriting)', 'Dòng kẻ': 'Ruled', 'Chấm': 'Dots',
+  'Trơn': 'Plain', 'Ô vuông': 'Grid', 'Ô li': 'Handwriting lines', 'Dòng kẻ': 'Ruled', 'Chấm': 'Dots',
   'Kéo bảng (H) — hoặc giữ phím Space': 'Pan (H) — or hold Space', 'Bút viết (P)': 'Pen (P)', 'Bút dạ quang (M)': 'Highlighter (M)',
   'Tẩy (E)': 'Eraser (E)', 'Khoanh vùng (L) — chọn hoặc xoá': 'Lasso (L) — select or erase', 'Hình (S)': 'Shapes (S)', 'Chữ (T)': 'Text (T)',
   'Bút laser (K) — chỉ để trỏ, tự mờ': 'Laser pointer (K) — fades away',
@@ -197,7 +197,7 @@ const EN = {
   'Như bảng lớp học': 'Like a classroom board',
   'Giấy trơn, không kẻ': 'Blank paper',
   'Vẽ hình, làm toán': 'Drawing and maths',
-  'Luyện chữ như vở ô li': 'Handwriting practice (Vietnamese ô li)',
+  'Luyện chữ như vở ô li': 'Handwriting practice',
   'Viết đoạn văn, chính tả': 'Paragraphs and dictation',
   'Vẽ đồ thị, sơ đồ': 'Graphs and diagrams',
   'Lịch hôm nay': 'Today',
@@ -366,7 +366,7 @@ function applyStaticI18n() {
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
   applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle(); Daily.load(); Note.load(); if (Chat.isOpen()) Chat.render();
-  renderBgUI();
+  renderBgUI(); Chat.renderState(); Reminders.sync(); renderIncomeBtn(); refreshDay();
 }
 
 /* ---------------- Biểu tượng ---------------- */
@@ -1669,8 +1669,7 @@ function renderTodayCard() {
   el.innerHTML = `
     <div class="dc-top">
       <span class="dc-ic dc-${part}">${ic(DAY_ICON[part], 16)}</span>
-      <div><b>${t(DAY_HELLO[part])}${name ? ',' : '!'}</b>${name ? `<b class="dc-name">${esc(name)} 👋</b>` : ''}<small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
-      <button class="icon-btn sm dc-refresh ${Daily.loading ? 'spin' : ''}" id="dcRefresh" title="${t('Viết lời chúc khác')}">${ic('refresh', 15)}</button>
+      <div><b><span class="live-clock dc-clock">${hm}</span> ${t(DAY_HELLO[part])}${name ? ',' : '!'}</b>${name ? `<b class="dc-name">${esc(name)} 👋</b>` : ''}<small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
     </div>
     ${dayChips('dc-chips')}
     <p class="dc-msg ${Daily.loading && !msg ? 'loading' : ''}">${msg ? esc(msg) : '<span class="shimmer"></span><span class="shimmer short"></span>'}</p>
@@ -1684,7 +1683,6 @@ function renderTodayCard() {
       </button>`; }).join('')}</div>`
       : `<div class="dc-free">${ic('calendar', 14)}${t('Hôm nay không có tiết nào.')}</div>`}`;
   el.onclick = e => {
-    if (e.target.closest('#dcRefresh')) return Daily.load(true);
     if (e.target.closest('#tcBell')) return remindersModal();
     if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds, true);
     const it = e.target.closest('.tc-item'); if (it) { S.tab = 'sched'; S.week = weekStart(now); selectStudent(it.dataset.owner); }
@@ -1909,7 +1907,7 @@ async function addFiles(files, studentId = S.studentId) {
    Học phí: tiền mỗi buổi × số buổi đã dạy trong tháng
    ===================================================================== */
 const ymKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-const fmtMoney = n => Math.round(n || 0).toLocaleString('vi-VN') + ' đ';
+const fmtMoney = n => LANG === 'en' ? Math.round(n || 0).toLocaleString('en-US') + ' VND' : Math.round(n || 0).toLocaleString('vi-VN') + ' đ';
 const parseMoney = v => { const n = parseInt(String(v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
 function monthLessons(sid, y, m) {
   const first = new Date(y, m, 1), last = new Date(y, m + 1, 0), out = [];
@@ -1964,7 +1962,7 @@ function renderFeeTab(body) {
   body.innerHTML = `
     <div class="fee-rate">
       <label for="feeInput">${ic('wallet', 15)}${t('Học phí mỗi buổi')}</label>
-      <div class="fee-in"><input id="feeInput" inputmode="numeric" value="${f.fee ? f.fee.toLocaleString('vi-VN') : ''}" placeholder="${t('VD: 200000')}"><span>đ</span></div>
+      <div class="fee-in"><input id="feeInput" inputmode="numeric" value="${f.fee ? f.fee.toLocaleString(LANG === 'en' ? 'en-US' : 'vi-VN') : ''}" placeholder="${t('VD: 200000')}"><span>${LANG === 'en' ? 'VND' : 'đ'}</span></div>
     </div>
     <div class="week-nav">
       <button class="icon-btn sm" data-fm="-1" title="${t('Tháng trước')}">${ic('left', 18)}</button>
@@ -1994,7 +1992,7 @@ function renderFeeTab(body) {
     }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
 `;
   const inp = $('#feeInput', body);
-  inp.addEventListener('input', () => { const n = parseMoney(inp.value); inp.value = n ? n.toLocaleString('vi-VN') : ''; });
+  inp.addEventListener('input', () => { const n = parseMoney(inp.value); inp.value = n ? n.toLocaleString(LANG === 'en' ? 'en-US' : 'vi-VN') : ''; });
   inp.addEventListener('change', async () => { st.fee = parseMoney(inp.value); await DB.put('students', st); renderFeeTab(body); });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
   $('#feePaid', body).onchange = async e => { st.feePaid = st.feePaid || {}; if (e.target.checked) st.feePaid[f.key] = true; else delete st.feePaid[f.key]; await DB.put('students', st); renderFeeTab(body); };
@@ -2325,7 +2323,7 @@ function aiContext() {
     } : null,
     currentBoard: board ? board.title : '',
     weather: wxContext(),
-    dayType: (dt => dt.holiday ? `${dt.weekday}, ${dt.holiday}` : `${dt.weekday}, ${dt.weekend ? 'cuối tuần' : 'ngày thường'}`)(dayType()),
+    dayType: (dt => dt.holiday ? `${dt.weekday}, ${dt.holiday}` : `${dt.weekday}, ${dt.weekend ? (LANG === 'vi' ? 'cuối tuần' : 'weekend') : (LANG === 'vi' ? 'ngày thường' : 'weekday')}`)(dayType()),
     moodHint: moodGuess().label,
   };
 }
@@ -2334,10 +2332,14 @@ const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCod
 /* ---- Vị trí: hồ sơ → GPS trình duyệt → IP (Vercel / BigDataCloud) ---- */
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const getJSON = async (url, ms = 7000) => { const r = await withTimeout(fetch(url, { cache: 'no-store' }), ms); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+/* Tiếng Anh: tên địa danh không dấu */
+const noAccent = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+const cityName = w => w && w.city ? (LANG === 'en' ? noAccent(w.city) : w.city) : '';
 function placeName(j) {
   const clean = x => String(x || '').replace(/\s*\([^)]*\)/g, '').replace(/^(Thành phố|TP\.?|Tỉnh|Phường|Xã|Thị trấn|Quận|Huyện|Thị xã|City of)\s+/i, '').replace(/\s+/g, ' ').trim();
   const prov = clean(j.principalSubdivision), area = [clean(j.locality), clean(j.city)].find(x => x && x !== prov) || '';
-  return area && prov ? `${area}, ${prov}` : (prov || area);
+  const r = area && prov ? `${area}, ${prov}` : (prov || area);
+  return LANG === 'en' ? noAccent(r) : r;
 }
 const Loc = {
   cur: null,
@@ -2461,7 +2463,7 @@ const Weather = {
     this.locating = false;
     const d = this.data;
     if (!g) { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí'), true); }
-    else toast(t('Đã cập nhật thời tiết cho {c}', { c: d.city }));
+    else toast(t('Đã cập nhật thời tiết cho {c}', { c: cityName(d) }));
     refreshDay(); if (d && d.city !== before) Daily.load();
   },
 };
@@ -2477,7 +2479,7 @@ function dayType(d = new Date()) {
 function wxContext() {
   const w = Weather.data; if (!w) return null;
   const f = d => d && `${wxInfo(d.code).desc}, ${d.min}–${d.max}°C, ${t('mưa {p}%', { p: d.rain })}`;
-  return { city: w.city, source: w.src === 'gps' ? 'GPS' : 'IP (ước tính)', now: `${w.temp}°C (${t('Cảm giác {f}°', { f: w.feels })}), ${wxInfo(w.code).desc}`, today: f(wxToday()), tomorrow: f(w.days[1]) };
+  return { city: cityName(w), source: w.src === 'gps' ? 'GPS' : (LANG === 'vi' ? 'IP (ước tính)' : 'IP (estimated)'), now: `${w.temp}°C (${t('Cảm giác {f}°', { f: w.feels })}), ${wxInfo(w.code).desc}`, today: f(wxToday()), tomorrow: f(w.days[1]) };
 }
 
 /* ---- Đoán tâm trạng người dạy (dự phòng khi AI chưa trả về) ---- */
@@ -2513,11 +2515,17 @@ function parseDaily(raw) {
   }
   return { mood, lines, text: lines.join(' ') };
 }
+/* Đồng hồ cạnh lời chào: cập nhật mỗi 15 giây, đổi buổi thì vẽ lại */
+let clockPart = dayPart();
+setInterval(() => {
+  const n = new Date(), hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  $$('.live-clock').forEach(el => { if (el.textContent !== hm) el.textContent = hm; });
+  if (dayPart() !== clockPart) { clockPart = dayPart(); refreshDay(); }
+}, 15000);
 function dayChips(cls) {
-  const w = Weather.data, mood = Daily.raw() ? Daily.mood() : moodGuess(), dt = dayType();
+  const w = Weather.data, dt = dayType();
   return `<div class="${cls}">
-    ${w ? `<span class="chip-wx" title="${esc(w.city)}">${wxInfo(w.code).emoji} <b>${w.temp}°</b> ${esc(w.city || wxInfo(w.code).desc)}</span>` : ''}
-    <span class="chip-mood" title="${t('Đoán tâm trạng')}">${mood.emoji} ${esc(mood.label)}</span>
+    ${w ? `<span class="chip-wx" title="${esc(cityName(w))}">${wxInfo(w.code).emoji} <b>${w.temp}°</b> ${esc(cityName(w) || wxInfo(w.code).desc)}</span>` : ''}
     ${dt.holiday ? `<span class="chip-day">🎉 ${esc(dt.holiday)}</span>` : ''}
   </div>`;
 }
@@ -2530,7 +2538,7 @@ function wxSection() {
   const lc = Loc.cur || {}, src = w.src === 'gps' ? (lc.acc ? t('GPS ±{m} m', { m: lc.acc }) : t('theo GPS')) : t('ước tính theo mạng');
   return `<section class="gr-sec">
     <h3>${ic('sun2', 15)}${t('Thời tiết')}
-      <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(w.city || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
+      <span class="gr-city-n" data-gr="locate" title="${t('Cập nhật vị trí hiện tại')}">📍 ${esc(cityName(w) || t('Vị trí của bạn'))}<small>${esc(src)}</small></span></h3>
     <div class="gr-wx">${w.days.map((d, i) => `<div class="gr-wd ${i === 0 ? 'today' : ''}">
       <small>${esc(name(d, i))}</small><span class="e">${wxInfo(d.code).emoji}</span>
       <b>${d.min}°–${d.max}°</b><em>${esc(wxInfo(d.code).desc)}${d.rain ? ` · ${d.rain}%` : ''}</em></div>`).join('')}</div>
@@ -2541,7 +2549,7 @@ function wxSection() {
 function wxLine() {
   const w = Weather.data, d = wxToday(); if (!w || !d) return '';
   const vi = LANG === 'vi';
-  if (d.rain >= 60 || wxInfo(d.code).rainy && d.rain >= 40) return vi ? `Hôm nay ${w.city} dễ mưa lắm (${d.rain}%), nhớ mang ô theo nha ☔` : `Rain is likely in ${w.city} today (${d.rain}%), take an umbrella ☔`;
+  if (d.rain >= 60 || wxInfo(d.code).rainy && d.rain >= 40) return vi ? `Hôm nay ${cityName(w)} dễ mưa lắm (${d.rain}%), nhớ mang ô theo nha ☔` : `Rain is likely in ${cityName(w)} today (${d.rain}%), take an umbrella ☔`;
   if (d.max >= 34) return vi ? `Trời nóng tới ${d.max}° đó, uống nhiều nước giùm tớ nha 💧` : `It’s getting up to ${d.max}°, please drink lots of water 💧`;
   if (d.min <= 18) return vi ? `Trời se lạnh ${d.min}°, mặc ấm vào kẻo ốm nha 🧣` : `Chilly ${d.min}° today, wrap up warm 🧣`;
   return vi ? `Ngoài trời ${w.temp}°, ${wxInfo(w.code).desc.toLowerCase()} — dễ chịu ghê.` : `It’s ${w.temp}° and ${wxInfo(w.code).desc.toLowerCase()} outside — lovely.`;
@@ -2598,58 +2606,71 @@ const FALLBACK = {
 };
 const pickDay = (arr, salt = 0) => arr[(hashStr(todayStr() + dayPart()) + salt) % arr.length];
 /* Lời chào dự phòng: một chuỗi tin nhắn thân mật, có thành phố + thời tiết + loại ngày + tâm trạng + lịch */
+/* Lời nhắn dự phòng: luôn tươi vui, đổi ngẫu nhiên mỗi lần mở trang */
+/* chọn ngẫu nhiên nhưng ổn định trong một lần mở trang (salt đổi mỗi lần tải lại) */
+const seeded = n => { let x = (n * 2654435761) >>> 0; x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13; x = Math.imul(x, 3266489917) >>> 0; x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+const rnd = (arr, salt) => arr[Math.floor(seeded(salt) * arr.length)];
+const CHEER = {
+  vi: {
+    sun: ['Trời nắng đẹp thế này, đúng kiểu ngày sinh ra để rực rỡ ☀️', 'Nắng lên rồi, năng lượng của cậu cũng phải lên theo nha!'],
+    rain: ['Mưa một chút cho phố mát, cho cậu có cớ pha ly trà nóng thật thơm ☔', 'Trời mưa là trời đang tưới cho may mắn của cậu nảy mầm đó 🌱'],
+    hot: ['Nắng nóng nhưng không nóng bằng nhiệt huyết của cậu đâu 🔥 Nhớ mang bình nước theo nha.', 'Trời hầm hập, uống thật nhiều nước để giữ giọng dạy hay nha 💧'],
+    cold: ['Se lạnh dễ thương ghê, khoác áo ấm vào là sẵn sàng chinh phục cả ngày 🧣', 'Trời lạnh nhưng lòng tớ ấm vì có cậu nè, nhớ mặc ấm nha.'],
+    cloud: ['Trời dịu mát, hợp để làm việc hiệu quả và vui vẻ cả ngày 🌤️', 'Mây nhẹ nhàng, gió hiu hiu — một ngày lý tưởng để toả sáng.'],
+    money: ['Chúc cậu hôm nay tiền vào như nước, học phí về đều đều, ví lúc nào cũng căng 💰', 'Mỗi buổi dạy là một viên gạch xây nên tự do tài chính của cậu đó — cứ thế mà giàu lên nha 💸', 'Năng suất lên, thu nhập lên, cuối tháng nhìn tài khoản là cười tít mắt luôn 🤑'],
+    health: ['Ăn uống đủ chất, ngủ đủ giấc, cười thật nhiều — sức khoẻ là vốn quý nhất của cậu đó 💪', 'Nhớ vươn vai, uống nước và hít thở sâu giữa các buổi nha, khoẻ thì mới vui được lâu.', 'Sống thật khoẻ, thật vui, thật rạng rỡ — tớ muốn thấy cậu như thế mỗi ngày 🌿'],
+    work: ['Cậu đang làm một công việc tuyệt vời: mỗi buổi học là một hạt giống tốt gieo vào học trò ✨', 'Đừng quên cậu giỏi hơn cậu nghĩ nhiều — cứ tự tin mà dạy, mà học thêm mỗi ngày nhé.', 'Việc khó cỡ nào cũng chia nhỏ ra mà làm, từng bước một là tới đích thôi 🚀', 'Luôn lạc quan lên nha, mọi cố gắng hôm nay đều đang âm thầm đền đáp cho cậu.'],
+    close: ['Tớ luôn ở đây cổ vũ cậu 💛', 'Một ngày thật rực rỡ nha!', 'Cậu làm được hết, tớ tin cậu nhất 🌟', 'Cười lên nào, hôm nay sẽ là một ngày đẹp!'],
+    weekend: 'Cuối tuần rồi, vừa làm vừa chơi cho cân bằng nha 🎈', monday: 'Đầu tuần mới, khởi động thật hăng hái nha!', friday: 'Thứ 6 rồi, cán đích tuần này thật đẹp nào 🎉',
+  },
+  en: {
+    sun: ['Sunny day — made for you to shine ☀️'], rain: ['A little rain to cool the streets and give you an excuse for a hot tea ☔'], hot: ['Hot outside, but not as hot as your passion 🔥 Keep a water bottle close.'], cold: ['Crisp and cosy — wrap up warm and conquer the day 🧣'], cloud: ['Mild and breezy — perfect for a productive, happy day 🌤️'],
+    money: ['May the money flow in today and your wallet stay happy 💰', 'Every lesson is a brick in your financial freedom — keep stacking 💸'],
+    health: ['Eat well, sleep well, laugh a lot — your health is your best asset 💪', 'Stretch, drink water and breathe deeply between lessons.'],
+    work: ['You’re doing wonderful work — every lesson plants a good seed ✨', 'You’re more capable than you think — teach and learn with confidence.', 'Stay optimistic — today’s effort is quietly paying off.'],
+    close: ['I’m always cheering for you 💛', 'Have a brilliant day!'], weekend: 'It’s the weekend — balance work and play 🎈', monday: 'New week, fresh start!', friday: 'It’s Friday — finish the week strong 🎉',
+  },
+};
 function fallbackDaily(salt = 0) {
-  const vi = LANG === 'vi', F = FALLBACK[LANG], part = dayPart(), p = profile();
-  const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const vi = LANG === 'vi', F = FALLBACK[LANG], C = CHEER[LANG], part = dayPart();
   const list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
   const next = list.find(o => o.end > hm) || list[0];
   const o = next ? { start: next.start, who: next.owner === 'all' ? t('Lớp chung') : ownerName(next.owner), subject: next.subject } : null;
-  const mood = moodGuess(), dt = dayType(), w = Weather.data, d = wxToday();
-  const L = [];
-  L.push(pickDay(F.hello[part], salt).replace('{n}', name ? (vi ? ` ${name}` : ` ${name}`) : ''));
+  const dt = dayType(), w = Weather.data, d = wxToday();
+  const p1 = [rnd(F.hello[part], salt * 7 + 11)];
   if (w && d) {
-    const desc = wxInfo(w.code).desc.toLowerCase();
-    let tip = '';
-    if (d.rain >= 60 || (wxInfo(d.code).rainy && d.rain >= 40)) tip = vi ? `Chiều dễ mưa lắm (${d.rain}%), bỏ cây dù vào túi giùm tớ nha ☔` : `Rain is likely (${d.rain}%), pop an umbrella in your bag for me ☔`;
-    else if (d.max >= 34) tip = vi ? `Trưa nắng lên tới ${d.max}° đó, mang theo bình nước nha 💧` : `It peaks at ${d.max}°, carry a water bottle 💧`;
-    else if (d.min <= 18) tip = vi ? `Sáng tối se lạnh ${d.min}°, khoác thêm áo kẻo ốm là tớ lo đó 🧣` : `It drops to ${d.min}°, grab a jacket or I’ll worry 🧣`;
-    else tip = vi ? `Thời tiết dễ chịu ghê, hợp để dạy lắm luôn.` : `Lovely weather — perfect for teaching.`;
-    L.push(vi ? `Ở ${w.city || 'chỗ cậu'} giờ đang ${w.temp}°, ${desc}; hôm nay khoảng ${d.min}–${d.max}°. ${tip}` : `In ${w.city || 'your area'} it’s ${w.temp}° and ${desc} now, ${d.min}–${d.max}° today. ${tip}`);
+    const kind = (d.rain >= 50 || wxInfo(w.code).rainy) ? 'rain' : d.max >= 34 ? 'hot' : d.min <= 18 ? 'cold' : w.code <= 1 ? 'sun' : 'cloud';
+    p1.push(vi ? `Ở ${cityName(w) || 'chỗ cậu'} đang ${w.temp}°, hôm nay ${d.min}–${d.max}°. ${rnd(C[kind], salt * 7 + 1)}` : `${cityName(w) || 'Your area'}: ${w.temp}° now, ${d.min}–${d.max}° today. ${rnd(C[kind], salt * 7 + 1)}`);
   }
-  if (dt.holiday) L.push(vi ? `Hôm nay là ${dt.holiday} nữa đó${dt.holiday.includes('Nhà giáo') ? ', tớ chúc người thầy/cô đáng yêu nhất của tớ luôn được học trò thương 💐' : ', nhớ dành chút thời gian cho bản thân nha 🎉'}` : `It’s ${dt.holiday} today — treat yourself a little 🎉`);
-  else if (dt.weekend) L.push(vi ? (list.length ? `Cuối tuần mà cậu vẫn đi dạy, chăm quá trời, tối nay phải thưởng cho bản thân nha.` : `Cuối tuần rồi, cho phép bản thân lười một chút đi, cậu xứng đáng mà.`) : (list.length ? `Teaching on the weekend — so dedicated. Treat yourself tonight.` : `It’s the weekend, let yourself be lazy for once.`));
-  else if (dt.monday) L.push(vi ? `Đầu tuần hơi ì là bình thường nha, mình khởi động từ từ thôi.` : `Monday sluggishness is normal, let’s warm up slowly.`);
-  else if (dt.friday) L.push(vi ? `Thứ 6 rồi đó, cố nốt hôm nay là được nghỉ xả hơi rồi!` : `It’s Friday — one more push and then rest!`);
-  else L.push(vi ? `${dt.weekday} rồi, tuần này cậu đã đi được nửa chặng đường rồi đó.` : `It’s ${dt.weekday}, you’re halfway through the week.`);
-  L.push(vi ? `Tớ đoán hôm nay cậu đang kiểu ${mood.label.toLowerCase()} ${mood.emoji} — tớ hiểu mà, cứ từ từ thôi.` : `My guess: you’re feeling ${mood.label.toLowerCase()} ${mood.emoji} today — totally fine, take it slow.`);
-  L.push(F.lessons(list.length, o));
-  L.push(pickDay(F.wish, 3 + salt));
-  // gộp thành 3 đoạn: chào + thời tiết · loại ngày + tâm trạng · lịch + lời chúc
-  const n = L.length;
-  return [L.slice(0, n - 4).join(' '), L.slice(n - 4, n - 2).join(' '), L.slice(n - 2).join(' ')].filter(Boolean).join('\n');
+  const p2 = [dt.holiday ? (vi ? `Hôm nay là ${dt.holiday}, chúc cậu thật nhiều niềm vui 🎉` : `Happy ${dt.holiday} 🎉`) : dt.weekend ? C.weekend : dt.monday ? C.monday : dt.friday ? C.friday : '', rnd(C.money, salt * 7 + 2), rnd(C.health, salt * 7 + 3)].filter(Boolean);
+  const p3 = [F.lessons(list.length, o), rnd(C.work, salt * 7 + 4), rnd(C.close, salt * 7 + 5)];
+  return [p1.join(' '), p2.join(' '), p3.join(' ')].join('\n');
 }
 const fallbackNote = (salt = 0) => { const [title, body] = pickDay(FALLBACK[LANG].tips, salt); return { title, body }; };
 
 
 /* ---- Lời chúc mỗi ngày (lưu theo ngày + buổi + ngôn ngữ + danh sách tiết) ---- */
 const Daily = {
-  loading: false, cur: null, salt: 0,
-  key() { return `vincenink.ai.daily2.${todayStr()}.${LANG}.${dayPart()}.${hashStr(JSON.stringify([Weather.data && Weather.data.city, todayLessons().map(o => [o.start, o.owner, o.subject, o.off])]))}`; },
-  raw() { return this.cur || ls.get(this.key(), '') || (!this.started || (AI.status === 'on' && this.loading) ? '' : fallbackDaily(this.salt)); },
+  loading: false, cur: null, salt: Math.floor(Math.random() * 1e6),
+  raw() { return this.cur || (!this.started || (AI.status === 'on' && this.loading) ? '' : fallbackDaily(this.salt)); },
   text() { return parseDaily(this.raw()).text; },
   lines() { return parseDaily(this.raw()).lines; },
   mood() { return parseDaily(this.raw()).mood || moodGuess(); },
-  async load(force) {
+  /* Mỗi lần mở / tải lại trang là một lời nhắn mới */
+  async load() {
     this.started = true; this.cur = null;
-    if (!force && ls.get(this.key(), '')) { refreshDay(); return; }
-    if (AI.status !== 'on') { if (force) this.salt++; refreshDay(); return; }
-    this.loading = true; renderTodayCard();
+    if (AI.status !== 'on') { refreshDay(); return; }
+    this.loading = true; refreshDay();
     const tones = LANG === 'vi'
-      ? ['thân thiết như bạn thân lâu năm, xưng "tớ" gọi "cậu", hơi trêu nhẹ', 'ngọt ngào, quan tâm như người yêu nhắn tin (tình cảm nhưng tinh tế, không sến)', 'dịu dàng, vỗ về như người thương đang nhắc nhở', 'nhắng nhít, lầy lội dễ thương như cạ cứng', 'ấm áp, chân thành như người bạn luôn ở bên']
-      : ['like a best friend of many years, lightly teasing', 'sweet and caring like a partner texting (tender, not cheesy)', 'gentle and soothing like someone who loves them', 'playful and silly like a bestie', 'warm and sincere like a friend who is always there'];
-    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8), tone: tones[Math.floor(Math.random() * tones.length)] }); if (txt) { ls.set(this.key(), txt); this.cur = txt; } }
-    catch (e) { this.cur = fallbackDaily(++this.salt); }
-    this.loading = false; renderTodayCard(); renderGreet();
+      ? ['thân thiết như bạn thân lâu năm, xưng "tớ" gọi "cậu", hơi trêu nhẹ', 'ngọt ngào, quan tâm như người yêu nhắn tin (tình cảm nhưng tinh tế, không sến)', 'hào hứng, tràn năng lượng như người truyền cảm hứng', 'nhắng nhít, lầy lội dễ thương như cạ cứng', 'ấm áp, chân thành, đầy lạc quan']
+      : ['like a best friend of many years, lightly teasing', 'sweet and caring like a partner texting (tender, not cheesy)', 'upbeat and inspiring like a motivator', 'playful and silly like a bestie', 'warm, sincere and optimistic'];
+    const angles = LANG === 'vi'
+      ? ['tiền vào như nước, tự do tài chính', 'sức khoẻ, ăn ngon ngủ kỹ', 'niềm vui nhỏ mỗi ngày', 'tự tin, tin vào bản thân', 'học thêm điều mới mỗi ngày', 'biết ơn và lạc quan', 'năng suất mà vẫn thảnh thơi', 'gieo hạt giống tốt cho học trò']
+      : ['money flowing in, financial freedom', 'health, good food and sleep', 'small daily joys', 'self-belief', 'learning something new every day', 'gratitude and optimism', 'productive yet relaxed', 'planting good seeds in students'];
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8), tone: pick(tones), angle: pick(angles) + ' · ' + pick(angles) }); this.cur = txt || fallbackDaily(this.salt); }
+    catch (e) { this.cur = fallbackDaily(this.salt); }
+    this.loading = false; refreshDay();
   },
 };
 /* ---- Ghi chú AI mỗi ngày ---- */
@@ -3149,7 +3170,7 @@ function renderGreet() {
     <header class="gr-hero gr-${part}">
       <span class="gr-ic">${ic(DAY_ICON[part], 26)}</span>
       <div class="gr-ht"><small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small>
-        <h2>${t(DAY_HELLO[part])}${name ? `, ${esc(name)}` : ''}!</h2></div>
+        <h2><span class="live-clock gr-clock">${hm}</span>${t(DAY_HELLO[part])}${name ? `, ${esc(name)}` : ''}!</h2></div>
       <button class="icon-btn gr-x" data-gr="close" aria-label="${t('Đóng')}">${ic('x', 18)}</button>
       ${dayChips('gr-chips')}
     </header>
