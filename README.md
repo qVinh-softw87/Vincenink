@@ -89,7 +89,7 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 ## Lời chào, thời tiết & tâm trạng
 
 - Mỗi lần mở app, AI tự viết **một lời nhắn 3 đoạn** thân mật như bạn thân/người thương (xưng "tớ – cậu"). Lời nhắn dựa trên vị trí GPS và thời tiết thực tế (tên khu vực, nhiệt độ, khả năng mưa), loại ngày (ngày thường, cuối tuần, ngày lễ), tâm trạng đoán được và lịch dạy trong ngày.
-- **Vị trí** tự lấy, không cần nhập: ưu tiên GPS của trình duyệt (lần đầu app hỏi quyền; có nút **Vị trí chính xác**). Nếu chưa cho phép thì ước tính theo IP: trên Vercel qua `api/geo.js`, nơi khác qua BigDataCloud. App theo dõi GPS vài giây để chọn lần đo chính xác nhất (hiện sai số ±m) và làm mới sau mỗi 10 phút.
+- **Vị trí** tự lấy, không cần nhập: ưu tiên GPS của trình duyệt (lần đầu app hỏi quyền; có nút **Vị trí chính xác**). Nếu chưa cho phép thì ước tính theo IP: trên Vercel qua `api/geo.js`, nơi khác qua BigDataCloud. GPS và vị trí theo mạng chạy song song: app hiện ngay thời tiết đã lưu, chờ GPS tối đa ~3 giây, chưa có thì dùng vị trí tạm rồi tự cập nhật khi GPS về. Thời tiết và tên khu vực cũng được tải song song.
 - Tên khu vực lấy từ BigDataCloud (miễn phí, không cần khoá).
 - **Thời tiết 3 ngày** lấy từ [Open-Meteo](https://open-meteo.com) (miễn phí, không cần khoá) và được lưu tạm 30 phút.
 

@@ -1322,3 +1322,25 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .gr-letter p:last-child { margin-bottom: 0; }
 .gr-letter .gl-wait { font-size: 13px; color: var(--muted); }
 .gr-letter .shimmer { display: block; margin: 6px 0; }
+
+/* ===== v18: thẻ Thành tiền tông be ===== */
+.fee-total { color: #4A3A2C; background: linear-gradient(140deg, #FBF6EF 0%, #F1E5D5 55%, #E8D7C1 100%); border: 1px solid rgba(140,105,70,.16); box-shadow: 0 6px 18px rgba(140,105,70,.12); }
+.fee-total::after { background: rgba(255,255,255,.5); }
+.fee-total::before { content: ""; position: absolute; left: -24px; bottom: -40px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,.35); }
+.fee-total > * { position: relative; z-index: 1; }
+.fee-total small { color: #9A6A44; opacity: 1; }
+.ft-amt { color: #5A3E26; }
+.ft-formula { color: #6B5340; }
+.ft-proj { color: #8A7462; opacity: 1; }
+.ft-paid .knob { background: rgba(140,105,70,.25); }
+.ft-paid input:checked + .knob { background: #7FA272; }
+.ft-paid input:checked + .knob::after { background: #fff; }
+.fee-total.paid { color: #36502F; background: linear-gradient(140deg, #F4F6EE 0%, #E4EBD8 60%, #D5E0C5 100%); border-color: rgba(95,130,85,.2); box-shadow: 0 6px 18px rgba(95,130,85,.14); }
+.fee-total.paid small, .fee-total.paid .ft-amt { color: #4C6E44; }
+[data-theme="dark"] .fee-total, [data-theme="chalk"] .fee-total { color: #F1E6D8; background: linear-gradient(140deg, #3E352C, #2E2721); border-color: rgba(255,240,220,.08); }
+[data-theme="dark"] .fee-total::after, [data-theme="dark"] .fee-total::before, [data-theme="chalk"] .fee-total::after, [data-theme="chalk"] .fee-total::before { background: rgba(255,240,220,.06); }
+[data-theme="dark"] .fee-total small, [data-theme="chalk"] .fee-total small { color: #E2B98F; }
+[data-theme="dark"] .ft-amt, [data-theme="dark"] .ft-formula, [data-theme="chalk"] .ft-amt, [data-theme="chalk"] .ft-formula { color: #F6EBDD; }
+[data-theme="dark"] .ft-proj, [data-theme="chalk"] .ft-proj { color: #C9B8A6; }
+[data-theme="dark"] .fee-total.paid, [data-theme="chalk"] .fee-total.paid { background: linear-gradient(140deg, #34402F, #263022); }
+.fee-stats > div { justify-content: center; }

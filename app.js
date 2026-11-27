@@ -1850,7 +1850,7 @@ function renderFeeTab(body) {
       <button class="icon-btn sm" data-fm="1" title="${t('Tháng sau')}">${ic('right', 18)}</button>
     </div>
     <div class="fee-stats">
-      <div class="taught"><b>${f.billable}</b><small>${t('Đã dạy')}</small>${f.adj ? `<i>${t('{a} theo lịch {s} {b} thêm', { a: f.taught, s: f.adj > 0 ? '+' : '−', b: Math.abs(f.adj) })}</i>` : ''}</div>
+      <div class="taught"><b>${f.billable}</b><small>${t('Đã dạy')}</small></div>
       <div class="adj"><span class="adj-ctl"><button data-plan="-1" aria-label="-1">−</button><b>${f.planned}</b><button data-plan="1" aria-label="+1">+</button></span><small>${t('Dự kiến cả tháng')}</small></div>
       <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1">−</button><b>${f.adj > 0 ? '+' + f.adj : f.adj}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Buổi cộng thêm')}</small></div>
     </div>
@@ -1861,7 +1861,6 @@ function renderFeeTab(body) {
       <div class="ft-proj">${t('Dự kiến cả tháng: {x}', { x: fmtMoney(f.projected) })}</div>
       <label class="switch ft-paid"><input type="checkbox" id="feePaid" ${f.paid ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Đã thu tiền tháng này')}</span></label>
     </div>
-    <div class="hint">${t('“Đã dạy” = số buổi đã qua theo lịch (không tính buổi nghỉ) cộng “Buổi cộng thêm”. “Dự kiến cả tháng” mặc định 8 buổi, bấm − / + để chỉnh riêng từng tháng.')}</div>
     <div class="sec-h">${ic('calendar', 15)}${t('Các buổi trong tháng')} <span class="muted">${f.list.length}</span></div>
     ${f.list.length ? `<div class="fee-list">${f.list.map(o => {
       const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
@@ -2221,7 +2220,7 @@ const Loc = {
   cur: null,
   async geoState() { try { return (await navigator.permissions.query({ name: 'geolocation' })).state; } catch (e) { return 'prompt'; } },
   async nameOf(lat, lon) {
-    try { return placeName(await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${LANG}`)); }
+    try { return placeName(await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${LANG}`, 4000)); }
     catch (e) { return ''; }
   },
   /* Lấy GPS chính xác: theo dõi vài giây, giữ lần đo có sai số nhỏ nhất */
@@ -2229,11 +2228,11 @@ const Loc = {
     return new Promise(resolve => {
       let best = null, id = null, settle = null, finished = false;
       const done = () => { if (finished) return; finished = true; if (id != null) navigator.geolocation.clearWatch(id); clearTimeout(hard); clearTimeout(settle); resolve(best); };
-      const hard = setTimeout(done, waitPrompt ? 45000 : 15000);
+      const hard = setTimeout(done, waitPrompt ? 30000 : 8000);
       id = navigator.geolocation.watchPosition(pos => {
         if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
-        if (pos.coords.accuracy <= 50) return done();
-        if (!settle) settle = setTimeout(done, 6000);
+        if (pos.coords.accuracy <= 80) return done();
+        if (!settle) settle = setTimeout(done, 2500);
       }, err => { if (err.code === 1 || !best) done(); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
     });
   },
@@ -2245,29 +2244,25 @@ const Loc = {
     if (!pos) return null;
     ls.set('vincenink.gpsOK', '1');
     const lat = +pos.coords.latitude.toFixed(4), lon = +pos.coords.longitude.toFixed(4);
-    return { lat, lon, acc: Math.round(pos.coords.accuracy), name: (await this.nameOf(lat, lon)) || t('Vị trí của bạn'), src: 'gps' };
+    return { lat, lon, acc: Math.round(pos.coords.accuracy), name: '', src: 'gps' };
   },
   async ip() {
-    try { // Vercel gắn sẵn vị trí theo IP vào request
-      const j = await getJSON('api/geo', 5000);
-      if (j && j.lat != null) return { lat: +(+j.lat).toFixed(3), lon: +(+j.lon).toFixed(3), name: (await this.nameOf(j.lat, j.lon)) || j.city || '', src: 'ip' };
-    } catch (e) { /* không chạy trên Vercel */ }
-    try { // BigDataCloud tự đoán theo IP khi không gửi toạ độ
-      const j = await getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=${LANG}`);
-      if (j && j.latitude != null) return { lat: +(+j.latitude).toFixed(3), lon: +(+j.longitude).toFixed(3), name: placeName(j), src: 'ip' };
-    } catch (e) { /* */ }
-    return null;
+    // Hai nguồn IP chạy song song, lấy cái về trước
+    const vercel = getJSON('api/geo', 3000).then(j => j && j.lat != null ? { lat: +(+j.lat).toFixed(3), lon: +(+j.lon).toFixed(3), name: j.city || '', src: 'ip' } : Promise.reject());
+    const bdc = getJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=${LANG}`, 4000).then(j => j && j.latitude != null ? { lat: +(+j.latitude).toFixed(3), lon: +(+j.longitude).toFixed(3), name: placeName(j), named: true, src: 'ip' } : Promise.reject());
+    try { return await Promise.any([vercel, bdc]); } catch (e) { return null; }
   },
-  async get({ ask = false, force = false } = {}) {
-    let c = null; try { c = JSON.parse(ls.get('vincenink.loc', 'null')); } catch (e) { /* */ }
-    if (!force && c && c.src === 'gps' && Date.now() - c.at < 10 * 6e4) return (this.cur = c);
-    if (!force && c && c.src !== 'gps' && !ask && Date.now() - c.at < 36e5) return (this.cur = c);
-    const r = (await this.gps(ask)) || (c && c.src === 'gps' ? c : null) || (await this.ip()) || c;
-    if (r) { if (r !== c) r.at = Date.now(); ls.set('vincenink.loc', JSON.stringify(r)); }
-    return (this.cur = r || null);
+  cached() { try { return JSON.parse(ls.get('vincenink.loc', 'null')); } catch (e) { return null; } },
+  save(r) { if (r) { r.at = r.at || Date.now(); ls.set('vincenink.loc', JSON.stringify(r)); this.cur = r; } return r; },
+  /* Tên khu vực: nhớ theo toạ độ (~100 m) để khỏi gọi lại */
+  async placeFor(loc) {
+    if (loc.named && loc.name) return loc.name;
+    const k = `vincenink.place.${LANG}.${(+loc.lat).toFixed(3)},${(+loc.lon).toFixed(3)}`, hit = ls.get(k, '');
+    if (hit) return hit;
+    const n = await this.nameOf(loc.lat, loc.lon); if (n) ls.set(k, n);
+    return n || loc.name || '';
   },
 };
-
 /* ---- Thời tiết (Open-Meteo, miễn phí, không cần khoá) ---- */
 const WX_CODES = [
   [[0], 'Trời quang', '☀️'], [[1], 'Ít mây', '🌤️'], [[2], 'Có mây', '⛅'], [[3], 'Nhiều mây', '☁️'],
@@ -2276,32 +2271,73 @@ const WX_CODES = [
   [[80, 81, 82], 'Mưa rào', '🌦️'], [[95, 96, 99], 'Dông', '⛈️'],
 ];
 const wxInfo = code => { for (const [cs, vi, e] of WX_CODES) if (cs.includes(code)) return { desc: t(vi), emoji: e, rainy: code >= 51 }; return { desc: '', emoji: '🌡️', rainy: false }; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 const Weather = {
   data: null, locating: false,
-  async load({ ask = false, force = false } = {}) {
-    const loc = await Loc.get({ ask, force });
-    if (!loc) { this.data = null; return null; }
-    let cache = null; try { cache = JSON.parse(ls.get('vincenink.wx', 'null')); } catch (e) { /* */ }
-    const same = cache && cache.lat === loc.lat && cache.lon === loc.lon;
-    if (!force && same && cache.day === todayStr() && Date.now() - cache.at < 30 * 6e4) { this.data = { ...cache, city: loc.name || cache.city, src: loc.src }; return this.data; }
-    try {
-      const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`);
+  readCache() { try { return JSON.parse(ls.get('vincenink.wx', 'null')); } catch (e) { return null; } },
+  /* Hiện ngay dữ liệu đã lưu (nếu là của hôm nay) — không phải chờ mạng */
+  useCache() {
+    const c = this.readCache(), l = Loc.cached();
+    if (c && c.day === todayStr()) { this.data = c; if (l) Loc.cur = l; }
+    return this.data;
+  },
+  /* Thời tiết + tên khu vực chạy song song cho một vị trí */
+  async fetchFor(loc) {
+    const c = this.readCache();
+    const near = c && Math.abs(c.lat - loc.lat) < 0.02 && Math.abs(c.lon - loc.lon) < 0.02 && c.day === todayStr();
+    const wxP = near && Date.now() - c.at < 30 * 6e4 ? Promise.resolve(null)
+      : getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`, 6000).catch(() => null);
+    const [j, name] = await Promise.all([wxP, Loc.placeFor(loc)]);
+    loc.name = name || loc.name; Loc.save(loc);
+    let d;
+    if (j && j.current) {
       const D = j.daily || {};
-      const d = {
-        at: Date.now(), day: todayStr(), lat: loc.lat, lon: loc.lon, city: loc.name, src: loc.src,
+      d = {
+        at: Date.now(), day: todayStr(), lat: loc.lat, lon: loc.lon,
         temp: Math.round(j.current.temperature_2m), feels: Math.round(j.current.apparent_temperature), code: j.current.weather_code,
         days: (D.time || []).map((date, i) => ({ date, code: D.weather_code[i], max: Math.round(D.temperature_2m_max[i]), min: Math.round(D.temperature_2m_min[i]), rain: D.precipitation_probability_max ? (D.precipitation_probability_max[i] ?? 0) : 0 })),
       };
-      ls.set('vincenink.wx', JSON.stringify(d)); this.data = d; return d;
-    } catch (e) { this.data = same ? cache : null; return this.data; }
+    } else if (near) d = { ...c };
+    else return this.data;
+    d.city = loc.name; d.src = loc.src;
+    ls.set('vincenink.wx', JSON.stringify(d)); this.data = d; return d;
+  },
+  /* Lấy vị trí + thời tiết nhanh: GPS và IP chạy song song.
+     Chờ GPS tối đa ~3,5 giây; chưa có thì dùng vị trí tạm, GPS về sau sẽ tự cập nhật. */
+  refresh({ ask = false, force = false } = {}) {
+    const c = Loc.cached();
+    if (!force && c && c.src === 'gps' && Date.now() - c.at < 10 * 6e4) {
+      Loc.cur = c; return { quick: this.fetchFor(c), final: Promise.resolve(this.data) };
+    }
+    const gpsP = Loc.gps(ask).catch(() => null);
+    const ipP = Loc.ip();
+    const quick = (async () => {
+      let loc = await Promise.race([gpsP, sleep(ask && !c ? 3500 : 2500).then(() => null)]);
+      if (!loc) loc = (c && c.src === 'gps' && Date.now() - c.at < 6 * 36e5) ? c : (await ipP) || c;
+      if (loc) await this.fetchFor(loc);
+      return this.data;
+    })();
+    const final = (async () => {
+      await quick;
+      const g = await gpsP;
+      if (g && (!this.data || this.data.src !== 'gps' || Math.abs(this.data.lat - g.lat) > 0.005 || Math.abs(this.data.lon - g.lon) > 0.005)) {
+        const before = this.data && this.data.city; g.at = Date.now();
+        await this.fetchFor(g); refreshDay();
+        if (this.data && this.data.city !== before && Daily.started) Daily.load();
+      } else if (g) Loc.save({ ...Loc.cur, ...g, name: (Loc.cur && Loc.cur.name) || g.name, at: Date.now() });
+      return this.data;
+    })();
+    return { quick, final };
   },
   /* Bấm "Vị trí chính xác": hỏi quyền GPS của trình duyệt */
   async locate(silent) {
     this.locating = true; refreshDay();
     const before = this.data && this.data.city;
-    const d = await this.load({ ask: true, force: true });
+    const g = await Loc.gps(true);
+    if (g) { g.at = Date.now(); await this.fetchFor(g); }
     this.locating = false;
-    if (!d || d.src !== 'gps') { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí'), true); }
+    const d = this.data;
+    if (!g) { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí'), true); }
     else toast(t('Đã cập nhật thời tiết cho {c}', { c: d.city }));
     refreshDay(); if (d && d.city !== before) Daily.load();
   },
@@ -2476,14 +2512,14 @@ const fallbackNote = (salt = 0) => { const [title, body] = pickDay(FALLBACK[LANG
 const Daily = {
   loading: false, cur: null, salt: 0,
   key() { return `vincenink.ai.daily2.${todayStr()}.${LANG}.${dayPart()}.${hashStr(JSON.stringify([Weather.data && Weather.data.city, todayLessons().map(o => [o.start, o.owner, o.subject, o.off])]))}`; },
-  raw() { return this.cur || ls.get(this.key(), '') || (AI.status === 'on' && this.loading ? '' : fallbackDaily(this.salt)); },
+  raw() { return this.cur || ls.get(this.key(), '') || (!this.started || (AI.status === 'on' && this.loading) ? '' : fallbackDaily(this.salt)); },
   text() { return parseDaily(this.raw()).text; },
   lines() { return parseDaily(this.raw()).lines; },
   mood() { return parseDaily(this.raw()).mood || moodGuess(); },
   async load(force) {
-    this.cur = null;
-    if (!force && ls.get(this.key(), '')) { renderTodayCard(); return; }
-    if (AI.status !== 'on') { if (force) this.salt++; renderTodayCard(); return; }
+    this.started = true; this.cur = null;
+    if (!force && ls.get(this.key(), '')) { refreshDay(); return; }
+    if (AI.status !== 'on') { if (force) this.salt++; refreshDay(); return; }
     this.loading = true; renderTodayCard();
     const tones = LANG === 'vi'
       ? ['thân thiết như bạn thân lâu năm, xưng "tớ" gọi "cậu", hơi trêu nhẹ', 'ngọt ngào, quan tâm như người yêu nhắn tin (tình cảm nhưng tinh tế, không sến)', 'dịu dàng, vỗ về như người thương đang nhắc nhở', 'nhắng nhít, lầy lội dễ thương như cạ cứng', 'ấm áp, chân thành như người bạn luôn ở bên']
@@ -2868,7 +2904,7 @@ function renderGreet() {
   const oldBody = $('.gr-body', el), scroll = oldBody ? oldBody.scrollTop : 0;
   const now = new Date(), part = dayPart(), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
   const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const paras = Weather.locating && !Daily.cur && !ls.get(Daily.key(), '') ? [] : Daily.lines();
+  const paras = Daily.lines();
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
   el.innerHTML = `<article class="greet-card">
     <header class="gr-hero gr-${part}">
@@ -3144,13 +3180,10 @@ async function init() {
   if (innerWidth <= 900) $('#app').classList.add('focus');
   bindChat(); Chat.renderState();
   if (isNewUser()) showWelcome(true); else showGreet(true);
-  AI.check().then(async () => {
-    // Lấy GPS chính xác trước (hỏi quyền nếu cần), rồi mới viết lời nhắn theo đúng thời tiết chỗ mình
-    const st = await Loc.geoState();
-    Weather.locating = st !== 'denied' && !!navigator.geolocation; refreshDay();
-    await Weather.load({ ask: st !== 'denied' });
-    Weather.locating = false; refreshDay(); Daily.load(); Note.load();
-  });
+  // Hiện ngay thời tiết đã lưu, rồi lấy vị trí + thời tiết mới SONG SONG với kiểm tra AI
+  Weather.useCache(); Weather.locating = !Weather.data; refreshDay();
+  const wxP = Loc.geoState().then(st => Weather.refresh({ ask: st !== 'denied' }).quick).catch(() => null);
+  Promise.all([AI.check(), wxP]).then(() => { Weather.locating = false; refreshDay(); Daily.load(); Note.load(); });
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
