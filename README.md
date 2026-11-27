@@ -86,6 +86,12 @@ Các lựa chọn khác (trang tự chọn theo thứ tự Gemini → Groq → C
 Khoá API chỉ nằm trên máy chủ Vercel (`api/assistant.js`), không lộ ra trình duyệt.
 Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để cải thiện sản phẩm. Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi được gửi tới AI; dữ liệu khác vẫn chỉ nằm trên máy bạn.
 
+## Lời chào, thời tiết & tâm trạng
+
+- Mỗi lần mở app, Vincenink chào bạn bằng giọng thân mật như bạn thân/người thương (xưng "tớ – cậu"), đổi theo buổi sáng/trưa/chiều/tối/khuya.
+- **Thời tiết 3 ngày** lấy miễn phí từ [Open-Meteo](https://open-meteo.com) (không cần khoá API). Nhập **Thành phố** trong *Hồ sơ* để xem đúng nơi bạn ở; nếu chưa nhập, app dùng vị trí trình duyệt (nếu đã cho phép) hoặc múi giờ Việt Nam → TP. Hồ Chí Minh. Dữ liệu được lưu tạm 1 giờ.
+- **Đoán tâm trạng** hôm nay dựa trên số tiết, thứ trong tuần, buổi và thời tiết — AI viết (dòng `MOOD:`), nếu chưa kết nối AI thì app tự đoán.
+
 ## Học phí
 
 - Thẻ **Học phí** của mỗi học sinh:

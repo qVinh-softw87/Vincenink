@@ -89,8 +89,14 @@ function systemPrompt(mode, lang, ctx, tone) {
   const data = (vi ? '\n\nDữ liệu hiện tại của giáo viên (JSON):\n' : '\n\nTeacher context (JSON):\n') + ctxText;
   if (mode === 'daily') {
     return base + data + (vi
-      ? `\n\nNhiệm vụ: viết LỜI CHÀO cho giáo viên khi vừa mở ứng dụng, 2–3 câu, tối đa 55 từ. Đúng thời điểm "dayPart" (morning = buổi sáng, noon = buổi trưa, afternoon = buổi chiều, evening = buổi tối, night = đêm khuya: nhắc nghỉ ngơi). Giọng văn lần này: ${tone || 'ấm áp, tích cực'}. Mỗi lần viết một kiểu mở đầu khác nhau, đừng lặp lại khuôn mẫu. Nếu "todayLessons" có buổi học, nhắc ngắn gọn số buổi và buổi sắp tới (giờ, học sinh, môn); nếu không có, chúc một ngày nhẹ nhàng để chuẩn bị bài. Kết thúc bằng một lời chúc năng suất. Tối đa 1–2 emoji. Chỉ trả về đoạn văn, không tiêu đề, không markdown.`
-      : `\n\nTask: write a GREETING for the teacher who just opened the app: 2–3 sentences, at most 55 words. Match "dayPart" (morning, noon, afternoon, evening, night = late night: suggest rest). Tone this time: ${tone || 'warm and positive'}. Vary the opening every time. If "todayLessons" has lessons, briefly mention how many and the next one (time, student, subject); otherwise wish them a calm prep day. End with a wish for a productive day. At most 1–2 emoji. Return only the paragraph, no title, no markdown.`);
+      ? `\n\nNhiệm vụ: viết LỜI CHÀO khi người dạy vừa mở ứng dụng. Trong lời chào này hãy nói chuyện thật gần gũi như bạn thân hoặc người yêu đang nhắn tin: xưng "tớ", gọi "cậu" (hoặc gọi tên riêng nếu có), KHÔNG gọi "thầy/cô", không khách sáo. Quan tâm thật lòng, có thể trêu nhẹ, tình cảm nhưng tinh tế, không sến, không suồng sã quá đà. Giọng văn lần này: ${tone || 'ấm áp, thân thiết'}.
+Định dạng BẮT BUỘC:
+Dòng 1: "MOOD: <1 emoji> <2–5 từ>" — đoán tâm trạng hôm nay của người dạy dựa trên số tiết trong "todayLessons", thứ trong tuần, "dayPart", thời tiết "weather" (gợi ý tham khảo: "moodHint").
+Dòng 2: lời chào 2–3 câu, tối đa 60 từ. Đúng thời điểm "dayPart" (morning = sáng, noon = trưa, afternoon = chiều, evening = tối, night = khuya: dỗ đi ngủ). Nếu có "weather", nhắc thời tiết một cách tự nhiên kèm lời dặn (mưa thì mang ô, nóng thì uống nước, lạnh thì mặc ấm). Nếu có buổi học, nhắc số buổi và buổi sắp tới (giờ, học sinh); nếu không, rủ thong thả nghỉ ngơi. Kết bằng một câu cổ vũ ngọt ngào. Mỗi lần mở đầu một kiểu khác. Tối đa 2 emoji. Không tiêu đề, không markdown.`
+      : `\n\nTask: write a GREETING for the teacher who just opened the app. Talk like a close best friend or a loving partner texting them: intimate, caring, a little teasing, tender but not cheesy; use their first name if known. Tone this time: ${tone || 'warm and close'}.
+REQUIRED format:
+Line 1: "MOOD: <1 emoji> <2–5 words>" — guess the teacher's mood today from the number of "todayLessons", weekday, "dayPart" and "weather" (hint: "moodHint").
+Line 2: the greeting, 2–3 sentences, at most 60 words. Match "dayPart" (night = coax them to sleep). If "weather" is given, mention it naturally with caring advice (umbrella, water, warm clothes). Mention lessons count and the next one if any; otherwise invite them to relax. End with a sweet word of encouragement. Vary the opening. At most 2 emoji. No title, no markdown.`);
   }
   if (mode === 'note') {
     return base + data + (vi
