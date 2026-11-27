@@ -262,6 +262,47 @@ const EN = {
   'Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi của thầy/cô được gửi tới AI để trả lời.': 'When you use the assistant, student names, today’s schedule and your question are sent to the AI to answer.',
   'Mã truy cập trợ lý': 'Assistant access code',
   'Hỏi Vincenink điều gì đó…': 'Ask Vincenink anything…',
+  'Nền sáng dịu mắt': 'Soft light paper',
+  'Khuya rồi đó': 'It’s late',
+  'Bắt đầu trong 3 bước': 'Get started in 3 steps',
+  'Cập nhật thông tin để Vincenink gửi lời chào, nhắc lịch học và ghi chú mỗi ngày cho thầy/cô.': 'Fill in your details so Vincenink can greet you, remind you of lessons and send a daily note.',
+  'Cập nhật hồ sơ': 'Update your profile',
+  'Tên và ảnh đại diện để Vincenink chào đúng thầy/cô': 'Name and photo so Vincenink can greet you',
+  'Mỗi em có bảng, tài liệu, lịch và học phí riêng': 'Each gets boards, files, schedule and fees',
+  'Để nhận lời nhắc tiết học mỗi ngày': 'To get daily lesson reminders',
+  'Lời chào khác': 'Another greeting',
+  'Hôm nay không có tiết nào — dành thời gian soạn bài và nghỉ ngơi nhé.': 'No lessons today — time to prepare and rest.',
+  'Hoàn thiện thông tin để nhận nhắc lịch đầy đủ': 'Complete your details for full reminders',
+  'Hỏi trợ lý': 'Ask assistant',
+  'Bắt đầu dạy': 'Start teaching',
+  'Học phí': 'Fees',
+  'Học phí mỗi buổi': 'Fee per lesson',
+  'VD: 200000': 'e.g. 20',
+  'Tháng trước': 'Previous month',
+  'Tháng sau': 'Next month',
+  'Tháng {m}': 'Month {m}',
+  'Về tháng này': 'Back to this month',
+  'Đã dạy': 'Taught',
+  'Dự kiến cả tháng': 'Planned this month',
+  'Buổi cộng thêm': 'Extra lessons',
+  'Tính tiền': 'Billable',
+  'buổi': 'lessons',
+  'Thành tiền': 'Amount due',
+  'Dự kiến cả tháng: {x}': 'Projected for the month: {x}',
+  '{f} × {n} buổi': '{f} × {n} lessons',
+  'Đã thu tiền tháng này': 'Paid for this month',
+  'Chưa thu': 'Unpaid',
+  'Đã thu': 'Paid',
+  'Các buổi trong tháng': 'Lessons this month',
+  'Sắp tới': 'Upcoming',
+  'Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.': 'No lessons this month. Add a schedule in the Schedule tab to count lessons automatically.',
+  'Tổng học phí các học sinh · tháng {m}': 'All students’ fees · month {m}',
+  'Tổng cộng': 'Total',
+  'Đã thu {x}': 'Collected {x}',
+  'Chưa đặt học phí': 'No fee set',
+  'Thêm học sinh để tính học phí.': 'Add a student to track fees.',
+  'Số buổi tự đếm từ lịch học (cố định, đổi lịch, buổi riêng), không tính buổi nghỉ. Dùng “Buổi cộng thêm” cho buổi dạy ngoài lịch.': 'Lessons are counted from the schedule (weekly, moved and one-off), excluding cancelled ones. Use “Extra lessons” for lessons outside the schedule.',
+  'Tháng này': 'This month',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -339,6 +380,7 @@ const ICONS = {
   palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   chev: '<path d="m6 9 6 6 6-6"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
   refresh: '<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M8 16H3v5"/>',
   send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   sparkle: '<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 15l.7 2.1L22 18l-2.3.8L19 21l-.7-2.2L16 18l2.3-.9z"/>',
@@ -366,12 +408,12 @@ const THEMES = {
   dark: { paper: '#1F1C18', line: 'rgba(230,205,170,0.08)', strong: 'rgba(230,205,170,0.17)', dot: 'rgba(230,205,170,0.24)', margin: 'rgba(230,120,100,0.3)', ph: '#2E2923', sel: '#D79A63', dark: true },
   chalk: { paper: '#233B31', line: 'rgba(235,245,230,0.09)', strong: 'rgba(235,245,230,0.19)', dot: 'rgba(235,245,230,0.26)', margin: 'rgba(250,150,130,0.35)', ph: '#2D473C', sel: '#E8C07A', dark: true },
 };
-const THEME_OPTS = [['system', 'Theo hệ thống'], ['light', 'Sáng (be)'], ['dark', 'Tối'], ['chalk', 'Bảng phấn xanh']];
+const THEME_OPTS = [['light', 'Sáng'], ['dark', 'Tối'], ['chalk', 'Bảng phấn xanh']];
 // Màu mực tối được làm sáng khi hiển thị trên nền tối (dữ liệu gốc giữ nguyên để in/xuất)
 const DARK_INK = { '#2F2A25': '#EEE6D9', '#1F4E8C': '#79A7E6', '#7B4FA0': '#B88CDD', '#2E7D4F': '#62C08A', '#C0392B': '#F0705F', '#5B8DB8': '#8FB9E0' };
 let RT = THEMES.light;
 const inkColor = c => (RT.dark && DARK_INK[c]) || c;
-let themePref = 'system'; // luôn theo hệ thống khi vào trang; đổi trong phiên thì giữ đến khi tải lại
+let themePref = 'light'; // mặc định giao diện sáng mỗi lần vào trang
 const mq = matchMedia('(prefers-color-scheme: dark)');
 const resolvedTheme = () => THEMES[themePref] ? themePref : (mq.matches ? 'dark' : 'light');
 
@@ -1425,6 +1467,7 @@ window.addEventListener('beforeunload', () => { doSave(); });
 function updateTitle() {
   if (document.hidden) { document.title = t('✏️ Bài giảng đang chờ bạn…') + ' | Vincenink'; return; }
   if (!$('#welcome').classList.contains('hidden')) { document.title = `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`; return; }
+  if (!$('#greetPop').classList.contains('hidden')) { document.title = `${t(DAY_HELLO[dayPart()])}! · Vincenink`; return; }
   const b = S.boards.find(x => x.id === S.boardId);
   document.title = b ? `${b.title} · ${ownerName(b.studentId)} | Vincenink` : `Vincenink – ${t('Bảng trắng dạy học trực tuyến')}`;
 }
@@ -1537,8 +1580,9 @@ async function deleteStudent(st) {
 /* =====================================================================
    Lời chúc mỗi ngày + tiết học hôm nay (thanh bên, phía dưới)
    ===================================================================== */
-const dayPart = (h = new Date().getHours()) => h < 11 ? 'morning' : h < 13 ? 'noon' : h < 18 ? 'afternoon' : 'evening';
-const DAY_HELLO = { morning: 'Chào buổi sáng', noon: 'Chào buổi trưa', afternoon: 'Chào buổi chiều', evening: 'Chào buổi tối' };
+const dayPart = (h = new Date().getHours()) => h < 4 ? 'night' : h < 11 ? 'morning' : h < 13 ? 'noon' : h < 18 ? 'afternoon' : h < 22 ? 'evening' : 'night';
+const DAY_HELLO = { morning: 'Chào buổi sáng', noon: 'Chào buổi trưa', afternoon: 'Chào buổi chiều', evening: 'Chào buổi tối', night: 'Khuya rồi đó' };
+const DAY_ICON = { morning: 'sun2', noon: 'sun2', afternoon: 'sunset', evening: 'moon', night: 'moon' };
 function todayLessons() {
   const now = new Date(), ds = dstr(now);
   const day = weekOccurrences('all', weekStart(now)).find(d => d.date === ds);
@@ -1553,7 +1597,7 @@ function renderTodayCard() {
   const msg = Daily.text();
   el.innerHTML = `
     <div class="dc-top">
-      <span class="dc-ic dc-${part}">${ic(part === 'evening' ? 'moon' : part === 'afternoon' ? 'sunset' : 'sun2', 16)}</span>
+      <span class="dc-ic dc-${part}">${ic(DAY_ICON[part], 16)}</span>
       <div><b>${t(DAY_HELLO[part])}${name ? ',' : '!'}</b>${name ? `<b class="dc-name">${esc(name)} 👋</b>` : ''}<small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
       <button class="icon-btn sm dc-refresh ${Daily.loading ? 'spin' : ''}" id="dcRefresh" title="${t('Viết lời chúc khác')}">${ic('refresh', 15)}</button>
     </div>
@@ -1577,7 +1621,7 @@ setInterval(() => renderTodayCard(), 60000);
 
 /* ---- Ghi chú AI (khoảng giữa thanh bên) ---- */
 function renderAiNote() {
-  const el = $('#aiNote'); if (!el) return;
+  const el = $('#aiNote'); if (!el) return; // (đã bỏ khỏi thanh bên, giữ hàm cho tương thích)
   const n = Note.value();
   el.innerHTML = `
     <div class="an-h"><span class="an-ic" title="AI">${ic('sparkle', 14)}</span><span>${t('Ghi chú hôm nay')}</span>
@@ -1593,7 +1637,7 @@ function renderAiNote() {
 
 const firstStudent = () => [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'))[0];
 function renderSidebar() {
-  renderTodayCard(); renderAiNote();
+  renderTodayCard();
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
@@ -1633,12 +1677,12 @@ function renderPanel() {
     </div>
     ${next ? `<div class="next-lesson">${ic('clock', 15)}${t('Buổi tới: {x}', { x: esc(next) })}</div>` : ''}
     <div class="tabs" role="tablist">
-      ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['notes', 'note', 'Ghi chú']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
+      ${[['boards', 'board', 'Bảng'], ['files', 'file', 'Tài liệu'], ['sched', 'calendar', 'Lịch'], ['fee', 'wallet', 'Học phí'], ['notes', 'note', 'Ghi chú']].map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'active' : ''}" data-tab="${k}" role="tab">${ic(i, 15)}${t(l)}</button>`).join('')}
     </div>
     <div class="panel-body" id="panelBody"></div>
     <div class="resizer" data-resize="panel" title="${t('Kéo để đổi độ rộng · nhấp đúp để về mặc định')}"></div>`;
   const body = $('#panelBody');
-  ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, notes: renderNotesTab })[S.tab](body);
+  ({ boards: renderBoardsTab, files: renderFilesTab, sched: renderSchedTab, fee: renderFeeTab, notes: renderNotesTab })[S.tab](body);
 }
 $('#panel').addEventListener('click', e => {
   const tb = e.target.closest('[data-tab]'); if (tb) { S.tab = tb.dataset.tab; renderPanel(); return; }
@@ -1736,6 +1780,85 @@ async function addFiles(files, studentId = S.studentId) {
     try { await DB.put('files', f); S.files.push(f); n++; } catch (err) { toast(t('Không lưu được {n}', { n: f.name }), true); }
   }
   if (n) { S.tab = 'files'; renderPanel(); toast(t('Đã lưu {c} tài liệu cho {n}', { c: n, n: ownerName(studentId) })); }
+}
+
+/* =====================================================================
+   Học phí: tiền mỗi buổi × số buổi đã dạy trong tháng
+   ===================================================================== */
+const ymKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const fmtMoney = n => Math.round(n || 0).toLocaleString('vi-VN') + ' đ';
+const parseMoney = v => { const n = parseInt(String(v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
+function monthLessons(sid, y, m) {
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0), out = [];
+  for (let ws = weekStart(first); ws <= last; ws = addDays(ws, 7)) {
+    for (const day of weekOccurrences(sid, ws)) {
+      if (day.d.getMonth() !== m || day.d.getFullYear() !== y) continue;
+      day.list.forEach(o => out.push(o));
+    }
+  }
+  return out;
+}
+function feeStats(st, y, m) {
+  const now = new Date(), today = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, key = `${y}-${pad(m + 1)}`;
+  const list = monthLessons(st.id, y, m);
+  const taughtFn = o => !o.off && (o.date < today || (o.date === today && o.end <= hm));
+  const taught = list.filter(taughtFn).length, planned = list.filter(o => !o.off).length;
+  const adj = (st.feeAdj && st.feeAdj[key]) || 0, fee = st.fee || 0;
+  return { list, taughtFn, taught, planned, adj, fee, key, billable: Math.max(0, taught + adj), amount: fee * Math.max(0, taught + adj), projected: fee * Math.max(0, planned + adj), paid: !!(st.feePaid && st.feePaid[key]) };
+}
+function renderFeeTab(body) {
+  const st = studentById(S.studentId);
+  if (!st) { body.innerHTML = `<div class="empty"><div class="big">${t('Học phí')}</div>${t('Thêm học sinh để tính học phí.')}</div>`; return; }
+  if (!S.feeMonth) S.feeMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const y = S.feeMonth.getFullYear(), m = S.feeMonth.getMonth(), isThis = ymKey(S.feeMonth) === ymKey(new Date());
+  const f = feeStats(st, y, m), mLabel = `${pad(m + 1)}/${y}`, today = todayStr();
+  const all = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map(s => ({ s, f: feeStats(s, y, m) }));
+  const sum = all.reduce((a, x) => a + x.f.amount, 0), got = all.filter(x => x.f.paid).reduce((a, x) => a + x.f.amount, 0);
+  body.innerHTML = `
+    <div class="fee-rate">
+      <label for="feeInput">${ic('wallet', 15)}${t('Học phí mỗi buổi')}</label>
+      <div class="fee-in"><input id="feeInput" inputmode="numeric" value="${f.fee ? f.fee.toLocaleString('vi-VN') : ''}" placeholder="${t('VD: 200000')}"><span>đ</span></div>
+    </div>
+    <div class="week-nav">
+      <button class="icon-btn sm" data-fm="-1" title="${t('Tháng trước')}">${ic('left', 18)}</button>
+      <div class="wl">${t('Tháng {m}', { m: mLabel })}<small>${isThis ? t('Tháng này') : `<a href="#" data-fm="0">${t('Về tháng này')}</a>`}</small></div>
+      <button class="icon-btn sm" data-fm="1" title="${t('Tháng sau')}">${ic('right', 18)}</button>
+    </div>
+    <div class="fee-stats">
+      <div><b>${f.taught}</b><small>${t('Đã dạy')}</small></div>
+      <div><b>${f.planned}</b><small>${t('Dự kiến cả tháng')}</small></div>
+      <div class="adj"><span class="adj-ctl"><button data-adj="-1" aria-label="-1">−</button><b>${f.adj > 0 ? '+' + f.adj : f.adj}</b><button data-adj="1" aria-label="+1">+</button></span><small>${t('Buổi cộng thêm')}</small></div>
+    </div>
+    <div class="fee-total ${f.paid ? 'paid' : ''}">
+      <small>${t('Thành tiền')} · ${t('Tháng {m}', { m: mLabel })}</small>
+      <div class="ft-amt">${fmtMoney(f.amount)}</div>
+      <div class="ft-formula">${f.fee ? t('{f} × {n} buổi', { f: fmtMoney(f.fee), n: f.billable }) : t('Chưa đặt học phí')}</div>
+      <div class="ft-proj">${t('Dự kiến cả tháng: {x}', { x: fmtMoney(f.projected) })}</div>
+      <label class="switch ft-paid"><input type="checkbox" id="feePaid" ${f.paid ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Đã thu tiền tháng này')}</span></label>
+    </div>
+    <div class="hint">${t('Số buổi tự đếm từ lịch học (cố định, đổi lịch, buổi riêng), không tính buổi nghỉ. Dùng “Buổi cộng thêm” cho buổi dạy ngoài lịch.')}</div>
+    <div class="sec-h">${ic('calendar', 15)}${t('Các buổi trong tháng')} <span class="muted">${f.list.length}</span></div>
+    ${f.list.length ? `<div class="fee-list">${f.list.map(o => {
+      const done = f.taughtFn(o), state = o.off ? 'off' : done ? 'done' : 'up';
+      return `<div class="fee-row ${state}"><span class="fr-d">${WDS[LANG][dow(parseD(o.date))]} ${shortDate(o.date)}</span><span class="fr-t">${o.start}–${o.end}</span><span class="fr-s">${esc(o.subject || '')}</span><em>${t(o.off ? 'Nghỉ' : done ? 'Đã dạy' : 'Sắp tới')}</em></div>`;
+    }).join('')}</div>` : `<div class="hint">${t('Chưa có buổi nào trong tháng này. Ghi lịch ở thẻ Lịch để tự đếm số buổi.')}</div>`}
+    <div class="sec-h">${ic('wallet', 15)}${t('Tổng học phí các học sinh · tháng {m}', { m: mLabel })}</div>
+    <div class="fee-sum">
+      ${all.map(({ s, f: x }) => `<button class="fs-row ${s.id === st.id ? 'cur' : ''}" data-fs="${s.id}">${avatarHTML(s.id)}<span class="fs-n">${esc(s.name)}<small>${x.fee ? t('{f} × {n} buổi', { f: fmtMoney(x.fee), n: x.billable }) : t('Chưa đặt học phí')}</small></span><span class="fs-a"><b>${fmtMoney(x.amount)}</b><em class="${x.paid ? 'ok' : ''}">${t(x.paid ? 'Đã thu' : 'Chưa thu')}</em></span></button>`).join('')}
+      <div class="fs-total"><span>${t('Tổng cộng')}</span><b>${fmtMoney(sum)}</b><small>${t('Đã thu {x}', { x: fmtMoney(got) })}</small></div>
+    </div>`;
+  const inp = $('#feeInput', body);
+  inp.addEventListener('input', () => { const n = parseMoney(inp.value); inp.value = n ? n.toLocaleString('vi-VN') : ''; });
+  inp.addEventListener('change', async () => { st.fee = parseMoney(inp.value); await DB.put('students', st); renderFeeTab(body); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+  $('#feePaid', body).onchange = async e => { st.feePaid = st.feePaid || {}; if (e.target.checked) st.feePaid[f.key] = true; else delete st.feePaid[f.key]; await DB.put('students', st); renderFeeTab(body); };
+  body.onclick = async e => {
+    const fm = e.target.closest('[data-fm]');
+    if (fm) { e.preventDefault(); const v = +fm.dataset.fm; S.feeMonth = v === 0 ? new Date(new Date().getFullYear(), new Date().getMonth(), 1) : new Date(y, m + v, 1); return renderFeeTab(body); }
+    const a = e.target.closest('[data-adj]');
+    if (a) { st.feeAdj = st.feeAdj || {}; const v = (st.feeAdj[f.key] || 0) + +a.dataset.adj; if (v) st.feeAdj[f.key] = Math.max(-f.taught, v); else delete st.feeAdj[f.key]; await DB.put('students', st); return renderFeeTab(body); }
+    const fs = e.target.closest('[data-fs]'); if (fs && fs.dataset.fs !== st.id) { S.tab = 'fee'; selectStudent(fs.dataset.fs); }
+  };
 }
 
 /* ---- Ghi chú ---- */
@@ -2004,7 +2127,7 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
         const dw = +($('[name=dow]:checked', body)?.value ?? curDow);
         const data = { start, end, subject: v('subject').trim(), note: v('note').trim() };
         if (isEdit) Object.assign(ref, data, kind === 'fixed' ? { dow: dw } : { date: v('date') });
-        else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: dw, ...data });
+        else if (kind === 'fixed') sc.fixed.push({ id: uid(), dow: dw, from: dstr(weekStart(new Date())), ...data }); // chỉ tính từ tuần đang ghi lịch
         else { sc.sessions.push({ id: uid(), date: v('date'), ...data }); S.week = weekStart(parseD(v('date'))); }
         saveSched(own); renderPanel();
         if (!isEdit) toast(t('Đã ghi lịch cho {n}', { n: ownerName(own) }));
@@ -2060,10 +2183,11 @@ const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCod
 const FALLBACK = {
   vi: {
     hello: {
-      morning: ['Một ngày mới thật nhiều năng lượng đang chờ thầy/cô ☀️', 'Pha một tách trà ấm rồi mình cùng bắt đầu nhé.', 'Ngày mới, bài giảng mới — Vincenink luôn sẵn sàng cùng thầy/cô.'],
+      morning: ['Một ngày mới thật nhiều năng lượng đang chờ thầy/cô ☀️', 'Hey bro, cà phê chưa? Ngày mới lên đồ dạy học thôi ☕', 'Ngày mới, bài giảng mới — Vincenink luôn sẵn sàng cùng thầy/cô.', 'Dậy rồi đó hả? Hôm nay mình quẩy hết mình với học trò nha 💪'],
       noon: ['Nghỉ trưa một chút để nạp lại năng lượng nhé.', 'Đã qua nửa ngày rồi, thầy/cô làm tốt lắm!'],
-      afternoon: ['Buổi chiều nhẹ nhàng, giữ nhịp thật đều nhé.', 'Chiều nay mình cùng hoàn thành nốt các buổi dạy nào.'],
-      evening: ['Buổi tối ấm áp, mong thầy/cô đã có một ngày trọn vẹn 🌙', 'Cuối ngày rồi, nhớ dành chút thời gian nghỉ ngơi nhé.'],
+      afternoon: ['Buổi chiều nhẹ nhàng, giữ nhịp thật đều nhé.', 'Yo, chiều rồi! Làm ly trà đá rồi mình chiến tiếp nha 🧋', 'Chiều nay mình cùng hoàn thành nốt các buổi dạy nào.'],
+      evening: ['Buổi tối ấm áp, mong thầy/cô đã có một ngày trọn vẹn 🌙', 'Cuối ngày rồi, nhớ dành chút thời gian nghỉ ngơi nhé.', 'Hey bro, tối nay mình cùng chốt nốt mấy việc rồi nghỉ nha 😎'],
+      night: ['Khuya rồi đó, soạn nốt bài rồi đi ngủ sớm nha 🌙', 'Ê, thức khuya quá là mai mất giọng giảng bài đó nha 😴'],
     },
     lessons: (n, o) => n ? `Hôm nay có ${n} buổi học, buổi gần nhất lúc ${o.start} với ${o.who}${o.subject ? ` (${o.subject})` : ''}.` : 'Hôm nay không có tiết nào — dịp tốt để soạn bài và nghỉ ngơi.',
     wish: ['Chúc thầy/cô dạy thật hiệu quả và học sinh tiến bộ!', 'Chúc một ngày năng suất và nhiều niềm vui.', 'Nhớ uống đủ nước và nghỉ giữa giờ nhé!', 'Chúc các buổi học suôn sẻ, nhẹ nhàng.'],
@@ -2082,10 +2206,11 @@ const FALLBACK = {
   },
   en: {
     hello: {
-      morning: ['A fresh day full of energy is waiting for you ☀️', 'Grab a warm cup of tea and let’s get started.', 'New day, new lessons — Vincenink is ready when you are.'],
+      morning: ['A fresh day full of energy is waiting for you ☀️', 'Hey there! Coffee in hand? Let’s teach ☕', 'New day, new lessons — Vincenink is ready when you are.'],
       noon: ['Take a short lunch break to recharge.', 'Half the day done — great job so far!'],
       afternoon: ['A calm afternoon — keep a steady pace.', 'Let’s wrap up this afternoon’s lessons together.'],
-      evening: ['A cosy evening — hope today went well 🌙', 'End of the day — remember to rest a little.'],
+      evening: ['A cosy evening — hope today went well 🌙', 'End of the day — remember to rest a little.', 'Hey, evening mode on — let’s wrap things up 😎'],
+      night: ['It’s late — finish up and get some sleep 🌙', 'Burning the midnight oil? Your voice needs rest for tomorrow 😴'],
     },
     lessons: (n, o) => n ? `You have ${n} lesson${n > 1 ? 's' : ''} today; the next one is at ${o.start} with ${o.who}${o.subject ? ` (${o.subject})` : ''}.` : 'No lessons today — a good time to prepare and rest.',
     wish: ['Have a productive day and happy students!', 'Wishing you a smooth, joyful day of teaching.', 'Stay hydrated and take short breaks!', 'May every lesson go smoothly today.'],
@@ -2103,7 +2228,7 @@ const FALLBACK = {
     ],
   },
 };
-const pickDay = (arr, salt = 0) => arr[(hashStr(todayStr()) + salt) % arr.length];
+const pickDay = (arr, salt = 0) => arr[(hashStr(todayStr() + dayPart()) + salt) % arr.length];
 function fallbackDaily(salt = 0) {
   const F = FALLBACK[LANG], list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
   const next = list.find(o => o.end > hm) || list[0];
@@ -2122,9 +2247,12 @@ const Daily = {
     if (!force && ls.get(this.key(), '')) { renderTodayCard(); return; }
     if (AI.status !== 'on') { if (force) this.salt++; renderTodayCard(); return; }
     this.loading = true; renderTodayCard();
-    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8) }); if (txt) { ls.set(this.key(), txt); this.cur = txt; } }
+    const tones = LANG === 'vi'
+      ? ['ấm áp, lịch sự', 'thân mật như bạn bè, có thể mở đầu kiểu "Hey bro" hoặc "Ê"', 'hài hước nhẹ nhàng', 'truyền cảm hứng, tràn năng lượng', 'ngắn gọn, ngọt ngào như một lời nhắn', 'vui vẻ kiểu Gen Z, dùng vài từ lóng nhẹ']
+      : ['warm and polite', 'casual like a friend, may open with "Hey bro" or "Yo"', 'lightly humorous', 'inspiring and energetic', 'short and sweet', 'playful Gen Z vibe'];
+    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8), tone: tones[Math.floor(Math.random() * tones.length)] }); if (txt) { ls.set(this.key(), txt); this.cur = txt; } }
     catch (e) { this.cur = fallbackDaily(++this.salt); }
-    this.loading = false; renderTodayCard();
+    this.loading = false; renderTodayCard(); renderGreet();
   },
 };
 /* ---- Ghi chú AI mỗi ngày ---- */
@@ -2146,7 +2274,7 @@ const Note = {
       const lines = txt.split('\n').map(x => x.trim()).filter(Boolean);
       if (lines.length) { const n = { title: lines[0].replace(/^#+\s*|\*\*/g, ''), body: lines.slice(1).join(' ').replace(/\*\*/g, '') }; ls.set(this.key(), JSON.stringify(n)); this.cur = n; }
     } catch (e) { this.cur = fallbackNote(++this.salt); }
-    this.loading = false; renderAiNote();
+    this.loading = false; renderAiNote(); renderGreet();
   },
 };
 
@@ -2345,7 +2473,7 @@ function themePreview(v) {
   const k = THEME_LOOK[v];
   return `<span class="tp-prev" style="--p:${k.paper};--l:${k.line}">${sq(k.ink)}</span>`;
 }
-const themeNow = () => THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
+const themeNow = () => THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'light';
 function renderThemeUI() {
   const cur = themeNow(), label = t(THEME_OPTS.find(o => o[0] === cur)[1]);
   $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span><span class="chev">${ic('chev', 12)}</span>`;
@@ -2355,7 +2483,7 @@ function themePopover(anchor) {
   const m = document.createElement('div'); m.className = 'popmenu theme-pop'; m.setAttribute('role', 'menu');
   m.innerHTML = `<div class="tpop-h">${t('Chế độ màu')}</div><div class="tpop-grid">${THEME_OPTS.map(([v, l]) => `
     <button class="tpop-card ${v === cur ? 'active' : ''}" data-theme-v="${v}">${themePreview(v)}<span class="tpop-l">${t(l)}${v === cur ? ic('check', 14) : ''}</span>
-    <small>${t({ system: 'Tự đổi sáng/tối theo máy', light: 'Nền be dịu mắt', dark: 'Đỡ chói buổi tối', chalk: 'Như bảng lớp học' }[v])}</small></button>`).join('')}</div>`;
+    <small>${t({ light: 'Nền sáng dịu mắt', dark: 'Đỡ chói buổi tối', chalk: 'Như bảng lớp học' }[v])}</small></button>`).join('')}</div>`;
   m.addEventListener('click', e => { const b = e.target.closest('[data-theme-v]'); if (b) { setTheme(b.dataset.themeV); closeMenu(); } });
   document.body.append(m); menuEl = m;
   const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
@@ -2416,7 +2544,7 @@ function bindTopbar() {
   $('#btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); };
   $('#btnExport').onclick = async () => { const blob = await renderBoardPNG(); if (!blob) return toast(t('Bảng đang trống')); download(blob, safeName($('#boardTitle').value) + '.png'); };
   $('#btnPdf').onclick = exportPdfDialog;
-  $('#btnSettings').onclick = settingsModal;
+  $('#btnLogo').onclick = () => showWelcome(true);
   $('#btnThemePick').onclick = e => themePopover(e.currentTarget);
   $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
@@ -2456,9 +2584,88 @@ function initResizers() {
 function toggleFocus() { $('#app').classList.toggle('focus'); setTimeout(resize, 0); }
 function showWelcome(on) {
   $('#welcome').classList.toggle('hidden', !on);
+  if (on) renderOnboard();
   if (!on) ls.set('vincenink.seen', '1');
   updateTitle();
 }
+/* Người mới: chưa từng đóng trang giới thiệu, chưa có học sinh và hồ sơ */
+const isNewUser = () => !ls.get('vincenink.seen', '') && !S.students.length && !profile().name;
+const needsSetup = () => !profile().name || !S.students.length || !S.students.some(st => (S.sched.get(st.id)?.fixed || []).length);
+function setupStepsHTML() {
+  const p = profile(), hasSched = S.students.some(st => (S.sched.get(st.id)?.fixed || []).length || (S.sched.get(st.id)?.sessions || []).length);
+  const steps = [
+    ['profile', 'user', 'Cập nhật hồ sơ', 'Tên và ảnh đại diện để Vincenink chào đúng thầy/cô', !!p.name],
+    ['student', 'plus', 'Thêm học sinh', 'Mỗi em có bảng, tài liệu, lịch và học phí riêng', S.students.length > 0],
+    ['sched', 'calendar', 'Ghi lịch học', 'Để nhận lời nhắc tiết học mỗi ngày', hasSched],
+  ];
+  return steps.map(([k, i, tt, d, done], n) => `
+    <button class="ob-step ${done ? 'done' : ''}" data-ob="${k}">
+      <span class="ob-n">${done ? ic('check', 14) : n + 1}</span>
+      <span class="ob-t"><b>${t(tt)}</b><small>${t(d)}</small></span>${done ? '' : ic('right', 16)}
+    </button>`).join('');
+}
+function runSetupStep(k) {
+  showWelcome(false); showGreet(false);
+  if (k === 'profile') profileModal();
+  else if (k === 'student') studentModal(null);
+  else { const st = firstStudent(); if (!st) return studentModal(null); S.tab = 'sched'; selectStudent(st.id).then(() => sessionModal(st.id, null, null)); }
+}
+function renderOnboard() {
+  const el = $('#wlOnboard'); if (!el) return;
+  const show = needsSetup(); el.classList.toggle('hidden', !show); if (!show) return;
+  el.innerHTML = `<h2>${t('Bắt đầu trong 3 bước')}</h2>
+    <p>${t('Cập nhật thông tin để Vincenink gửi lời chào, nhắc lịch học và ghi chú mỗi ngày cho thầy/cô.')}</p>
+    <div class="ob-steps">${setupStepsHTML()}</div>`;
+  el.onclick = e => { const b = e.target.closest('[data-ob]'); if (b) runSetupStep(b.dataset.ob); };
+}
+/* ---- Cửa sổ chào khi vào trang (người đã dùng) ---- */
+function showGreet(on) {
+  const el = $('#greetPop'); el.classList.toggle('hidden', !on);
+  if (on) renderGreet(); else ls.set('vincenink.seen', '1');
+  updateTitle();
+}
+function renderGreet() {
+  const el = $('#greetPop'); if (!el || el.classList.contains('hidden')) return;
+  const now = new Date(), part = dayPart(), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+  const list = todayLessons(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`, msg = Daily.text(), n = Note.value();
+  const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  el.innerHTML = `<article class="greet-card">
+    <header class="gr-hero gr-${part}">
+      <span class="gr-ic">${ic(DAY_ICON[part], 26)}</span>
+      <div class="gr-ht"><small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small>
+        <h2>${t(DAY_HELLO[part])}${name ? `, ${esc(name)}` : ''}!</h2></div>
+      <button class="icon-btn gr-x" data-gr="close" aria-label="${t('Đóng')}">${ic('x', 18)}</button>
+      <p class="gr-msg">${msg ? esc(msg) : '<span class="shimmer"></span><span class="shimmer short"></span>'}</p>
+      <button class="gr-again ${Daily.loading ? 'spin' : ''}" data-gr="again">${ic('refresh', 13)}${t('Lời chào khác')}</button>
+    </header>
+    <div class="gr-body">
+      <section class="gr-sec">
+        <h3>${ic('calendar', 15)}${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></h3>
+        ${list.length ? `<div class="gr-lessons">${list.map(o => {
+          const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
+          return `<div class="gr-les ${st}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}"><b>${o.start}–${o.end}</b><span>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</span><small>${esc(o.subject || '')}</small>${st === 'now' ? `<i>${t('Đang học')}</i>` : st === 'done' ? `<i class="dn">${t('Xong')}</i>` : st === 'off' ? `<i class="dn">${t('Nghỉ')}</i>` : ''}</div>`;
+        }).join('')}</div>` : `<p class="gr-free">${t('Hôm nay không có tiết nào — dành thời gian soạn bài và nghỉ ngơi nhé.')}</p>`}
+      </section>
+      <section class="gr-sec gr-note">
+        <h3>${ic('sparkle', 15)}${t('Ghi chú hôm nay')}</h3>
+        ${n ? `<b>${esc(n.title)}</b><p>${esc(n.body)}</p>` : '<span class="shimmer"></span><span class="shimmer short"></span>'}
+      </section>
+      ${needsSetup() ? `<section class="gr-sec gr-setup"><h3>${ic('info', 15)}${t('Hoàn thiện thông tin để nhận nhắc lịch đầy đủ')}</h3><div class="ob-steps">${setupStepsHTML()}</div></section>` : ''}
+    </div>
+    <footer class="gr-foot">
+      <button class="btn ghost" data-gr="ask">${ic('sparkle', 15)}${t('Hỏi trợ lý')}</button>
+      <button class="btn primary" data-gr="close">${t('Bắt đầu dạy')}</button>
+    </footer>
+  </article>`;
+}
+$('#greetPop').addEventListener('click', e => {
+  if (e.target.id === 'greetPop') return showGreet(false);
+  const ob = e.target.closest('[data-ob]'); if (ob) return runSetupStep(ob.dataset.ob);
+  const b = e.target.closest('[data-gr]'); if (!b) return;
+  if (b.dataset.gr === 'close') showGreet(false);
+  else if (b.dataset.gr === 'again') Daily.load(true);
+  else if (b.dataset.gr === 'ask') { showGreet(false); Chat.open(); }
+});
 $('#welcome').addEventListener('pointerdown', e => { if (e.target.id === 'welcome') showWelcome(false); });
 
 /* =====================================================================
@@ -2619,7 +2826,7 @@ function toast(msg, err) {
    Bàn phím, dán, kéo thả
    ===================================================================== */
 const isTyping = () => { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable); };
-const blocked = () => $('#modalRoot').children.length || !$('#welcome').classList.contains('hidden') || isTyping();
+const blocked = () => $('#modalRoot').children.length || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden') || isTyping();
 document.addEventListener('keydown', e => {
   if (blocked()) return;
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
@@ -2692,9 +2899,9 @@ async function init() {
   if (b.studentId !== S.studentId) { S.studentId = b.studentId; renderSidebar(); }
   await openBoard(b.id); renderPanel();
   if (innerWidth <= 900) $('#app').classList.add('focus');
-  showWelcome(true); // luôn giới thiệu khi vào trang
   bindChat(); Chat.renderState();
-  AI.check().then(() => { Daily.load(); Note.load(); renderAiNote(); renderTodayCard(); });
+  if (isNewUser()) showWelcome(true); else showGreet(true);
+  AI.check().then(() => { Daily.load(); Note.load(); renderTodayCard(); renderGreet(); });
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }

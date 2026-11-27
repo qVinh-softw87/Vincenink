@@ -47,7 +47,7 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
 - **Hồ sơ giáo viên** (góc phải thanh trên): ảnh đại diện, họ tên, vai trò, trường, liên hệ, giới thiệu. Chưa cần đăng nhập.
 
 **Giao diện**
-- **Tiếng Việt / English**. Bộ chọn **chế độ màu** có thẻ xem trước (ở thanh trên và góc dưới thanh bên): *Theo hệ thống* (luôn là mặc định mỗi lần vào trang), *Sáng (be)*, *Tối*, *Bảng phấn xanh*.
+- **Tiếng Việt / English**. Bộ chọn **chế độ màu** ở thanh trên: *Sáng* (mặc định mỗi lần vào trang), *Tối*, *Bảng phấn xanh*.
 - **Bút mặc định**: nét đều, cỡ vừa, mực đen; ở nền tối/bảng phấn tự hiện màu trắng.
 - **Trang giới thiệu** hiện mỗi lần vào trang.
 - Tiêu đề tab thay đổi theo bảng đang dạy.
@@ -55,28 +55,44 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
 - Tự động lưu, hoàn tác/làm lại, thu phóng, kéo bảng vô hạn, chụm 2 ngón, chế độ *chỉ viết bằng bút* cho iPad.
 - Sao lưu và khôi phục bằng tệp JSON.
 
-## Trợ lý AI (Claude)
+## Trợ lý AI
 
 - **Nút chú chó** ở góc phải bảng mở khung trò chuyện, dùng để:
   - soạn bài tập kèm đáp án, gợi ý giáo án;
   - giải thích kiến thức, viết nhận xét học sinh gửi phụ huynh.
-  
-  Trợ lý biết học sinh đang mở và lịch hôm nay. Mỗi câu trả lời có nút **Sao chép** và **Chèn lên bảng**.
-- **Lời chúc mỗi ngày** (cuối thanh bên): AI tự viết theo buổi sáng/chiều/tối, nhắc các tiết hôm nay và chúc dạy hiệu quả; bên dưới là danh sách tiết.
-- **Ghi chú hôm nay** (giữa thanh bên): một mẹo dạy học mới mỗi ngày, liên quan tới học sinh/môn hôm nay nếu có.
-- Khi chưa kết nối AI, lời chúc và ghi chú vẫn tự đổi mỗi ngày từ bộ mẫu có sẵn.
 
-### Kết nối AI trên Vercel
+  Mỗi câu trả lời có nút **Sao chép** và **Chèn lên bảng**.
+- **Cửa sổ chào khi vào trang** (với người đã dùng):
+  - Lời chào do AI viết theo giờ (sáng, trưa, chiều, tối, khuya), mỗi lần một giọng khác: lịch sự, thân mật kiểu "Hey bro", hài hước, truyền cảm hứng…
+  - Danh sách tiết hôm nay và **Ghi chú hôm nay** (mẹo dạy học).
+  - Người dùng lần đầu sẽ thấy trang giới thiệu Vincenink kèm hướng dẫn 3 bước: cập nhật hồ sơ, thêm học sinh, ghi lịch.
+- Khi chưa kết nối AI, lời chào và ghi chú vẫn tự đổi theo ngày và theo buổi từ bộ mẫu có sẵn.
 
-1. Tạo khoá API tại https://console.anthropic.com/ (mục *API Keys*).
-2. Vào Vercel → dự án **Vincenink** → **Settings → Environment Variables**, thêm:
-   - `ANTHROPIC_API_KEY` = khoá vừa tạo (bắt buộc).
-   - `ANTHROPIC_MODEL` (tuỳ chọn) — mặc định `claude-haiku-5-5`, nhanh và rẻ.
-   - `VINCENINK_ACCESS_CODE` (tuỳ chọn, nên đặt): nếu đặt, chỉ ai nhập đúng mã này trong **Cài đặt & sao lưu** mới dùng được trợ lý. Cách này giúp người lạ không dùng tốn tiền khoá của bạn.
-3. Vào tab **Deployments** → bấm **⋯ → Redeploy** ở bản mới nhất.
+### Kết nối AI miễn phí (khuyên dùng: Google Gemini)
 
-Khoá API chỉ nằm trên máy chủ Vercel (`api/assistant.js`), không bao giờ gửi xuống trình duyệt.
-Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi được gửi tới Claude để trả lời; dữ liệu khác vẫn chỉ nằm trên máy bạn.
+1. Vào https://aistudio.google.com/apikey, đăng nhập Google → **Create API key** → sao chép khoá.
+2. Vào Vercel → dự án **Vincenink** → **Settings → Environment Variables** → thêm `GEMINI_API_KEY` = khoá vừa sao chép.
+3. Vào **Deployments** → **⋯ → Redeploy**.
+
+Các lựa chọn khác (trang tự chọn theo thứ tự Gemini → Groq → Claude, tuỳ khoá nào có):
+
+| Biến | Nhà cung cấp | Ghi chú |
+|---|---|---|
+| `GEMINI_API_KEY` | Google Gemini | Miễn phí, có giới hạn số lượt/phút và /ngày. Mặc định mô hình `gemini-3.6-flash` (đổi bằng `GEMINI_MODEL`). |
+| `GROQ_API_KEY` | Groq (console.groq.com/keys) | Miễn phí, rất nhanh. Mặc định `llama-3.3-70b-versatile` (đổi bằng `GROQ_MODEL`). |
+| `ANTHROPIC_API_KEY` | Claude | Trả phí theo lượt dùng. Mặc định `claude-haiku-5-5`. |
+| `VINCENINK_ACCESS_CODE` | — | Tuỳ chọn: chỉ ai nhập đúng mã trong *Hồ sơ → Cài đặt & sao lưu* mới dùng được trợ lý. |
+
+Khoá API chỉ nằm trên máy chủ Vercel (`api/assistant.js`), không lộ ra trình duyệt.
+Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để cải thiện sản phẩm. Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi được gửi tới AI; dữ liệu khác vẫn chỉ nằm trên máy bạn.
+
+## Học phí
+
+- Thẻ **Học phí** của mỗi học sinh:
+  - Nhập **học phí mỗi buổi**; số buổi trong tháng được **tự đếm từ lịch học** (không tính buổi nghỉ).
+  - **Thành tiền = học phí × số buổi đã dạy**, kèm số tiền **dự kiến cả tháng**.
+  - Nút **Buổi cộng thêm** cho buổi dạy ngoài lịch; công tắc **Đã thu tiền tháng này**.
+- Bên dưới là bảng **tổng học phí của tất cả học sinh** trong tháng, cùng số tiền đã thu.
 
 ## Chạy trên máy
 

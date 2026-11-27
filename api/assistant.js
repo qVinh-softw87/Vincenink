@@ -1,18 +1,72 @@
 /* =====================================================================
    Vincenink — Trợ lý AI (Vercel Serverless Function)
-   Gọi Claude qua Anthropic API. Khoá API chỉ nằm ở máy chủ (biến môi trường),
-   không bao giờ gửi xuống trình duyệt.
+   Khoá API chỉ nằm ở máy chủ (biến môi trường), không bao giờ gửi xuống trình duyệt.
+   Tự chọn nhà cung cấp theo khoá có sẵn (ưu tiên từ trên xuống):
 
-   Biến môi trường trên Vercel (Settings → Environment Variables):
-     ANTHROPIC_API_KEY       bắt buộc — khoá API Anthropic
-     ANTHROPIC_MODEL         tuỳ chọn — mặc định "claude-haiku-5-5"
-     VINCENINK_ACCESS_CODE   tuỳ chọn — nếu đặt, chỉ ai nhập đúng mã này
-                             (trong Cài đặt của trang) mới dùng được trợ lý
+     GEMINI_API_KEY    — Google Gemini, có gói MIỄN PHÍ (aistudio.google.com/apikey)
+       GEMINI_MODEL      tuỳ chọn, mặc định "gemini-3.6-flash"
+     GROQ_API_KEY      — Groq, có gói MIỄN PHÍ (console.groq.com/keys)
+       GROQ_MODEL        tuỳ chọn, mặc định "llama-3.3-70b-versatile"
+     ANTHROPIC_API_KEY — Claude (trả phí theo lượt dùng)
+       ANTHROPIC_MODEL   tuỳ chọn, mặc định "claude-haiku-5-5"
+
+     VINCENINK_ACCESS_CODE  tuỳ chọn — nếu đặt, chỉ ai nhập đúng mã này
+                            (trong Cài đặt của trang) mới dùng được trợ lý
    ===================================================================== */
 'use strict';
 
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
+const env = process.env;
+function provider() {
+  if (env.GEMINI_API_KEY) return 'gemini';
+  if (env.GROQ_API_KEY) return 'groq';
+  if (env.ANTHROPIC_API_KEY) return 'anthropic';
+  return null;
+}
+
+/* Gọi từng nhà cung cấp, trả về văn bản */
+async function callGemini(system, messages, maxTokens, temperature) {
+  const models = [env.GEMINI_MODEL || 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+  let last;
+  for (const model of [...new Set(models)]) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+        generationConfig: { temperature, maxOutputTokens: maxTokens + 1500 },
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+      return parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
+    }
+    last = { status: r.status, message: data.error && data.error.message };
+    if (r.status !== 404 && r.status !== 400) break; // chỉ thử mô hình khác khi không tìm thấy mô hình
+  }
+  throw Object.assign(new Error('upstream'), last || {});
+}
+async function callGroq(system, messages, maxTokens, temperature) {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer ' + env.GROQ_API_KEY },
+    body: JSON.stringify({ model: env.GROQ_MODEL || 'llama-3.3-70b-versatile', max_tokens: maxTokens, temperature, messages: [{ role: 'system', content: system }, ...messages] }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error('upstream'), { status: r.status, message: data.error && data.error.message });
+  return ((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim();
+}
+async function callAnthropic(system, messages, maxTokens, temperature) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: env.ANTHROPIC_MODEL || 'claude-haiku-5-5', max_tokens: maxTokens, temperature, system, messages }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error('upstream'), { status: r.status, message: data.error && data.error.message });
+  return (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+}
 
 // Giới hạn tần suất đơn giản theo IP (trong bộ nhớ của từng phiên bản hàm)
 const hits = new Map();
@@ -26,7 +80,7 @@ function rateLimited(ip) {
 
 const clip = (s, n) => String(s == null ? '' : s).slice(0, n);
 
-function systemPrompt(mode, lang, ctx) {
+function systemPrompt(mode, lang, ctx, tone) {
   const vi = lang !== 'en';
   const ctxText = JSON.stringify(ctx || {}, null, 0).slice(0, 6000);
   const base = vi
@@ -35,8 +89,8 @@ function systemPrompt(mode, lang, ctx) {
   const data = (vi ? '\n\nDữ liệu hiện tại của giáo viên (JSON):\n' : '\n\nTeacher context (JSON):\n') + ctxText;
   if (mode === 'daily') {
     return base + data + (vi
-      ? `\n\nNhiệm vụ: viết LỜI CHÀO MỖI NGÀY cho giáo viên, 2–3 câu, tối đa 55 từ, ấm áp và tích cực, phù hợp thời điểm trong ngày (sáng/chiều/tối theo "time"). Nếu "todayLessons" có buổi học, nhắc ngắn gọn số buổi và buổi gần nhất (giờ, học sinh, môn); nếu không có, chúc một ngày nhẹ nhàng để chuẩn bị bài. Kết thúc bằng một lời chúc năng suất. Có thể dùng tối đa 1 emoji. Chỉ trả về đoạn văn, không tiêu đề, không markdown.`
-      : `\n\nTask: write a DAILY GREETING for the teacher: 2–3 sentences, at most 55 words, warm and positive, matching the time of day in "time". If "todayLessons" has lessons, briefly mention how many and the next one (time, student, subject); otherwise wish them a calm prep day. End with a wish for a productive day. At most one emoji. Return only the paragraph, no title, no markdown.`);
+      ? `\n\nNhiệm vụ: viết LỜI CHÀO cho giáo viên khi vừa mở ứng dụng, 2–3 câu, tối đa 55 từ. Đúng thời điểm "dayPart" (morning = buổi sáng, noon = buổi trưa, afternoon = buổi chiều, evening = buổi tối, night = đêm khuya: nhắc nghỉ ngơi). Giọng văn lần này: ${tone || 'ấm áp, tích cực'}. Mỗi lần viết một kiểu mở đầu khác nhau, đừng lặp lại khuôn mẫu. Nếu "todayLessons" có buổi học, nhắc ngắn gọn số buổi và buổi sắp tới (giờ, học sinh, môn); nếu không có, chúc một ngày nhẹ nhàng để chuẩn bị bài. Kết thúc bằng một lời chúc năng suất. Tối đa 1–2 emoji. Chỉ trả về đoạn văn, không tiêu đề, không markdown.`
+      : `\n\nTask: write a GREETING for the teacher who just opened the app: 2–3 sentences, at most 55 words. Match "dayPart" (morning, noon, afternoon, evening, night = late night: suggest rest). Tone this time: ${tone || 'warm and positive'}. Vary the opening every time. If "todayLessons" has lessons, briefly mention how many and the next one (time, student, subject); otherwise wish them a calm prep day. End with a wish for a productive day. At most 1–2 emoji. Return only the paragraph, no title, no markdown.`);
   }
   if (mode === 'note') {
     return base + data + (vi
@@ -50,10 +104,10 @@ function systemPrompt(mode, lang, ctx) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  const configured = !!process.env.ANTHROPIC_API_KEY;
+  const prov = provider(), configured = !!prov;
   const needCode = !!process.env.VINCENINK_ACCESS_CODE;
 
-  if (req.method === 'GET') return res.status(200).json({ ok: true, configured, needCode });
+  if (req.method === 'GET') return res.status(200).json({ ok: true, configured, provider: prov, needCode });
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!configured) return res.status(503).json({ error: 'not_configured' });
   if (needCode && req.headers['x-access-code'] !== process.env.VINCENINK_ACCESS_CODE) return res.status(401).json({ error: 'bad_code' });
@@ -80,31 +134,15 @@ module.exports = async function handler(req, res) {
     messages = [{ role: 'user', content: (lang === 'vi' ? 'Viết cho hôm nay. Mã ngẫu nhiên: ' : 'Write it for today. Random seed: ') + seed }];
   }
 
+  const system = systemPrompt(mode, lang, body.context, clip(body.tone, 160));
+  const maxTokens = mode === 'chat' ? 1200 : 300, temperature = mode === 'chat' ? 0.6 : 1;
   try {
-    const r = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: mode === 'chat' ? 1200 : 300,
-        temperature: mode === 'chat' ? 0.6 : 0.9,
-        system: systemPrompt(mode, lang, body.context),
-        messages,
-      }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      console.error('Anthropic error', r.status, data && data.error);
-      return res.status(502).json({ error: 'upstream', status: r.status, detail: data && data.error && data.error.message });
-    }
-    const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
-    return res.status(200).json({ text });
+    const call = prov === 'gemini' ? callGemini : prov === 'groq' ? callGroq : callAnthropic;
+    const text = await call(system, messages, maxTokens, temperature);
+    return res.status(200).json({ text, provider: prov });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'server_error' });
+    console.error('AI error', prov, err.status, err.message);
+    if (err.status === 429) return res.status(429).json({ error: 'rate_limited' });
+    return res.status(502).json({ error: 'upstream', status: err.status, detail: err.message });
   }
 };

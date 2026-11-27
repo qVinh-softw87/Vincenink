@@ -42,13 +42,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
     try {
-      // Mỗi lần vào trang: luôn theo chế độ sáng/tối của hệ thống
-      var t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      // Mặc định giao diện sáng mỗi lần vào trang
+      var t = 'light';
       document.documentElement.dataset.theme = t;
     } catch (e) {}
   })();
@@ -129,7 +129,7 @@
 <div id="app">
   <aside id="sidebar" aria-label="Học sinh">
     <div class="brand">
-      <img class="logo" src="assets/logo.png" alt="Vincenink" width="38" height="38">
+      <button class="logo-btn" id="btnLogo" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"><img class="logo" src="assets/logo.png" alt="Vincenink" width="38" height="38"></button>
       <div class="brand-text">
         <div class="brand-name">Vincenink</div>
         <div class="brand-sub" data-i18n="Bảng dạy học">Bảng dạy học</div>
@@ -139,11 +139,9 @@
       </div>
     </div>
     <nav id="studentNav"></nav>
-    <section class="ai-note" id="aiNote" aria-live="polite"></section>
     <section class="today-card day-card" id="todayCard" aria-live="polite"></section>
     <div class="side-foot">
       <div class="foot-row">
-        <button class="foot-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"><span data-i18n="Cài đặt &amp; sao lưu">Cài đặt &amp; sao lưu</span><em class="fb-go">›</em></button>
         <button class="foot-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"><span data-i18n="Về Vincenink">Về Vincenink</span><em class="fb-go">›</em></button>
       </div>
     </div>
@@ -260,11 +258,14 @@
       <p>Yes. Each PDF page becomes an image you can write over; scan mode makes phone photos easier to read.</p>
     </section>
 
+    <section class="wl-onboard hidden" id="wlOnboard"></section>
     <footer class="wl-foot">
       <button class="btn primary" id="btnStart"><span class="l-vi">Bắt đầu dạy ngay</span><span class="l-en">Start teaching</span></button>
     </footer>
   </article>
 </div>
+
+<div id="greetPop" class="welcome greet hidden" role="dialog" aria-modal="true"></div>
 
 <input type="file" id="fileInsert" accept="image/*,application/pdf" hidden multiple>
 <input type="file" id="fileScan" accept="image/*,application/pdf" hidden multiple>
@@ -274,6 +275,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=13" defer></script>
+<script src="app.js?v=14" defer></script>
 </body>
 </html>
