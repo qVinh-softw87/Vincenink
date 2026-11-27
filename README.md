@@ -55,6 +55,29 @@ Bảng trắng miễn phí dành cho giáo viên và gia sư, tông màu be dị
 - Tự động lưu, hoàn tác/làm lại, thu phóng, kéo bảng vô hạn, chụm 2 ngón, chế độ *chỉ viết bằng bút* cho iPad.
 - Sao lưu và khôi phục bằng tệp JSON.
 
+## Trợ lý AI (Claude)
+
+- **Nút chú chó** ở góc phải bảng mở khung trò chuyện, dùng để:
+  - soạn bài tập kèm đáp án, gợi ý giáo án;
+  - giải thích kiến thức, viết nhận xét học sinh gửi phụ huynh.
+  
+  Trợ lý biết học sinh đang mở và lịch hôm nay. Mỗi câu trả lời có nút **Sao chép** và **Chèn lên bảng**.
+- **Lời chúc mỗi ngày** (cuối thanh bên): AI tự viết theo buổi sáng/chiều/tối, nhắc các tiết hôm nay và chúc dạy hiệu quả; bên dưới là danh sách tiết.
+- **Ghi chú hôm nay** (giữa thanh bên): một mẹo dạy học mới mỗi ngày, liên quan tới học sinh/môn hôm nay nếu có.
+- Khi chưa kết nối AI, lời chúc và ghi chú vẫn tự đổi mỗi ngày từ bộ mẫu có sẵn.
+
+### Kết nối AI trên Vercel
+
+1. Tạo khoá API tại https://console.anthropic.com/ (mục *API Keys*).
+2. Vào Vercel → dự án **Vincenink** → **Settings → Environment Variables**, thêm:
+   - `ANTHROPIC_API_KEY` = khoá vừa tạo (bắt buộc).
+   - `ANTHROPIC_MODEL` (tuỳ chọn) — mặc định `claude-haiku-5-5`, nhanh và rẻ.
+   - `VINCENINK_ACCESS_CODE` (tuỳ chọn, nên đặt): nếu đặt, chỉ ai nhập đúng mã này trong **Cài đặt & sao lưu** mới dùng được trợ lý. Cách này giúp người lạ không dùng tốn tiền khoá của bạn.
+3. Vào tab **Deployments** → bấm **⋯ → Redeploy** ở bản mới nhất.
+
+Khoá API chỉ nằm trên máy chủ Vercel (`api/assistant.js`), không bao giờ gửi xuống trình duyệt.
+Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi được gửi tới Claude để trả lời; dữ liệu khác vẫn chỉ nằm trên máy bạn.
+
 ## Chạy trên máy
 
 ```bash
@@ -110,7 +133,8 @@ Các bước còn lại bạn cần tự làm:
 ```
 index.html              giao diện + thẻ SEO + JSON-LD + trang giới thiệu
 styles.css              màu sắc (sáng/tối) và bố cục
-app.js                  toàn bộ chức năng: canvas, IndexedDB, lịch học, xuất PDF, đa ngôn ngữ
+app.js                  toàn bộ chức năng: canvas, IndexedDB, lịch học, xuất PDF, đa ngôn ngữ, trợ lý AI
+api/assistant.js        hàm máy chủ Vercel gọi Claude (giữ khoá API bí mật)
 assets/                 logo, favicon, icon ứng dụng, ảnh chia sẻ (og-image)
 favicon.ico             biểu tượng tab
 manifest.webmanifest    thông tin ứng dụng web (cài lên màn hình chính)

@@ -223,6 +223,45 @@ const EN = {
   'Đã ghi lịch cho {n}': 'Scheduled for {n}',
   'Giờ': 'Hour',
   'Phút': 'Minute',
+  'Trợ lý Vincenink': 'Vincenink assistant',
+  'Cuộc trò chuyện mới': 'New conversation',
+  'Đóng': 'Close',
+  'Hỏi Vincenink: soạn bài tập, giáo án, nhận xét…': 'Ask Vincenink: exercises, lesson plans, feedback…',
+  'Gửi (Enter)': 'Send (Enter)',
+  'Chào buổi sáng': 'Good morning',
+  'Chào buổi trưa': 'Good afternoon',
+  'Chào buổi chiều': 'Good afternoon',
+  'Chào buổi tối': 'Good evening',
+  'Viết lời chúc khác': 'New greeting',
+  'Tiết hôm nay': 'Lessons today',
+  'Hôm nay không có tiết nào.': 'No lessons today.',
+  'Ghi chú từ Vincenink': 'Note from Vincenink',
+  'Ghi chú hôm nay': 'Today’s note',
+  'Viết ghi chú khác': 'New note',
+  'Hỏi thêm trợ lý': 'Ask the assistant',
+  'Giải thích kỹ hơn và cho ví dụ áp dụng: “{x}”': 'Explain this in more detail with a practical example: “{x}”',
+  'Sẵn sàng hỗ trợ': 'Ready to help',
+  'Đang kết nối…': 'Connecting…',
+  'Chưa kết nối AI': 'AI not connected',
+  '{n} tiết hôm nay': '{n} lessons today',
+  'Trợ lý AI chạy khi trang được mở từ Vercel (vincenink.vercel.app). Bản mở trực tiếp từ tệp trên máy không gọi được AI.': 'The AI assistant works on the Vercel site (vincenink.vercel.app). A copy opened from local files cannot reach the AI.',
+  'Trợ lý chưa có khoá AI. Vào Vercel → dự án Vincenink → <b>Settings → Environment Variables</b>, thêm <code>ANTHROPIC_API_KEY</code>, rồi <b>Redeploy</b>.': 'No AI key yet. In Vercel → Vincenink project → <b>Settings → Environment Variables</b>, add <code>ANTHROPIC_API_KEY</code>, then <b>Redeploy</b>.',
+  'Xin chào{n}! Mình là Vincenink 🐾': 'Hi{n}! I’m Vincenink 🐾',
+  'Mình có thể soạn bài tập, gợi ý giáo án, giải thích kiến thức và viết nhận xét học sinh. Thầy/cô muốn bắt đầu từ đâu?': 'I can write exercises, suggest lesson plans, explain concepts and draft student feedback. Where shall we start?',
+  'Sao chép': 'Copy',
+  'Chèn lên bảng': 'Put on board',
+  'Đã sao chép': 'Copied',
+  'Trợ lý AI chỉ chạy trên bản Vercel của trang.': 'The AI assistant only works on the Vercel site.',
+  'Trợ lý chưa có khoá AI. Thêm ANTHROPIC_API_KEY trên Vercel rồi Redeploy.': 'No AI key yet. Add ANTHROPIC_API_KEY on Vercel and redeploy.',
+  'Sai mã truy cập trợ lý. Vào Cài đặt & sao lưu để nhập mã.': 'Wrong assistant access code. Enter it in Settings & backup.',
+  'Hỏi hơi nhanh rồi, thầy/cô đợi vài phút rồi thử lại nhé.': 'Too many requests — please wait a few minutes.',
+  'Không kết nối được AI lúc này. Thầy/cô thử lại sau nhé.': 'Could not reach the AI right now. Please try again later.',
+  'Trợ lý AI': 'AI assistant',
+  'Đã kết nối Claude qua Vercel.': 'Connected to Claude via Vercel.',
+  'Chưa kết nối. Thêm biến ANTHROPIC_API_KEY trong Vercel → Settings → Environment Variables rồi Redeploy.': 'Not connected. Add ANTHROPIC_API_KEY in Vercel → Settings → Environment Variables and redeploy.',
+  'Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi của thầy/cô được gửi tới AI để trả lời.': 'When you use the assistant, student names, today’s schedule and your question are sent to the AI to answer.',
+  'Mã truy cập trợ lý': 'Assistant access code',
+  'Hỏi Vincenink điều gì đó…': 'Ask Vincenink anything…',
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -245,7 +284,7 @@ function applyStaticI18n() {
 }
 function setLang(l) {
   if (l === LANG) return; LANG = l; ls.set('vincenink.lang', l);
-  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle();
+  applyStaticI18n(); renderToolbar(); renderProps(); renderSidebar(); renderPanel(); renderTopbar(); renderProfileCard(); renderThemeUI(); updateTitle(); Daily.load(); Note.load(); if (Chat.isOpen()) Chat.render();
   renderBgUI();
 }
 
@@ -300,6 +339,11 @@ const ICONS = {
   palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3.1 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   chev: '<path d="m6 9 6 6 6-6"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M8 16H3v5"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  sparkle: '<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 15l.7 2.1L22 18l-2.3.8L19 21l-.7-2.2L16 18l2.3-.9z"/>',
+  sun2: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  sunset: '<path d="M12 10V2M4.9 10.9l1.4 1.4M2 18h2M20 18h2M17.7 12.3l1.4-1.4M22 22H2M8 6l4-4 4 4M16 18a4 4 0 0 0-8 0"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   s_line: '<path d="M5 19 19 5"/>', s_arrow: '<path d="M5 19 19 5M9 5h10v10"/>', s_rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
   s_ellipse: '<ellipse cx="12" cy="12" rx="9" ry="7"/>', s_triangle: '<path d="M12 4 21 20H3Z"/>',
@@ -1483,23 +1527,38 @@ async function deleteStudent(st) {
   await DB.del('students', st.id); await DB.del('schedule', st.id); S.sched.delete(st.id);
   S.boards = S.boards.filter(b => b.studentId !== st.id); S.files = S.files.filter(f => f.studentId !== st.id); S.students = S.students.filter(s => s.id !== st.id);
   if (!S.boards.find(b => b.id === S.boardId)) { S.boardId = null; contentDirty = viewDirty = false; }
-  S.studentId = 'all';
-  const next = boardsOf('all')[0] || await createBoard('all', false);
-  if (!S.boardId) await openBoard(next.id);
+  const fs = firstStudent();
+  S.studentId = fs ? fs.id : 'all';
+  if (!S.boardId || fs) { const next = boardsOf(S.studentId)[0] || await createBoard(S.studentId, false); await openBoard(next.id); }
   renderSidebar(); renderPanel(); renderTopbar();
 }
 
 /* ---- Thanh bên ---- */
-/* ---- Thẻ "Lịch hôm nay" ở thanh bên ---- */
+/* =====================================================================
+   Lời chúc mỗi ngày + tiết học hôm nay (thanh bên, phía dưới)
+   ===================================================================== */
+const dayPart = (h = new Date().getHours()) => h < 11 ? 'morning' : h < 13 ? 'noon' : h < 18 ? 'afternoon' : 'evening';
+const DAY_HELLO = { morning: 'Chào buổi sáng', noon: 'Chào buổi trưa', afternoon: 'Chào buổi chiều', evening: 'Chào buổi tối' };
+function todayLessons() {
+  const now = new Date(), ds = dstr(now);
+  const day = weekOccurrences('all', weekStart(now)).find(d => d.date === ds);
+  return day ? day.list : [];
+}
 function renderTodayCard() {
   const el = $('#todayCard'); if (!el) return;
   const now = new Date(), ds = dstr(now), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const day = weekOccurrences('all', weekStart(now)).find(d => d.date === ds);
-  const list = day ? day.list : [];
+  const list = todayLessons(), part = dayPart(), p = profile();
+  const name = p.name ? p.name.trim().split(/\s+/).pop() : '';
   const label = now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
+  const msg = Daily.text();
   el.innerHTML = `
-    <div class="tc-h"><span class="tc-ic">${ic('calendar', 15)}</span><div><b>${t('Lịch hôm nay')}</b><small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
-      <button class="icon-btn sm" id="tcAdd" title="${t('Ghi lịch học')}">${ic('plus', 16)}</button></div>
+    <div class="dc-top">
+      <span class="dc-ic dc-${part}">${ic(part === 'evening' ? 'moon' : part === 'afternoon' ? 'sunset' : 'sun2', 16)}</span>
+      <div><b>${t(DAY_HELLO[part])}${name ? ',' : '!'}</b>${name ? `<b class="dc-name">${esc(name)} 👋</b>` : ''}<small>${esc(label.charAt(0).toUpperCase() + label.slice(1))}</small></div>
+      <button class="icon-btn sm dc-refresh ${Daily.loading ? 'spin' : ''}" id="dcRefresh" title="${t('Viết lời chúc khác')}">${ic('refresh', 15)}</button>
+    </div>
+    <p class="dc-msg ${Daily.loading && !msg ? 'loading' : ''}">${msg ? esc(msg) : '<span class="shimmer"></span><span class="shimmer short"></span>'}</p>
+    <div class="dc-sec"><span>${t('Tiết hôm nay')} <em>${list.filter(o => !o.off).length}</em></span><button class="add-link" id="tcAdd">${ic('plus', 13)}${t('Ghi lịch')}</button></div>
     ${list.length ? `<div class="tc-list">${list.map(o => {
       const st = o.off ? 'off' : (hm >= o.start && hm < o.end ? 'now' : (hm >= o.end ? 'done' : ''));
       return `<button class="tc-item ${st}" data-owner="${o.owner}" style="--c:${o.owner === 'all' ? 'var(--accent)' : ownerColor(o.owner)}">
@@ -1507,20 +1566,37 @@ function renderTodayCard() {
         <span class="tc-body"><b>${esc(o.owner === 'all' ? t('Lớp chung') : ownerName(o.owner))}</b><small>${esc(o.subject || t('Buổi học'))}</small></span>
         ${st === 'now' ? `<span class="tc-badge">${t('Đang học')}</span>` : st === 'off' ? `<span class="tc-badge off">${t('Nghỉ')}</span>` : ''}
       </button>`; }).join('')}</div>`
-      : `<div class="tc-empty"><svg viewBox="0 0 120 64" aria-hidden="true"><rect x="10" y="8" width="70" height="48" rx="6" fill="var(--paper)" stroke="var(--line-strong)"/><path d="M10 20h70M22 8v48M10 32h70M10 44h70" stroke="var(--line)" /><path d="M30 38c6-10 12-10 16-2s10 6 16-4" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><g transform="rotate(35 96 26)"><rect x="90" y="4" width="10" height="40" rx="3" fill="var(--accent)"/><path d="M90 44l5 9 5-9z" fill="var(--accent-ink)"/></g></svg>
-        <span>${t('Hôm nay không có buổi học nào.')}</span></div>`}`;
+      : `<div class="dc-free">${ic('calendar', 14)}${t('Hôm nay không có tiết nào.')}</div>`}`;
   el.onclick = e => {
+    if (e.target.closest('#dcRefresh')) return Daily.load(true);
     if (e.target.closest('#tcAdd')) return sessionModal(S.studentId, null, ds, true);
     const it = e.target.closest('.tc-item'); if (it) { S.tab = 'sched'; S.week = weekStart(now); selectStudent(it.dataset.owner); }
   };
 }
 setInterval(() => renderTodayCard(), 60000);
+
+/* ---- Ghi chú AI (khoảng giữa thanh bên) ---- */
+function renderAiNote() {
+  const el = $('#aiNote'); if (!el) return;
+  const n = Note.value();
+  el.innerHTML = `
+    <div class="an-h"><span class="an-ic" title="AI">${ic('sparkle', 14)}</span><span>${t('Ghi chú hôm nay')}</span>
+      <button class="icon-btn sm ${Note.loading ? 'spin' : ''}" id="anRefresh" title="${t('Viết ghi chú khác')}">${ic('refresh', 14)}</button></div>
+    ${n ? `<div class="an-body"><b>${esc(n.title)}</b><p>${esc(n.body)}</p></div>`
+      : `<div class="an-body"><span class="shimmer"></span><span class="shimmer"></span><span class="shimmer short"></span></div>`}
+    <button class="an-ask" id="anAsk">${t('Hỏi thêm trợ lý')} <span>→</span></button>`;
+  el.onclick = e => {
+    if (e.target.closest('#anRefresh')) return Note.load(true);
+    if (e.target.closest('#anAsk') && n) { Chat.open(); Chat.send(t('Giải thích kỹ hơn và cho ví dụ áp dụng: “{x}”', { x: n.title })); }
+  };
+}
+
+const firstStudent = () => [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'))[0];
 function renderSidebar() {
-  renderTodayCard();
+  renderTodayCard(); renderAiNote();
   const cnt = id => S.boards.filter(b => b.studentId === id).length;
   const students = [...S.students].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   $('#studentNav').innerHTML = `
-    <button class="nav-item ${S.studentId === 'all' ? 'active' : ''}" data-student="all" title="${t('Lớp chung')}">${avatarHTML('all')}<span class="name">${t('Lớp chung')}</span></button>
     <div class="side-label"><span>${t('Học sinh · {n}', { n: students.length })}</span><button id="btnAddStudent" class="add-pill" title="${t('Thêm học sinh')}" aria-label="${t('Thêm học sinh')}">${ic('plus', 14)}<em>${t('Thêm')}</em></button></div>
     ${students.map(s => `<button class="nav-item two ${S.studentId === s.id ? 'active' : ''}" data-student="${s.id}" title="${esc(s.name)}">${avatarHTML(s.id)}<span class="name"><span>${esc(s.name)}</span><small>${esc(s.grade || t('{b} bảng', { b: cnt(s.id) }))}</small></span><span class="nav-more" data-smenu="${s.id}" role="button" tabindex="0" title="${t('Tuỳ chọn')}" aria-label="${t('Tuỳ chọn')}">${ic('more', 16)}</span></button>`).join('')
     || `<div class="side-empty">${t('Chưa có học sinh nào.')}<br>${t('Bấm + để thêm — mỗi em sẽ có bảng, tài liệu, lịch học và ghi chú riêng.')}</div>`}`;
@@ -1938,6 +2014,260 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
 }
 
 /* =====================================================================
+   Trợ lý AI (Claude qua hàm máy chủ /api/assistant trên Vercel)
+   ===================================================================== */
+const AI = {
+  status: 'unknown', needCode: false,
+  async check() {
+    if (!location.protocol.startsWith('http')) { this.status = 'off'; Chat.renderState(); return this.status; }
+    try {
+      const r = await fetch('api/assistant', { cache: 'no-store' });
+      const j = await r.json();
+      this.status = j.configured ? 'on' : 'nokey'; this.needCode = !!j.needCode;
+    } catch (e) { this.status = 'off'; }
+    Chat.renderState(); if (Chat.isOpen()) Chat.render();
+    return this.status;
+  },
+  async ask(mode, extra = {}) {
+    if (this.status !== 'on') throw Object.assign(new Error(this.status), { code: this.status });
+    const r = await fetch('api/assistant', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-access-code': S.settings.aiCode || '' },
+      body: JSON.stringify({ mode, lang: LANG, context: aiContext(), ...extra }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(j.error || 'HTTP ' + r.status), { code: j.error || 'http' });
+    return (j.text || '').trim();
+  },
+};
+function aiContext() {
+  const now = new Date(), p = profile(), cur = studentById(S.studentId), board = S.boards.find(b => b.id === S.boardId);
+  const ws = weekStart(now);
+  return {
+    date: fmtDateLong(todayStr()), time: `${pad(now.getHours())}:${pad(now.getMinutes())}`, dayPart: dayPart(),
+    teacher: { name: p.name || '', role: p.role || '', school: p.school || '' },
+    students: S.students.slice(0, 40).map(s => ({ name: s.name, grade: s.grade || '' })),
+    todayLessons: todayLessons().map(o => ({ time: `${o.start}-${o.end}`, student: o.owner === 'all' ? 'Lớp chung' : ownerName(o.owner), subject: o.subject || '', cancelled: o.off })),
+    currentStudent: cur ? {
+      name: cur.name, grade: cur.grade || '', note: (cur.note || '').slice(0, 600),
+      thisWeek: weekOccurrences(cur.id, ws).flatMap(d => d.list.map(o => `${WD.vi[dow(d.d)]} ${shortDate(d.date)} ${o.start}-${o.end} ${o.subject || ''}${o.off ? ' (nghỉ)' : ''}`)),
+    } : null,
+    currentBoard: board ? board.title : '',
+  };
+}
+const hashStr = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
+
+/* ---- Nội dung dự phòng khi chưa kết nối AI (vẫn đổi theo ngày) ---- */
+const FALLBACK = {
+  vi: {
+    hello: {
+      morning: ['Một ngày mới thật nhiều năng lượng đang chờ thầy/cô ☀️', 'Pha một tách trà ấm rồi mình cùng bắt đầu nhé.', 'Ngày mới, bài giảng mới — Vincenink luôn sẵn sàng cùng thầy/cô.'],
+      noon: ['Nghỉ trưa một chút để nạp lại năng lượng nhé.', 'Đã qua nửa ngày rồi, thầy/cô làm tốt lắm!'],
+      afternoon: ['Buổi chiều nhẹ nhàng, giữ nhịp thật đều nhé.', 'Chiều nay mình cùng hoàn thành nốt các buổi dạy nào.'],
+      evening: ['Buổi tối ấm áp, mong thầy/cô đã có một ngày trọn vẹn 🌙', 'Cuối ngày rồi, nhớ dành chút thời gian nghỉ ngơi nhé.'],
+    },
+    lessons: (n, o) => n ? `Hôm nay có ${n} buổi học, buổi gần nhất lúc ${o.start} với ${o.who}${o.subject ? ` (${o.subject})` : ''}.` : 'Hôm nay không có tiết nào — dịp tốt để soạn bài và nghỉ ngơi.',
+    wish: ['Chúc thầy/cô dạy thật hiệu quả và học sinh tiến bộ!', 'Chúc một ngày năng suất và nhiều niềm vui.', 'Nhớ uống đủ nước và nghỉ giữa giờ nhé!', 'Chúc các buổi học suôn sẻ, nhẹ nhàng.'],
+    tips: [
+      ['Mở đầu bằng một câu hỏi', 'Bắt đầu buổi học bằng một câu hỏi gần gũi giúp học sinh tò mò và tập trung ngay từ những phút đầu.'],
+      ['Chia nhỏ nhiệm vụ', 'Chia bài khó thành 3–4 bước nhỏ, mỗi bước có ví dụ mẫu. Học sinh sẽ tự tin hơn khi hoàn thành từng phần.'],
+      ['Khen cụ thể', 'Thay vì “giỏi lắm”, hãy khen đúng việc: “Em trình bày lời giải rất rõ ràng”. Học sinh biết nên lặp lại điều gì.'],
+      ['Quy tắc 10 phút', 'Sau mỗi 10–15 phút giảng, cho học sinh làm một bài ngắn hoặc tự giải thích lại. Vận dụng giúp nhớ lâu hơn.'],
+      ['Ôn tập ngắt quãng', 'Dành 5 phút đầu buổi ôn lại kiến thức buổi trước và tuần trước. Ôn ngắt quãng giúp nhớ lâu hơn học dồn.'],
+      ['Để học sinh làm thầy', 'Mời học sinh giảng lại một bước giải. Khi phải giải thích, các em sẽ tự phát hiện chỗ mình chưa hiểu.'],
+      ['Ghi lại lỗi hay gặp', 'Lưu những lỗi học sinh hay mắc vào thẻ Ghi chú. Buổi sau dành 5 phút chữa riêng các lỗi đó.'],
+      ['Một mục tiêu mỗi buổi', 'Viết một mục tiêu duy nhất lên góc bảng ở đầu buổi, cuối buổi cùng học sinh kiểm tra đã đạt chưa.'],
+      ['Dùng màu có chủ đích', 'Quy ước màu cố định: đen cho lời giải, đỏ cho lỗi sai, xanh cho công thức. Học sinh đọc bảng nhanh hơn.'],
+      ['Phiếu thoát lớp', 'Cuối buổi cho 1–2 câu hỏi nhanh. Câu trả lời cho thầy/cô biết cần ôn lại gì ở buổi sau.'],
+    ],
+  },
+  en: {
+    hello: {
+      morning: ['A fresh day full of energy is waiting for you ☀️', 'Grab a warm cup of tea and let’s get started.', 'New day, new lessons — Vincenink is ready when you are.'],
+      noon: ['Take a short lunch break to recharge.', 'Half the day done — great job so far!'],
+      afternoon: ['A calm afternoon — keep a steady pace.', 'Let’s wrap up this afternoon’s lessons together.'],
+      evening: ['A cosy evening — hope today went well 🌙', 'End of the day — remember to rest a little.'],
+    },
+    lessons: (n, o) => n ? `You have ${n} lesson${n > 1 ? 's' : ''} today; the next one is at ${o.start} with ${o.who}${o.subject ? ` (${o.subject})` : ''}.` : 'No lessons today — a good time to prepare and rest.',
+    wish: ['Have a productive day and happy students!', 'Wishing you a smooth, joyful day of teaching.', 'Stay hydrated and take short breaks!', 'May every lesson go smoothly today.'],
+    tips: [
+      ['Open with a question', 'Start the lesson with a relatable question to spark curiosity and focus from the first minutes.'],
+      ['Break tasks down', 'Split a hard problem into 3–4 small steps, each with a worked example. Students gain confidence step by step.'],
+      ['Praise specifically', 'Instead of “great job”, praise the action: “You explained your solution clearly.” Students learn what to repeat.'],
+      ['The 10-minute rule', 'After 10–15 minutes of explaining, give a short task or ask students to explain it back.'],
+      ['Spaced review', 'Spend the first 5 minutes reviewing last lesson and last week. Spaced review beats cramming.'],
+      ['Let students teach', 'Ask a student to explain a step to you. Explaining reveals what they have not understood yet.'],
+      ['Track common mistakes', 'Keep students’ frequent mistakes in Notes and spend 5 minutes on them next lesson.'],
+      ['One goal per lesson', 'Write a single goal in the corner of the board; check it together at the end.'],
+      ['Use colour on purpose', 'Fix a colour code: black for working, red for mistakes, blue for formulas.'],
+      ['Exit tickets', 'End with 1–2 quick questions. The answers tell you what to revisit next time.'],
+    ],
+  },
+};
+const pickDay = (arr, salt = 0) => arr[(hashStr(todayStr()) + salt) % arr.length];
+function fallbackDaily(salt = 0) {
+  const F = FALLBACK[LANG], list = todayLessons().filter(o => !o.off), hm = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
+  const next = list.find(o => o.end > hm) || list[0];
+  const o = next ? { start: next.start, who: next.owner === 'all' ? t('Lớp chung') : ownerName(next.owner), subject: next.subject } : null;
+  return `${pickDay(F.hello[dayPart()], salt)} ${F.lessons(list.length, o)} ${pickDay(F.wish, 3 + salt)}`;
+}
+const fallbackNote = (salt = 0) => { const [title, body] = pickDay(FALLBACK[LANG].tips, salt); return { title, body }; };
+
+/* ---- Lời chúc mỗi ngày (lưu theo ngày + buổi + ngôn ngữ + danh sách tiết) ---- */
+const Daily = {
+  loading: false, cur: null, salt: 0,
+  key() { return `vincenink.ai.daily.${todayStr()}.${LANG}.${dayPart()}.${hashStr(JSON.stringify(todayLessons().map(o => [o.start, o.owner, o.subject, o.off])))}`; },
+  text() { return this.cur || ls.get(this.key(), '') || (AI.status === 'on' && this.loading ? '' : fallbackDaily(this.salt)); },
+  async load(force) {
+    this.cur = null;
+    if (!force && ls.get(this.key(), '')) { renderTodayCard(); return; }
+    if (AI.status !== 'on') { if (force) this.salt++; renderTodayCard(); return; }
+    this.loading = true; renderTodayCard();
+    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8) }); if (txt) { ls.set(this.key(), txt); this.cur = txt; } }
+    catch (e) { this.cur = fallbackDaily(++this.salt); }
+    this.loading = false; renderTodayCard();
+  },
+};
+/* ---- Ghi chú AI mỗi ngày ---- */
+const Note = {
+  loading: false, cur: null, salt: 0,
+  key() { return `vincenink.ai.note.${todayStr()}.${LANG}`; },
+  value() {
+    if (this.cur) return this.cur;
+    const saved = ls.get(this.key(), ''); if (saved) { try { return JSON.parse(saved); } catch (e) { /* */ } }
+    return AI.status === 'on' && this.loading ? null : fallbackNote(this.salt);
+  },
+  async load(force) {
+    this.cur = null;
+    if (!force && ls.get(this.key(), '')) { renderAiNote(); return; }
+    if (AI.status !== 'on') { if (force) this.salt++; renderAiNote(); return; }
+    this.loading = true; renderAiNote();
+    try {
+      const txt = await AI.ask('note', { seed: Math.random().toString(36).slice(2, 8) });
+      const lines = txt.split('\n').map(x => x.trim()).filter(Boolean);
+      if (lines.length) { const n = { title: lines[0].replace(/^#+\s*|\*\*/g, ''), body: lines.slice(1).join(' ').replace(/\*\*/g, '') }; ls.set(this.key(), JSON.stringify(n)); this.cur = n; }
+    } catch (e) { this.cur = fallbackNote(++this.salt); }
+    this.loading = false; renderAiNote();
+  },
+};
+
+/* ---- Khung trò chuyện ---- */
+function mdToHtml(src) {
+  const lines = esc(src).split('\n'); let html = '', list = null;
+  const inline = x => x.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of lines) {
+    const l = raw.trimEnd(); let m;
+    if (!l.trim()) { close(); continue; }
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { close(); html += `<h4>${inline(m[1])}</h4>`; continue; }
+    if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { if (list !== 'ul') { close(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== 'ol') { close(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    close(); html += `<p>${inline(l)}</p>`;
+  }
+  close(); return html;
+}
+const mdToPlain = src => src.replace(/^#{1,4}\s+/gm, '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/^\s*[-*]\s+/gm, '• ');
+function insertTextOnBoard(text) {
+  const plain = mdToPlain(text).trim(); if (!plain) return;
+  const wrapAt = 54, out = [];
+  for (const para of plain.split('\n')) {
+    if (!para.trim()) { out.push(''); continue; }
+    let line = '';
+    for (const w of para.split(/\s+/)) { if ((line + ' ' + w).trim().length > wrapAt) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); }
+    if (line) out.push(line);
+  }
+  const v = viewportWorld(), fs = 20 / E.view.s;
+  placeItems([{ type: 'text', x: r1(v.x + 60 / E.view.s), y: r1(v.y + 50 / E.view.s), fs, color: E.color, text: out.join('\n').replace(/\n{3,}/g, '\n\n') }]);
+}
+const Chat = {
+  msgs: (() => { try { return JSON.parse(ls.get('vincenink.chat', '[]')); } catch (e) { return []; } })(),
+  busy: false,
+  save() { ls.set('vincenink.chat', JSON.stringify(this.msgs.slice(-40))); },
+  isOpen: () => !!$('#aiPanel') && $('#aiPanel').classList.contains('open'),
+  open() { $('#aiPanel').classList.add('open'); $('#aiPanel').setAttribute('aria-hidden', 'false'); $('#aiFab').classList.add('hide'); this.render(); setTimeout(() => $('#aiText').focus(), 220); },
+  close() { $('#aiPanel').classList.remove('open'); $('#aiPanel').setAttribute('aria-hidden', 'true'); $('#aiFab').classList.remove('hide'); },
+  renderState() {
+    const st = $('#aiState'); if (!st) return;
+    st.innerHTML = AI.status === 'on' ? `<i class="dot on"></i>${t('Sẵn sàng hỗ trợ')}` : AI.status === 'unknown' ? t('Đang kết nối…') : `<i class="dot"></i>${t('Chưa kết nối AI')}`;
+  },
+  renderCtx() {
+    const cur = studentById(S.studentId), n = todayLessons().filter(o => !o.off).length;
+    $('#aiCtx').innerHTML = `${cur ? `<span class="ctx-chip">${avatarHTML(cur.id)}${esc(cur.name)}${cur.grade ? ` · ${esc(cur.grade)}` : ''}</span>` : ''}<span class="ctx-chip">${ic('calendar', 12)}${t('{n} tiết hôm nay', { n })}</span>`;
+  },
+  suggestions() {
+    const cur = studentById(S.studentId), g = cur?.grade ? ` ${cur.grade}` : '';
+    return LANG === 'vi' ? [
+      `Soạn 5 bài tập luyện tập${g ? ' cho học sinh' + g : ''} kèm đáp án`,
+      'Gợi ý giáo án 90 phút cho buổi học hôm nay',
+      cur ? `Viết nhận xét ngắn về tiến độ của ${cur.name} gửi phụ huynh` : 'Viết mẫu nhận xét học sinh gửi phụ huynh',
+      'Giải thích khái niệm phân số thật dễ hiểu cho học sinh lớp 4',
+      'Tóm tắt lịch dạy hôm nay và việc cần chuẩn bị',
+    ] : [
+      `Write 5 practice exercises${g ? ' for' + g : ''} with answers`,
+      'Suggest a 90-minute lesson plan for today',
+      cur ? `Write short progress feedback about ${cur.name} for parents` : 'Write a sample progress report for parents',
+      'Explain fractions simply for a 9-year-old',
+      'Summarise today’s teaching schedule and what to prepare',
+    ];
+  },
+  render() {
+    this.renderState(); this.renderCtx();
+    const box = $('#aiMsgs'), p = profile(), name = p.name ? p.name.trim().split(/\s+/).pop() : '';
+    let html = '';
+    if (AI.status !== 'on' && AI.status !== 'unknown') {
+      html += `<div class="ai-setup">${ic('info', 16)}<div>${AI.status === 'off'
+        ? t('Trợ lý AI chạy khi trang được mở từ Vercel (vincenink.vercel.app). Bản mở trực tiếp từ tệp trên máy không gọi được AI.')
+        : t('Trợ lý chưa có khoá AI. Vào Vercel → dự án Vincenink → <b>Settings → Environment Variables</b>, thêm <code>ANTHROPIC_API_KEY</code>, rồi <b>Redeploy</b>.')}</div></div>`;
+    }
+    if (!this.msgs.length) {
+      html += `<div class="ai-hello"><img src="assets/logo.png" alt="" width="64" height="64">
+        <b>${t('Xin chào{n}! Mình là Vincenink 🐾', { n: name ? ' ' + esc(name) : '' })}</b>
+        <span>${t('Mình có thể soạn bài tập, gợi ý giáo án, giải thích kiến thức và viết nhận xét học sinh. Thầy/cô muốn bắt đầu từ đâu?')}</span></div>
+        <div class="ai-sugs">${this.suggestions().map(x => `<button class="ai-sug" data-sug="${esc(x)}">${ic('sparkle', 13)}<span>${esc(x)}</span></button>`).join('')}</div>`;
+    }
+    html += this.msgs.map((m, i) => m.role === 'user'
+      ? `<div class="msg me"><div class="bubble">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`
+      : `<div class="msg bot ${m.error ? 'err' : ''}"><img src="assets/logo.png" alt="" width="28" height="28"><div class="bubble">${mdToHtml(m.content)}
+          ${m.error ? '' : `<div class="msg-acts"><button data-copy="${i}">${ic('copy', 13)}${t('Sao chép')}</button><button data-board="${i}">${ic('toBoard', 13)}${t('Chèn lên bảng')}</button></div>`}</div></div>`).join('');
+    if (this.busy) html += `<div class="msg bot"><img src="assets/logo.png" alt="" width="28" height="28"><div class="bubble typing"><i></i><i></i><i></i></div></div>`;
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  },
+  async send(text) {
+    text = (text || '').trim(); if (!text || this.busy) return;
+    if (!this.isOpen()) this.open();
+    this.msgs.push({ role: 'user', content: text }); this.busy = true; this.save(); this.render();
+    try {
+      const reply = await AI.ask('chat', { messages: this.msgs.filter(m => !m.error).slice(-12).map(m => ({ role: m.role, content: m.content })) });
+      this.msgs.push({ role: 'assistant', content: reply || '…' });
+    } catch (e) {
+      const c = e.code;
+      const msg = c === 'off' ? t('Trợ lý AI chỉ chạy trên bản Vercel của trang.')
+        : c === 'nokey' || c === 'not_configured' ? t('Trợ lý chưa có khoá AI. Thêm ANTHROPIC_API_KEY trên Vercel rồi Redeploy.')
+        : c === 'bad_code' ? t('Sai mã truy cập trợ lý. Vào Cài đặt & sao lưu để nhập mã.')
+        : c === 'rate_limited' ? t('Hỏi hơi nhanh rồi, thầy/cô đợi vài phút rồi thử lại nhé.')
+        : t('Không kết nối được AI lúc này. Thầy/cô thử lại sau nhé.');
+      this.msgs.push({ role: 'assistant', content: msg, error: true });
+    }
+    this.busy = false; this.save(); this.render();
+  },
+};
+function bindChat() {
+  $('#aiFab').onclick = () => Chat.open();
+  $('#aiClose').onclick = () => Chat.close();
+  $('#aiNew').onclick = () => { Chat.msgs = []; Chat.save(); Chat.render(); };
+  const ta = $('#aiText');
+  const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(140, ta.scrollHeight) + 'px'; };
+  ta.addEventListener('input', grow);
+  ta.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#aiForm').requestSubmit(); } if (e.key === 'Escape') Chat.close(); });
+  $('#aiForm').onsubmit = e => { e.preventDefault(); const v = ta.value; ta.value = ''; grow(); Chat.send(v); };
+  $('#aiMsgs').onclick = e => {
+    const sg = e.target.closest('[data-sug]'); if (sg) return Chat.send(sg.dataset.sug);
+    const cp = e.target.closest('[data-copy]'); if (cp) { navigator.clipboard?.writeText(mdToPlain(Chat.msgs[+cp.dataset.copy].content)); toast(t('Đã sao chép')); return; }
+    const bd = e.target.closest('[data-board]'); if (bd) insertTextOnBoard(Chat.msgs[+bd.dataset.board].content);
+  };
+}
+
+/* =====================================================================
    Hồ sơ giáo viên
    ===================================================================== */
 const profile = () => S.settings.profile || (S.settings.profile = {});
@@ -2018,9 +2348,6 @@ function themePreview(v) {
 const themeNow = () => THEME_OPTS.some(o => o[0] === themePref) ? themePref : 'system';
 function renderThemeUI() {
   const cur = themeNow(), label = t(THEME_OPTS.find(o => o[0] === cur)[1]);
-  $('#sideTheme').innerHTML = `
-    <div class="tbx-h"><span>${ic('palette', 14)}${t('Giao diện')}</span><b>${esc(label)}</b></div>
-    <div class="tbx-row">${THEME_OPTS.map(([v, l]) => `<button class="tbx-chip ${v === cur ? 'active' : ''}" data-theme-v="${v}" title="${t(l)}" aria-label="${t(l)}">${themePreview(v)}</button>`).join('')}</div>`;
   $('#btnThemePick').innerHTML = `${themePreview(cur)}<span>${esc(label)}</span><span class="chev">${ic('chev', 12)}</span>`;
 }
 function themePopover(anchor) {
@@ -2091,7 +2418,6 @@ function bindTopbar() {
   $('#btnPdf').onclick = exportPdfDialog;
   $('#btnSettings').onclick = settingsModal;
   $('#btnThemePick').onclick = e => themePopover(e.currentTarget);
-  $('#sideTheme').onclick = e => { const b = e.target.closest('[data-theme-v]'); if (b) setTheme(b.dataset.themeV); };
   $('#topProfile').onclick = profileMenu;
   $('#btnAbout').onclick = () => showWelcome(true);
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
@@ -2175,6 +2501,12 @@ function settingsModal() {
     <label class="switch"><input type="checkbox" id="setPen" ${s.penOnly ? 'checked' : ''}><span class="knob"></span>
       <span class="lbl">${t('Chỉ viết bằng bút cảm ứng')}<small>${t('Dành cho iPad/máy tính bảng: Apple Pencil để viết, ngón tay chỉ để kéo và phóng to — tránh lỡ tay chạm lòng bàn tay vào bảng.')}</small></span></label>
     <div class="set-section">
+      <h4>${t('Trợ lý AI')}</h4>
+      <p class="muted" style="font-size:13px">${AI.status === 'on' ? '✅ ' + t('Đã kết nối Claude qua Vercel.') : t('Chưa kết nối. Thêm biến ANTHROPIC_API_KEY trong Vercel → Settings → Environment Variables rồi Redeploy.')}
+        ${t('Khi dùng trợ lý, tên học sinh, lịch hôm nay và câu hỏi của thầy/cô được gửi tới AI để trả lời.')}</p>
+      ${AI.needCode ? `<div class="field"><label>${t('Mã truy cập trợ lý')}</label><input type="text" id="setAiCode" value="${esc(s.aiCode || '')}"></div>` : ''}
+    </div>
+    <div class="set-section">
       <h4>${t('Sao lưu dữ liệu')}</h4>
       <p class="muted" style="font-size:13px">${t('Dữ liệu được lưu ngay trong trình duyệt trên máy này. Thỉnh thoảng hãy tải bản sao lưu để không mất bài giảng.')}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2205,6 +2537,7 @@ function settingsModal() {
     if (name === 'lang') { setLang(b.dataset.v); m.close(); settingsModal(); } else setTheme(b.dataset.v);
   });
   $('#setPen', body).onchange = e => { s.penOnly = e.target.checked; saveSettings(); };
+  if ($('#setAiCode', body)) $('#setAiCode', body).onchange = e => { s.aiCode = e.target.value.trim(); saveSettings(); };
   $('#setTheme', body).onchange = e => setTheme(e.target.value);
   $('#setExport', body).onclick = exportBackup;
   $('#setImport', body).onclick = () => $('#fileImport').click();
@@ -2350,16 +2683,18 @@ async function init() {
   const [st, bo, fi, sc, se] = await Promise.all([DB.all('students'), DB.all('boards'), DB.all('files'), DB.all('schedule'), DB.get('settings', 'main')]);
   S.students = st; S.boards = bo; S.files = fi; sc.forEach(x => S.sched.set(x.id, x));
   if (se) { delete se.clientId; delete se.apiKey; S.settings = { ...S.settings, ...se }; }
-  S.studentId = (S.settings.lastStudent === 'all' || studentById(S.settings.lastStudent)) ? S.settings.lastStudent : 'all';
+  S.studentId = studentById(S.settings.lastStudent) ? S.settings.lastStudent : (firstStudent()?.id || 'all');
   renderToolbar(); bindTopbar(); applyTheme(); setTool(E.tool); initResizers();
   renderSidebar(); renderPanel(); renderProfileCard();
   new ResizeObserver(resize).observe(wrap); resize();
-  let b = S.boards.find(x => x.id === S.settings.lastBoard) || boardsOf(S.studentId)[0];
+  let b = S.boards.find(x => x.id === S.settings.lastBoard && (x.studentId !== 'all' || !S.students.length)) || boardsOf(S.studentId)[0];
   if (!b) b = await createBoard(S.studentId, false);
   if (b.studentId !== S.studentId) { S.studentId = b.studentId; renderSidebar(); }
   await openBoard(b.id); renderPanel();
   if (innerWidth <= 900) $('#app').classList.add('focus');
   showWelcome(true); // luôn giới thiệu khi vào trang
+  bindChat(); Chat.renderState();
+  AI.check().then(() => { Daily.load(); Note.load(); renderAiNote(); renderTodayCard(); });
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }

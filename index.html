@@ -42,7 +42,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
@@ -139,9 +139,9 @@
       </div>
     </div>
     <nav id="studentNav"></nav>
-    <section class="today-card" id="todayCard" aria-live="polite"></section>
+    <section class="ai-note" id="aiNote" aria-live="polite"></section>
+    <section class="today-card day-card" id="todayCard" aria-live="polite"></section>
     <div class="side-foot">
-      <div class="theme-box" id="sideTheme"></div>
       <div class="foot-row">
         <button class="foot-btn" id="btnSettings" data-icon="settings" data-i18n-title="Cài đặt &amp; sao lưu" title="Cài đặt &amp; sao lưu"><span data-i18n="Cài đặt &amp; sao lưu">Cài đặt &amp; sao lưu</span><em class="fb-go">›</em></button>
         <button class="foot-btn" id="btnAbout" data-icon="info" data-i18n-title="Giới thiệu Vincenink" title="Giới thiệu Vincenink"><span data-i18n="Về Vincenink">Về Vincenink</span><em class="fb-go">›</em></button>
@@ -184,6 +184,23 @@
       <div id="props" class="floating"></div>
       <div id="toolbar" class="floating" role="toolbar"></div>
       <div id="zoombar" class="floating"></div>
+      <button id="aiFab" class="ai-fab" data-i18n-title="Trợ lý Vincenink" title="Trợ lý Vincenink" aria-label="Trợ lý Vincenink">
+        <img src="assets/logo.png" alt="" width="56" height="56"><span class="ai-fab-badge">AI</span>
+      </button>
+      <aside id="aiPanel" class="ai-panel" aria-hidden="true" aria-label="Trợ lý Vincenink">
+        <header class="ai-h">
+          <img src="assets/logo.png" alt="" width="40" height="40">
+          <div class="ai-h-t"><b data-i18n="Trợ lý Vincenink">Trợ lý Vincenink</b><small id="aiState"></small></div>
+          <button class="icon-btn sm" id="aiNew" data-icon="refresh" data-i18n-title="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"></button>
+          <button class="icon-btn sm" id="aiClose" data-icon="x" data-i18n-title="Đóng" title="Đóng"></button>
+        </header>
+        <div class="ai-ctx" id="aiCtx"></div>
+        <div class="ai-msgs" id="aiMsgs"></div>
+        <form class="ai-input" id="aiForm">
+          <textarea id="aiText" rows="1" data-i18n-ph="Hỏi Vincenink điều gì đó…" placeholder="Hỏi Vincenink điều gì đó…"></textarea>
+          <button type="submit" class="ai-send" id="aiSend" data-icon="send" data-i18n-title="Gửi (Enter)" title="Gửi (Enter)"></button>
+        </form>
+      </aside>
       <div id="dropHint"><div data-i18n="Thả ảnh hoặc PDF vào đây để đưa lên bảng">Thả ảnh hoặc PDF vào đây để đưa lên bảng</div></div>
     </div>
   </main>
@@ -257,6 +274,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=12" defer></script>
+<script src="app.js?v=13" defer></script>
 </body>
 </html>
