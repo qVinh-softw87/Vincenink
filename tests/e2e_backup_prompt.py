@@ -21,16 +21,18 @@ async def main():
     await p.screenshot(path='/tmp/nudge.png', clip={'x':0,'y':700,'width':240,'height':200})
     # đăng nhập → nudge ẩn, menu có Đăng xuất
     E.USERS['x@t.vn']={'id':'11111111-1111-1111-1111-111111111111','password':'matkhau1','confirmed':True}
-    await E.login(p,'x@t.vn','matkhau1'); await p.wait_for_timeout(2500)
-    await p.evaluate("document.querySelectorAll('.modal-back').forEach(x=>x.remove())")
+    await E.login(p,'x@t.vn','matkhau1'); await p.wait_for_timeout(3500)
+    await p.evaluate("showGreet(false); showWelcome(false); document.querySelectorAll('.modal-back').forEach(x=>x.remove())"); await p.wait_for_timeout(600)
     print('4 nudge hidden after login:', await p.evaluate("document.querySelector('#backupNudge').classList.contains('hidden')"))
     await p.click('#topProfile'); await p.wait_for_timeout(300)
     print('5 menu has Đăng xuất:', 'Đăng xuất' in await p.evaluate("document.querySelector('.pop-menu, .menu, #popMenu')?.innerText || document.body.innerText"))
     await p.evaluate("[...document.querySelectorAll('button, .mi, li')].find(x=>x.textContent.trim()==='Đăng xuất')?.click()"); await p.wait_for_timeout(300)
-    await p.evaluate("document.querySelector('.modal .btn.danger').click()"); await p.wait_for_timeout(1200)
+    await p.evaluate("document.querySelector('.modal .btn.danger').click()"); await p.wait_for_timeout(3500)
+    await p.evaluate("showGreet(false); showWelcome(false)"); await p.wait_for_timeout(900)
+    await p.evaluate("document.querySelector('.mode-pick [data-pick=guest]')?.click()"); await p.wait_for_timeout(300)
     print('6 signed out:', not await p.evaluate("!!Cloud.user"), 'nudge back:', await p.evaluate("!document.querySelector('#backupNudge').classList.contains('hidden')"))
     # quay lại lần sau: lời chào trước, rồi nhắc sao lưu
-    await p.reload(); await p.wait_for_timeout(2200)
+    await p.evaluate("Guest.leaving=true"); await p.reload(); await p.wait_for_timeout(2200)
     g = await p.evaluate("!document.querySelector('#greetPop').classList.contains('hidden') || !document.querySelector('#welcome').classList.contains('hidden')")
     await p.evaluate("showGreet(false); showWelcome(false)"); await p.wait_for_timeout(900)
     print('7 returning: popup first', g, '→ chooser after:', await p.evaluate("!!document.querySelector('.mode-pick')"))

@@ -126,7 +126,10 @@ async def main():
         USERS['a@test.vn']['confirmed'] = True
         await login(p, 'a@test.vn', 'sai-mat-khau')
         assert 'chưa đúng' in (await msg(p)); ok('Sai mật khẩu → báo "Email hoặc mật khẩu chưa đúng"')
-        await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(3500)
+        await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(800)
+        assert 'Mang dữ liệu đang có vào tài khoản' in await p.evaluate("document.body.innerText"); ok('Đăng nhập khi đang có dữ liệu khách → hỏi có mang vào tài khoản không')
+        await p.click('.modal .btn.primary >> text=Mang vào tài khoản'); await p.wait_for_timeout(4000)
+        assert await p.evaluate("DB.owner") == USERS['a@test.vn']['id'] and await p.evaluate("S.students.map(s=>s.name)") == ['Lớp 9A']; ok('Chọn mang vào → dữ liệu chuyển sang kho riêng của tài khoản A')
         assert 'Xác nhận email thành công' in await p.evaluate("document.body.innerText"); ok('Xác nhận xong, đăng nhập lần đầu → hiện cửa sổ chúc mừng')
         A = USERS['a@test.vn']['id']; row = STATE.get(A)
         assert row and [c['name'] for c in row['classes'] if not c.get('deleted')] == ['Lớp 9A'] and 'c1' in row['schedule']; ok('Đăng nhập → đẩy lớp + lịch lên user_state của A')
@@ -150,7 +153,9 @@ async def main():
 
         await open_acct(p); await p.click('#acctModal [data-a=out]'); await p.wait_for_timeout(300)
         await p.click('.modal .btn.danger'); await p.wait_for_timeout(1500)
-        assert not await p.evaluate("!!Cloud.user") and await p.evaluate("S.students.length") == 1 and not any(s['user_id'] == A for s in SUBS.values()); ok('Đăng xuất → còn dữ liệu tới khi đóng trang, máy này ngừng nhận thông báo')
+        await p.wait_for_timeout(1500)
+        assert not await p.evaluate("!!Cloud.user") and await p.evaluate("DB.owner") == '' and await p.evaluate("S.students.length") == 0 and not any(s['user_id'] == A for s in SUBS.values()); ok('Đăng xuất → về chế độ khách, không lộ dữ liệu của A, máy này ngừng nhận thông báo')
+        assert await p.evaluate(f"(async()=>(await indexedDB.databases()).some(d=>d.name==='vincenink-u-{A}'))()"); ok('Đăng xuất KHÔNG xoá dữ liệu của tài khoản A trên máy')
 
         ctx2, q = await page(b, 'may2')
         await login(q, 'a@test.vn', 'matkhau123'); await q.wait_for_timeout(3000)
@@ -162,19 +167,24 @@ async def main():
         assert BOARDS[(A, bid)]['deleted'] is True; ok('Xoá bảng ở máy 2 → máy chủ ghi dấu đã xoá')
 
         await q.evaluate("sched('c1').sessions.push({id:'s9',date:todayStr(),start:'20:00',end:'21:00',subject:'Ôn thi'}); saveSched('c1'); Cloud.queue(true)"); await q.wait_for_timeout(1500)
-        await p.evaluate("Cloud"); await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(3000)
+        await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(3500)
+        assert 'Mang dữ liệu' not in await p.evaluate("document.body.innerText"); ok('Khách không có dữ liệu → đăng nhập thẳng, không hỏi')
         assert await p.evaluate("sched('c1').sessions.some(x=>x.id==='s9')"); ok('Sửa lịch ở máy 2 → máy 1 nhận được khi đăng nhập lại')
 
         USERS['b@test.vn'] = {'id': str(uuid.uuid4()), 'password': 'matkhau456', 'confirmed': True}; B = USERS['b@test.vn']['id']
         await open_acct(p); await p.click('#acctModal [data-a=out]'); await p.wait_for_timeout(300); await p.click('.modal .btn.danger'); await p.wait_for_timeout(1200)
-        await login(p, 'b@test.vn', 'matkhau456'); await p.wait_for_timeout(800)
-        assert 'tài khoản khác' in await p.evaluate("document.body.innerText"); ok('Đổi sang tài khoản B trên cùng máy → hỏi trước khi gộp dữ liệu')
-        await p.evaluate("[...document.querySelectorAll('.modal .btn')].find(x=>/Huỷ|Cancel/.test(x.textContent)).click()"); await p.wait_for_timeout(1500)
-        assert B not in STATE and not await p.evaluate("!!Cloud.user"); ok('Chọn Huỷ → đăng xuất, KHÔNG đẩy dữ liệu của A vào tài khoản B')
+        await p.wait_for_timeout(1500)
+        await login(p, 'b@test.vn', 'matkhau456'); await p.wait_for_timeout(3500)
+        assert await p.evaluate("DB.owner") == B and await p.evaluate("S.students.length") == 0 and STATE[B]['classes'] == [] and STATE[B]['schedule'] == {}; ok('Cùng Chrome, đăng nhập tài khoản B → kho riêng của B, không thấy và không gộp dữ liệu của A')
+        await p.evaluate("(async()=>{ const st={id:'cb',name:'Lớp của B',color:'#36c',created:Date.now()}; await DB.put('students',st); S.students.push(st); Cloud.queue(true); })()"); await p.wait_for_timeout(1500)
+        await open_acct(p); await p.click('#acctModal [data-a=out]'); await p.wait_for_timeout(300); await p.click('.modal .btn.danger'); await p.wait_for_timeout(3000)
+        await login(p, 'a@test.vn', 'matkhau123'); await p.wait_for_timeout(3500)
+        assert await p.evaluate("S.students.map(s=>s.name)") == ['Lớp 9A'] and [c['name'] for c in STATE[A]['classes'] if not c.get('deleted')] == ['Lớp 9A']; ok('Quay lại tài khoản A → dữ liệu A còn nguyên, không lẫn lớp của B')
+        assert [c['name'] for c in STATE[B]['classes'] if not c.get('deleted')] == ['Lớp của B']; ok('Dữ liệu của B vẫn còn nguyên trên tài khoản B')
 
         ctx3, r = await page(b, 'may3')
-        await login(r, 'b@test.vn', 'matkhau456'); await r.wait_for_timeout(2500)
-        assert await r.evaluate("S.students.length") == 0 and STATE.get(B) and STATE[B]['classes'] == []; ok('Tài khoản B (máy mới) không thấy lớp/lịch của A — RLS chỉ trả dòng của B')
+        await login(r, 'b@test.vn', 'matkhau456'); await r.wait_for_timeout(3500)
+        assert await r.evaluate("S.students.map(s=>s.name)") == ['Lớp của B']; ok('Tài khoản B ở máy mới chỉ thấy lớp của B — RLS chỉ trả dòng của B')
 
         LOG['denied'] = True
         await r.evaluate("Cloud.lastHash=''; Cloud.queue(true)"); await r.wait_for_timeout(1200); await open_acct(r)

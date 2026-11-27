@@ -468,7 +468,12 @@ const EN = {
   "Tiếp tục với tư cách khách": "Continue as guest",
   "Chọn cách sử dụng": "Choose how to continue",
   "Đang dùng chế độ khách — nhớ đăng nhập trước khi đóng trang để không mất dữ liệu": "Guest mode: sign in before closing the page so you don't lose data",
-  "Bạn chưa đăng nhập — đóng trang sẽ mất dữ liệu.": "You're not signed in. Closing the page will delete your data."
+  "Bạn chưa đăng nhập — đóng trang sẽ mất dữ liệu.": "You're not signed in. Closing the page will delete your data.",
+  "Mang dữ liệu đang có vào tài khoản?": "Bring your current data into this account?",
+  "Trên trình duyệt này đang có dữ liệu dùng khi chưa đăng nhập (lớp, lịch, bảng vẽ…). Mang vào tài khoản {e} để giữ lại? Chọn “Huỷ” thì tài khoản giữ nguyên dữ liệu của nó; dữ liệu khách sẽ mất khi đóng trang như bình thường.": "This browser has data from guest mode (classes, schedule, boards\u2026). Move it into {e} to keep it? Choose \u201cCancel\u201d to leave the account's data as it is; guest data is deleted when the page closes, as usual.",
+  "Mang vào tài khoản": "Move into account",
+  "Đã đăng xuất. Dữ liệu của tài khoản vẫn được giữ — đăng nhập lại là thấy đủ.": "Signed out. Your account data is kept; sign in again to see everything.",
+  "Dữ liệu của tài khoản vẫn được giữ nguyên, đăng nhập lại là thấy đủ. Sau khi đăng xuất bạn dùng ở chế độ khách: dữ liệu tạo lúc đó sẽ mất khi đóng trang.": "Your account data stays as it is; sign in again to see everything. After signing out you are in guest mode: anything created then is deleted when the page closes."
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -587,11 +592,23 @@ const mq = matchMedia('(prefers-color-scheme: dark)');
 const resolvedTheme = () => THEMES[themePref] ? themePref : (mq.matches ? 'dark' : 'light');
 
 /* ---------------- Cơ sở dữ liệu (IndexedDB) ---------------- */
+/* Mỗi tài khoản một kho dữ liệu riêng trên máy: 'vincenink-u-<id>'. Khách dùng kho 'vincenink'. Không gộp, không xoá lẫn nhau. */
+const authUid = () => { try { const j = JSON.parse(localStorage.getItem('vincenink.auth') || 'null'); return (j && ((j.user && j.user.id) || (j.currentSession && j.currentSession.user && j.currentSession.user.id))) || ''; } catch (e) { return ''; } };
+const dbNameFor = uid => uid ? 'vincenink-u-' + uid : 'vincenink';
+const ck = k => 'vincenink.cloud.' + k + (DB.owner ? '.' + DB.owner : '');
 const DB = {
-  db: null,
-  open() {
+  db: null, owner: '',
+  openNamed(name) {
     return new Promise((res, rej) => {
-      const r = indexedDB.open('vincenink', 2);
+      const r = indexedDB.open(name, 2);
+      r.onupgradeneeded = () => { const d = r.result; ['students', 'boards', 'boardData', 'files', 'settings', 'schedule'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); }); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+  },
+  open() {
+    this.owner = authUid();
+    return new Promise((res, rej) => {
+      const r = indexedDB.open(dbNameFor(this.owner), 2);
       r.onupgradeneeded = () => {
         const d = r.result;
         ['students', 'boards', 'boardData', 'files', 'settings', 'schedule'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); });
@@ -3187,11 +3204,24 @@ const Guest = {
       const keep = {};
       ['penOnly', 'aiCode'].forEach(k => { if (S.settings[k] != null) keep[k] = S.settings[k]; });
       S.settings = { ...keep }; await DB.put('settings', { id: 'main', ...S.settings });
-      ['vincenink.reminders', 'vincenink.cloud.at', 'vincenink.cloud.bsync', 'vincenink.cloud.deleted', 'vincenink.cloud.bdel', 'vincenink.cloud.owner', 'vincenink.firedLocal'].forEach(k => ls.set(k, k === 'vincenink.cloud.at' ? '' : (/deleted|bdel/.test(k) ? '[]' : k.endsWith('owner') ? '' : '{}')));
+      ['vincenink.reminders', ck('at'), ck('bsync'), ck('deleted'), ck('bdel'), 'vincenink.firedLocal'].forEach(k => ls.set(k, k === ck('at') ? '' : (/deleted|bdel/.test(k) ? '[]' : '{}')));
     }
     S.students = S.students.filter(s => !goneSt.has(s.id));
     S.boards = S.boards.filter(b => !(newer(b) || goneSt.has(b.studentId)));
     S.files = S.files.filter(f => !(newer(f) || goneSt.has(f.studentId)));
+  },
+  hasData() { return S.students.length > 0 || S.sched.size > 0 || S.files.length > 0 || S.boards.some(b => (b.updatedAt || 0) - (b.createdAt || 0) > 1000) || !!(S.settings.profile && S.settings.profile.name); },
+  /* Chép toàn bộ kho khách sang kho của tài khoản rồi làm trống kho khách */
+  async moveTo(name) {
+    await doSave();
+    const dst = await DB.openNamed(name), stores = ['students', 'boards', 'boardData', 'files', 'settings', 'schedule'];
+    for (const st of stores) {
+      const rows = await DB.all(st);
+      await new Promise((res, rej) => { const tx = dst.transaction(st, 'readwrite'), os = tx.objectStore(st); rows.forEach(r => os.put(r)); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    }
+    dst.close();
+    for (const st of stores) await DB.req(st, 'readwrite', os => os.clear());
+    ls.set('vincenink.legacyAt', '0');
   },
   /* Khách đang có dữ liệu sẽ mất khi đóng trang? (để hỏi lại trước khi đóng) */
   atRisk() {
@@ -3236,6 +3266,7 @@ var Cloud = window.Cloud = {
   configured() { return !!(this.cfg && this.cfg.cloud); },
   canPush() { return !!(this.cfg && this.cfg.push && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); },
   async init() {
+    const isRecovery = /type=recovery/.test(location.hash);
     try { this.cfg = await getJSON('api/config', 5000); } catch (e) { this.cfg = null; }
     if (this.configured()) {
       try {
@@ -3247,25 +3278,35 @@ var Cloud = window.Cloud = {
         this.sb.auth.onAuthStateChange((ev, session) => {
           const was = this.user && this.user.id; this.user = (session && session.user) || null;
           if (ev === 'PASSWORD_RECOVERY') { this.recovery = true; setTimeout(() => accountModal(), 50); }
-          if (this.user && this.user.id !== was) setTimeout(() => this.afterLogin(), 0);
+          if (this.ready && ((this.user && this.user.id) || '') !== DB.owner && ev !== 'PASSWORD_RECOVERY') setTimeout(() => this.switchTo((this.user && this.user.id) || ''), 0);
           renderAccountUI();
         });
       } catch (e) { this.sb = null; }
     }
     this.ready = true; renderAccountUI();
-    if (this.user && await this.guardOwner()) { await this.pull(); await this.checkPush(); }
+    const uid = this.user ? this.user.id : '';
+    if (uid !== DB.owner && !(isRecovery && uid)) return this.switchTo(uid);   // vd: vừa quay về từ Google, hoặc phiên đã hết hạn
+    let just = ''; try { just = sessionStorage.getItem('vincenink.justIn') || ''; sessionStorage.removeItem('vincenink.justIn'); } catch (e) { /* */ }
+    if (this.user) { await this.pull(); await this.checkPush(); }
+    if (just === 'out') toast(t('Đã đăng xuất. Dữ liệu của tài khoản vẫn được giữ — đăng nhập lại là thấy đủ.'));
+    else if (just && this.user) {
+      const pend = ls.get('vincenink.pendingConfirm', '');
+      if (pend && pend === String(this.user.email || '').toLowerCase()) { ls.set('vincenink.pendingConfirm', ''); setTimeout(welcomeAccountModal, 400); }
+      else toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
+    }
     document.addEventListener('visibilitychange', () => { if (!document.hidden && this.user && Date.now() - this.syncedAt > 60e3) this.pull(); });
   },
-  /* Mỗi trình duyệt gắn với một tài khoản: đổi sang tài khoản khác thì hỏi trước, tránh trộn dữ liệu giữa hai người */
-  async guardOwner() {
-    const owner = ls.get('vincenink.cloud.owner', ''), me = this.user.id;
-    if (!owner || owner === me) { ls.set('vincenink.cloud.owner', me); ls.set('vincenink.legacyAt', '0'); return true; }
-    this.blocked = true;
-    const ok = await confirmBox(t('Máy này đang có dữ liệu của tài khoản khác'),
-      t('Lớp học và lịch trên trình duyệt này đã được đồng bộ với một tài khoản khác. Gộp chúng vào tài khoản {e}? Chọn “Huỷ” để đăng xuất, dữ liệu trên máy giữ nguyên.', { e: esc(this.user.email || '') }), t('Gộp vào tài khoản này'), false);
-    this.blocked = false;
-    if (!ok) { await this.sb.auth.signOut(); this.user = null; renderAccountUI(); toast(t('Đã đăng xuất để không trộn dữ liệu. Hãy dùng một hồ sơ trình duyệt riêng cho tài khoản đó.')); return false; }
-    ls.set('vincenink.cloud.owner', me); ls.set('vincenink.cloud.at', ''); ls.set('vincenink.cloud.bsync', '{}'); ls.set('vincenink.legacyAt', '0'); return true;
+  /* Đổi kho dữ liệu khi đăng nhập / đăng xuất / đổi tài khoản: mỗi tài khoản một kho riêng, rồi tải lại trang */
+  async switchTo(uid) {
+    if (this.switching) return; this.switching = true; this.blocked = true;
+    if (!DB.owner && uid && document.visibilityState === 'visible' && Guest.hasData()) {
+      const take = await confirmBox(t('Mang dữ liệu đang có vào tài khoản?'),
+        t('Trên trình duyệt này đang có dữ liệu dùng khi chưa đăng nhập (lớp, lịch, bảng vẽ…). Mang vào tài khoản {e} để giữ lại? Chọn “Huỷ” thì tài khoản giữ nguyên dữ liệu của nó; dữ liệu khách sẽ mất khi đóng trang như bình thường.', { e: esc(this.user && this.user.email || '') }),
+        t('Mang vào tài khoản'), false);
+      if (take) { try { await Guest.moveTo(dbNameFor(uid)); } catch (e) { console.warn(e); } }
+    }
+    try { sessionStorage.setItem('vincenink.justIn', uid ? (this.user && this.user.email) || '1' : 'out'); } catch (e) { /* */ }
+    Guest.leaving = true; location.reload();
   },
   fail(e, where) {
     const m = String((e && (e.message || e.code)) || e || '');
@@ -3278,18 +3319,9 @@ var Cloud = window.Cloud = {
       : t('Chưa đồng bộ được ({w}): {m}', { w, m: m.slice(0, 120) });
     console.warn('cloud', where, e); renderAccountUI(); const md = $('#acctModal'); if (md) acctPaint(md);
   },
-  async afterLogin() {
-    if (!await this.guardOwner()) return;
-    const pend = ls.get('vincenink.pendingConfirm', '');
-    await this.pull(); await this.checkPush(); renderAccountUI();
-    if (pend && pend === String(this.user.email || '').toLowerCase()) { ls.set('vincenink.pendingConfirm', ''); $$('.modal-back').forEach(x => x.remove()); welcomeAccountModal(); }
-    else toast(t('Đã đăng nhập: {e}', { e: this.user.email || '' }));
-    const m = $('#acctModal'); if (m) acctPaint(m);
-  },
-
   /* ---- Đồng bộ ---- */
-  deleted() { try { return JSON.parse(ls.get('vincenink.cloud.deleted', '[]')) || []; } catch (e) { return []; } },
-  markDeleted(id) { const d = this.deleted(); if (!d.includes(id)) { d.push(id); ls.set('vincenink.cloud.deleted', JSON.stringify(d.slice(-200))); } this.queue(); },
+  deleted() { try { return JSON.parse(ls.get(ck('deleted'), '[]')) || []; } catch (e) { return []; } },
+  markDeleted(id) { const d = this.deleted(); if (!d.includes(id)) { d.push(id); ls.set(ck('deleted'), JSON.stringify(d.slice(-200))); } this.queue(); },
   snapshot() {
     const p = { ...profile() }; if (p.avatar && p.avatar.length > 160000) delete p.avatar;
     const schedule = {};
@@ -3309,7 +3341,7 @@ var Cloud = window.Cloud = {
     const updated_at = new Date().toISOString();
     const { error } = await this.sb.from('user_state').upsert({ user_id: this.user.id, ...snap, updated_at, device: deviceId });
     if (error) return this.fail(error, 'push');
-    this.lastError = ''; this.lastHash = h; this.syncedAt = Date.now(); ls.set('vincenink.cloud.at', updated_at); renderAccountUI();
+    this.lastError = ''; this.lastHash = h; this.syncedAt = Date.now(); ls.set(ck('at'), updated_at); renderAccountUI();
   },
   async pull() {
     if (!this.user || this.busy || this.blocked) return;
@@ -3317,9 +3349,9 @@ var Cloud = window.Cloud = {
     try {
       const { data, error } = await this.sb.from('user_state').select('*').eq('user_id', this.user.id).maybeSingle();
       if (error) throw error;
-      const localAt = ls.get('vincenink.cloud.at', ''), rT = data ? Date.parse(data.updated_at) : 0, lT = Date.parse(localAt) || 0;
+      const localAt = ls.get(ck('at'), ''), rT = data ? Date.parse(data.updated_at) : 0, lT = Date.parse(localAt) || 0;
       if (data && rT > lT && data.device !== deviceId) await this.apply(data);
-      if (data) ls.set('vincenink.cloud.at', rT > lT ? data.updated_at : localAt);
+      if (data) ls.set(ck('at'), rT > lT ? data.updated_at : localAt);
       await this.pullBoards().then(() => { this.boardErr = ''; }, e => this.fail(e, 'boards'));
       this.syncedAt = Date.now(); this.lastError = ''; okPull = true;
     } catch (e) { this.fail(e, 'pull'); }
@@ -3345,11 +3377,11 @@ var Cloud = window.Cloud = {
   },
 
   /* ---- Bảng vẽ: mỗi bảng một dòng trong bảng `boards` (mốc đã gửi lưu ở cloud.bsync) ---- */
-  bsync() { try { return JSON.parse(ls.get('vincenink.cloud.bsync', '{}')) || {}; } catch (e) { return {}; } },
-  setB(id, v) { const m = this.bsync(); if (v == null) delete m[id]; else m[id] = v; ls.set('vincenink.cloud.bsync', JSON.stringify(m)); },
+  bsync() { try { return JSON.parse(ls.get(ck('bsync'), '{}')) || {}; } catch (e) { return {}; } },
+  setB(id, v) { const m = this.bsync(); if (v == null) delete m[id]; else m[id] = v; ls.set(ck('bsync'), JSON.stringify(m)); },
   btimer: null, bbusy: false,
-  deletedBoards() { try { return JSON.parse(ls.get('vincenink.cloud.bdel', '[]')) || []; } catch (e) { return []; } },
-  setDeletedBoards(d) { ls.set('vincenink.cloud.bdel', JSON.stringify(d.slice(-500))); },
+  deletedBoards() { try { return JSON.parse(ls.get(ck('bdel'), '[]')) || []; } catch (e) { return []; } },
+  setDeletedBoards(d) { ls.set(ck('bdel'), JSON.stringify(d.slice(-500))); },
   markBoardDeleted(id) { if (!this.user) return; const d = this.deletedBoards(); if (!d.includes(id)) d.push(id); this.setDeletedBoards(d); this.setB(id, null); this.queueBoards(); },
   queueBoards(now) { if (!this.user || this.blocked) return; clearTimeout(this.btimer); this.btimer = setTimeout(() => this.pushBoards(), now ? 50 : 4000); },
   async pushBoards() {
@@ -3460,12 +3492,12 @@ var Cloud = window.Cloud = {
   },
   async google() { Guest.leaving = true; const { error } = await this.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } }); if (error) Guest.leaving = false; return error; },
   async reset(email) { const { error } = await this.sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0].split('?')[0] }); return error; },
-  async newPassword(pw) { const { error } = await this.sb.auth.updateUser({ password: pw }); if (!error) this.recovery = false; return error; },
+  async newPassword(pw) { const { error } = await this.sb.auth.updateUser({ password: pw }); if (!error) { this.recovery = false; if (this.user && this.user.id !== DB.owner) setTimeout(() => this.switchTo(this.user.id), 1500); } return error; },
   async signOut() {
     try { clearTimeout(this.timer); clearTimeout(this.btimer); await this.push(); this.bbusy = false; await this.pushBoards(); } catch (e) { /* vẫn đăng xuất */ }
     await this.disablePush();
-    await this.sb.auth.signOut(); this.user = null; this.lastHash = ''; ls.set('vincenink.cloud.at', '');
-    toast(t('Đã đăng xuất. Dữ liệu đã sao lưu trên tài khoản — bản trên máy này sẽ xoá khi đóng trang.')); renderAccountUI();
+    await this.sb.auth.signOut(); this.user = null; this.lastHash = '';
+    await this.switchTo('');
   },
 };
 
@@ -3567,10 +3599,10 @@ function welcomeAccountModal() {
   openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: acts });
 }
 async function signOutFlow() {
-  if (!await confirmBox(t('Đăng xuất?'), t('Dữ liệu đã được sao lưu trên tài khoản. Sau khi đăng xuất, máy này chuyển sang chế độ khách: đóng trang thì bản trên máy bị xoá, đăng nhập lại sẽ tải về đủ.'), t('Đăng xuất'))) return;
+  if (!await confirmBox(t('Đăng xuất?'), t('Dữ liệu của tài khoản vẫn được giữ nguyên, đăng nhập lại là thấy đủ. Sau khi đăng xuất bạn dùng ở chế độ khách: dữ liệu tạo lúc đó sẽ mất khi đóng trang.'), t('Đăng xuất'))) return;
   await Cloud.signOut(); const m = $('#acctModal'); if (m) acctPaint(m);
 }
-function accountModal() {
+function accountModal(opts = {}) {
   const body = document.createElement('div'); body.id = 'acctModal'; body.dataset.mode = 'in'; acctPaint(body);
   const msg = (s, ok) => { const m = $('.acct-msg', body); if (m) { m.textContent = s || ''; m.classList.toggle('ok', !!ok); } };
   body.addEventListener('click', async e => {
@@ -3605,7 +3637,11 @@ function accountModal() {
     else if (er && /not confirmed/i.test(String(er.message || er))) { md.close(); emailSentModal('unconfirmed', em); }
     else if (er) msg(authErr(er));
   });
-  const md = openModal({ title: t('Tài khoản Vincenink'), body, width: 440, actions: [] });
+  const md = openModal({ title: t('Tài khoản Vincenink'), body, width: 440, actions: [], onClose: () => {
+    // Đã chọn "Đăng nhập / Đăng ký" mà lỡ bấm ra ngoài: khoảng 6 giây sau mở lại MỘT lần; đóng lần nữa thì thôi
+    if (!opts.retry || Cloud.user) return;
+    setTimeout(() => { if (!Cloud.user && !$('.modal-back') && $('#welcome').classList.contains('hidden') && $('#greetPop').classList.contains('hidden')) accountModal(); }, 6000);
+  } });
   if (!Cloud.ready) { const iv = setInterval(() => { if (Cloud.ready) { clearInterval(iv); acctPaint(body); } }, 200); }
 }
 
@@ -3869,7 +3905,7 @@ async function maybeBackupPrompt() {
   body.addEventListener('click', e => {
     const c = e.target.closest('[data-pick]'); if (!c) return;
     m.close();
-    if (c.dataset.pick === 'login') setTimeout(accountModal, 60);
+    if (c.dataset.pick === 'login') setTimeout(() => accountModal({ retry: true }), 60);
     else toast(t('Đang dùng chế độ khách — nhớ đăng nhập trước khi đóng trang để không mất dữ liệu'));
   });
 }

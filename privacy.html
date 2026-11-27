@@ -21,7 +21,7 @@ a{color:var(--acc)}nav{margin-top:28px;padding-top:16px;border-top:1px solid var
 <li>Tài khoản được quản lý bởi <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a>. Khi đăng nhập bằng Google, Vincenink chỉ nhận <b>tên, địa chỉ email và ảnh đại diện</b> của tài khoản Google — không đọc Gmail, Drive hay dữ liệu Google nào khác.</li>
 <li>Được sao lưu lên máy chủ: hồ sơ (tên, vai trò, trường, liên hệ, ảnh đại diện nhỏ), lớp học kèm học phí và các tháng đã thu, lịch học, cài đặt nhắc lịch kèm múi giờ, và bảng vẽ (ảnh dán trong bảng được nén) — để dữ liệu không mất, dùng được trên nhiều thiết bị và nhận thông báo nhắc lịch.</li>
 <li><b>Không</b> gửi lên máy chủ: tài liệu tải lên (PDF, ảnh trong mục Tài liệu).</li>
-<li>Trình duyệt ghi nhớ phiên đăng nhập, nên lần sau mở lại không cần đăng nhập. Khi đăng xuất, bản trên máy được xoá lúc đóng trang; dữ liệu đã sao lưu vẫn còn trên tài khoản.</li>
+<li>Trình duyệt ghi nhớ phiên đăng nhập, nên lần sau mở lại không cần đăng nhập. Mỗi tài khoản có một kho dữ liệu riêng trên máy: nhiều tài khoản dùng chung một trình duyệt cũng không gộp hay xoá dữ liệu của nhau. Đăng xuất thì về chế độ khách; dữ liệu của tài khoản vẫn được giữ.</li>
 <li>Mỗi tài khoản chỉ đọc/ghi được dữ liệu của chính mình (Row Level Security).</li>
 </ul>
 <h2>3. Thông báo nhắc lịch</h2>
@@ -48,7 +48,7 @@ a{color:var(--acc)}nav{margin-top:28px;padding-top:16px;border-top:1px solid var
 <h2>2. When you sign in (optional)</h2>
 <ul><li>Accounts are managed by Supabase. With Google sign-in, Vincenink receives only your <b>name, email address and profile picture</b> — it does not access Gmail, Drive or any other Google data.</li>
 <li>Backed up to the server: profile, classes with fees and paid months, schedules, reminder settings with your time zone, and boards (pasted images are compressed), so nothing is lost and you can use several devices and receive reminders.</li>
-<li><b>Not</b> sent to the server: uploaded documents (PDFs, images in Files). Your browser remembers your sign-in. After signing out, the local copy is removed when the page closes; your backup stays in your account. Each account can only access its own data (Row Level Security).</li></ul>
+<li><b>Not</b> sent to the server: uploaded documents (PDFs, images in Files). Your browser remembers your sign-in. Each account has its own local data store, so several accounts on one browser never merge or delete each other's data. Signing out returns to guest mode; your account data is kept. Each account can only access its own data (Row Level Security).</li></ul>
 <h2>3. Reminder notifications</h2>
 <p>If you enable notifications, your browser provides a push subscription that Vincenink stores to send reminders; it is deleted when you turn notifications off or sign out.</p>
 <h2>4. Third-party services</h2>
