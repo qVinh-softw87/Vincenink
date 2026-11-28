@@ -534,7 +534,14 @@ const EN = {
   "Bạn vừa tạo lớp đầu tiên!": "You just created your first class!",
   "Bạn đã dạy được một lúc rồi đó!": "You've been teaching for a while!",
   "Đang ở chế độ khách — đóng trang là mất. Đăng nhập để giữ lại nhé.": "You're in guest mode: closing the page deletes it. Sign in to keep it.",
-  "Đăng nhập để lưu": "Sign in to save"
+  "Đăng nhập để lưu": "Sign in to save",
+  "Chọn được nhiều thứ — mỗi thứ đặt giờ riêng bên dưới, bấm Lưu là ghi tất cả một lượt.": "Pick several days; set each day's time below and save them all at once.",
+  "Giờ học từng thứ": "Time for each day",
+  "Chọn ít nhất một thứ ở trên.": "Pick at least one day above.",
+  "Thời lượng nhanh (áp dụng cho mọi thứ đã chọn)": "Quick duration (applies to all selected days)",
+  "Chọn ít nhất một thứ": "Pick at least one day",
+  "{d}: giờ kết thúc phải sau giờ bắt đầu": "{d}: end time must be after start time",
+  "Đã ghi {k} buổi mỗi tuần cho {n}": "Saved {k} weekly lessons for {n}"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -2501,9 +2508,11 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
       <label><input type="radio" name="kind" value="fixed" ${kind === 'fixed' ? 'checked' : ''}><span class="kc-ic">${ic('repeat', 17)}</span><span class="kc-t"><b>${t('Cố định hằng tuần')}</b><small>${t('Lặp lại mỗi tuần, đổi riêng tuần nào cũng được')}</small></span></label>
       <label><input type="radio" name="kind" value="once" ${kind === 'once' ? 'checked' : ''}><span class="kc-ic">${ic('calendar', 17)}</span><span class="kc-t"><b>${t('Chỉ một buổi')}</b><small>${t('Học bù, học thêm, kiểm tra')}</small></span></label></div></div>`}
     <div class="field f-dow"><label>${t('Học vào thứ')}</label>
-      <div class="day-pills">${WDS[LANG].map((d, i) => `<label class="dp ${i >= 5 ? 'we' : ''}"><input type="radio" name="dow" value="${i}" ${curDow === i ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
+      <div class="day-pills">${WDS[LANG].map((d, i) => `<label class="dp ${i >= 5 ? 'we' : ''}"><input type="${isEdit ? 'radio' : 'checkbox'}" name="dow" value="${i}" ${curDow === i ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div>
+      ${isEdit ? '' : `<small class="dp-hint">${t('Chọn được nhiều thứ — mỗi thứ đặt giờ riêng bên dưới, bấm Lưu là ghi tất cả một lượt.')}</small>`}</div>
+    <div class="field f-multi hidden"><label>${t('Giờ học từng thứ')}</label><div class="mt-rows"></div></div>
     <div class="field f-date"><label>${t('Ngày học')}</label><input type="date" name="date" value="${ref.date || presetDate || todayStr()}"></div>
-    <div class="field"><label>${t('Thời gian')}</label>
+    <div class="field f-single"><label>${t('Thời gian')}</label>
       <div class="time-row">
         ${timeField('start', ref.start || '18:00', t('Bắt đầu'), true)}
         <span class="time-arrow">→</span>
@@ -2516,12 +2525,40 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
   const toMin = x => { const [h, m] = (x || '0:0').split(':').map(Number); return h * 60 + m; };
   const fromMin = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
   const syncDur = () => { const d = toMin($('[name=end]', body).value) - toMin($('[name=start]', body).value); $$('[data-dur]', body).forEach(b => b.classList.toggle('active', +b.dataset.dur === d)); };
-  const sync = () => { $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once'); };
-  body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } });
-  body.addEventListener('input', () => syncDur());
+  // Nhiều thứ một lượt: mỗi thứ đã chọn có một dòng giờ riêng
+  const multi = () => !isEdit && kind === 'fixed';
+  const times = {}; let lastT = { start: ref.start || '18:00', end: ref.end || '19:30' };
+  const days = () => $$('[name=dow]:checked', body).map(x => +x.value).sort((a, b) => a - b);
+  const readRows = () => $$('.mt-row', body).forEach(r => { const d = r.dataset.d; times[d] = { start: $(`[name=start-${d}]`, r).value, end: $(`[name=end-${d}]`, r).value }; });
+  const paintRows = () => {
+    readRows();
+    const ds = days();
+    $('.mt-rows', body).innerHTML = ds.map(d => { const tt = times[d] || (times[d] = { ...lastT }); return `
+      <div class="mt-row" data-d="${d}"><span class="mt-d ${d >= 5 ? 'we' : ''}">${WD[LANG][d]}</span>
+        <div class="time-row">${timeField('start-' + d, tt.start, t('Bắt đầu'), true)}<span class="time-arrow">→</span>${timeField('end-' + d, tt.end, t('Kết thúc'), false)}</div></div>`; }).join('')
+      || `<div class="hint">${t('Chọn ít nhất một thứ ở trên.')}</div>`;
+  };
+  const sync = () => {
+    $('.f-dow', body).classList.toggle('hidden', kind !== 'fixed'); $('.f-date', body).classList.toggle('hidden', kind !== 'once');
+    $('.f-multi', body).classList.toggle('hidden', !multi()); $('.f-single .time-row', body).classList.toggle('hidden', multi());
+    $('.f-single > label', body).textContent = multi() ? t('Thời lượng nhanh (áp dụng cho mọi thứ đã chọn)') : t('Thời gian');
+    if (multi()) paintRows();
+  };
+  body.addEventListener('change', e => { if (e.target.name === 'kind') { kind = e.target.value; sync(); } if (e.target.name === 'dow' && multi()) paintRows(); });
+  body.addEventListener('input', e => {
+    syncDur();
+    const tp = e.target.closest && e.target.closest('[data-tp]'); if (!tp || !multi()) return;
+    const [k, d] = tp.dataset.tp.split('-'); if (d == null) return;
+    readRows(); lastT = { ...times[d] };
+  });
   bindTimeFields(body);
   body.addEventListener('click', e => {
     const d = e.target.closest('[data-dur]'); if (!d) return;
+    if (multi()) {
+      readRows();
+      days().forEach(x => setTimeField(body, 'end-' + x, fromMin(Math.min(toMin(times[x].start) + +d.dataset.dur, 23 * 60 + 55))));
+      readRows(); $$('[data-dur]', body).forEach(b => b.classList.toggle('active', b === d)); return;
+    }
     const st = $('[name=start]', body).value || '18:00';
     setTimeField(body, 'end', fromMin(Math.min(toMin(st) + +d.dataset.dur, 23 * 60 + 55)));
   });
@@ -2531,6 +2568,18 @@ function sessionModal(owner, existing, presetDate, pickOwner) {
     actions: [{ label: t('Huỷ') }, {
       label: t(isEdit ? 'Lưu' : 'Lưu lịch'), kind: 'primary', onClick: () => {
         const v = n => $(`[name=${n}]`, body)?.value;
+        if (multi()) {
+          readRows(); const ds = days();
+          if (!ds.length) { toast(t('Chọn ít nhất một thứ'), true); return false; }
+          const bad = ds.find(d => !times[d].start || !times[d].end || times[d].end <= times[d].start);
+          if (bad != null) { toast(t('{d}: giờ kết thúc phải sau giờ bắt đầu', { d: WD[LANG][bad] }), true); return false; }
+          const own = $('[name=owner]:checked', body)?.value || owner, sc = sched(own), from = dstr(weekStart(new Date()));
+          const extra = { subject: v('subject').trim(), note: v('note').trim() };
+          ds.forEach(d => sc.fixed.push({ id: uid(), dow: d, from, start: times[d].start, end: times[d].end, ...extra }));
+          saveSched(own); renderPanel();
+          toast(ds.length > 1 ? t('Đã ghi {k} buổi mỗi tuần cho {n}', { k: ds.length, n: ownerName(own) }) : t('Đã ghi lịch cho {n}', { n: ownerName(own) }));
+          return;
+        }
         const start = v('start'), end = v('end');
         if (!start || !end || end <= start) { toast(t('Giờ kết thúc phải sau giờ bắt đầu'), true); return false; }
         const own = $('[name=owner]:checked', body)?.value || owner, sc = sched(own);
