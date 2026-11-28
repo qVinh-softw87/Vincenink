@@ -508,7 +508,8 @@ const EN = {
   "Bạn đang dùng <b>chế độ khách</b>: lớp học, lịch, học phí và bảng vẽ <b>chưa được lưu</b>. Đóng trang là mất hết.": "You're in <b>guest mode</b>: classes, schedule, fees and boards <b>aren't saved</b>. Closing the page deletes them.",
   "Đăng nhập hoặc đăng ký (miễn phí, chưa tới 1 phút) để lưu lại toàn bộ và dùng tiếp trên mọi máy.": "Sign in or sign up (free, under a minute) to save everything and continue on any device.",
   "Đăng nhập / Đăng ký để lưu": "Sign in / Sign up to save",
-  "Vẫn dùng chế độ khách": "Stay in guest mode"
+  "Vẫn dùng chế độ khách": "Stay in guest mode",
+  "Chọn giờ rồi chọn phút": "Pick the hour, then the minutes"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3154,14 +3155,48 @@ function remModalPaint(body) {
     <div class="rem-block ${s.enabled ? '' : 'dim'}">
       <div class="rem-lab">${ic('clock', 14)}${t('Nhắc trước mỗi buổi')}</div>
       <div class="rem-chips">${leads.map(m => `<button data-lead="${m}" class="${s.lead.includes(m) ? 'on' : ''}">${t('{m} phút', { m })}</button>`).join('')}</div>
-      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="morning" ${s.morning ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Tóm tắt lịch buổi sáng')}</span></label><input type="time" data-t="morningAt" value="${s.morningAt}" ${s.morning ? '' : 'disabled'}></div>
-      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="evening" ${s.evening ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Báo trước lịch ngày mai')}</span></label><input type="time" data-t="eveningAt" value="${s.eveningAt}" ${s.evening ? '' : 'disabled'}></div>
+      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="morning" ${s.morning ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Tóm tắt lịch buổi sáng')}</span></label><button type="button" class="tp-btn" data-tp="morningAt" ${s.morning ? '' : 'disabled'}><span>${s.morningAt}</span>${ic('clock', 15)}</button></div>
+      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="evening" ${s.evening ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Báo trước lịch ngày mai')}</span></label><button type="button" class="tp-btn" data-tp="eveningAt" ${s.evening ? '' : 'disabled'}><span>${s.eveningAt}</span>${ic('clock', 15)}</button></div>
       <div class="rem-line"><label class="switch"><input type="checkbox" data-r="empty" ${s.empty ? 'checked' : ''} ${s.morning || s.evening ? '' : 'disabled'}><span class="knob"></span><span class="lbl">${t('Báo cả những ngày không có lịch dạy')}</span></label></div>
       <p class="hint">${t('Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.')}</p>
     </div>
     <div class="rem-foot">
       ${Cloud.pushOn ? `<button class="btn ghost sm" data-rtest>${ic('bell', 15)}${t('Gửi thử thông báo')}</button>` : ''}
     </div>`;
+}
+/* Bảng chọn giờ tông be (thay ô chọn giờ mặc định của trình duyệt) */
+function timePicker(anchor, value, onPick) {
+  $$('.tp-pop').forEach(x => x.remove());
+  let [h, m] = String(value || '09:00').split(':').map(Number);
+  const pop = document.createElement('div'); pop.className = 'tp-pop';
+  const pad = n => String(n).padStart(2, '0');
+  const paint = () => {
+    pop.innerHTML = `<div class="tp-head"><b>${pad(h)}:${pad(m)}</b><small>${t('Chọn giờ rồi chọn phút')}</small></div>
+      <div class="tp-lab">${t('Giờ')}</div>
+      <div class="tp-grid h">${Array.from({ length: 24 }, (_, i) => `<button type="button" data-h="${i}" class="${i === h ? 'on' : ''}">${pad(i)}</button>`).join('')}</div>
+      <div class="tp-lab">${t('Phút')}</div>
+      <div class="tp-grid m">${[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(i => `<button type="button" data-m="${i}" class="${i === m ? 'on' : ''}">${pad(i)}</button>`).join('')}</div>
+      <div class="tp-foot"><button type="button" class="btn ghost sm" data-x>${t('Huỷ')}</button><button type="button" class="btn primary sm" data-ok>${t('Xong')}</button></div>`;
+  };
+  paint();
+  const close = () => { pop.remove(); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', onKey, true); };
+  const done = () => { close(); onPick(`${pad(h)}:${pad(m)}`); };
+  pop.addEventListener('click', e => {
+    e.stopPropagation();
+    const bh = e.target.closest('[data-h]'), bm = e.target.closest('[data-m]');
+    if (bh) { h = +bh.dataset.h; return paint(); }
+    if (bm) { m = +bm.dataset.m; return done(); }
+    if (e.target.closest('[data-ok]')) return done();
+    if (e.target.closest('[data-x]')) return close();
+  });
+  const outside = e => { if (!pop.contains(e.target) && e.target !== anchor && !anchor.contains(e.target)) close(); };
+  const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  document.body.append(pop);
+  const r = anchor.getBoundingClientRect(), W = pop.offsetWidth, H = pop.offsetHeight;
+  let left = Math.min(Math.max(8, r.right - W), innerWidth - W - 8), top = r.bottom + 8;
+  if (top + H > innerHeight - 8) top = Math.max(8, r.top - H - 8);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', onKey, true); }, 0);
 }
 function remindersModal() {
   const body = document.createElement('div'); body.id = 'remModal'; remModalPaint(body);
@@ -3172,6 +3207,8 @@ function remindersModal() {
     remModalPaint(body);
   });
   body.addEventListener('click', async e => {
+    const tp = e.target.closest('[data-tp]');
+    if (tp && !tp.disabled) return timePicker(tp, Reminders.settings()[tp.dataset.tp], v => { Reminders.save({ [tp.dataset.tp]: v }); remModalPaint(body); });
     const l = e.target.closest('[data-lead]');
     if (l) {
       const m = +l.dataset.lead, cur = Reminders.settings().lead;
