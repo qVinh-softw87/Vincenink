@@ -473,7 +473,9 @@ const EN = {
   "Trên trình duyệt này đang có dữ liệu dùng khi chưa đăng nhập (lớp, lịch, bảng vẽ…). Mang vào tài khoản {e} để giữ lại? Chọn “Huỷ” thì tài khoản giữ nguyên dữ liệu của nó; dữ liệu khách sẽ mất khi đóng trang như bình thường.": "This browser has data from guest mode (classes, schedule, boards\u2026). Move it into {e} to keep it? Choose \u201cCancel\u201d to leave the account's data as it is; guest data is deleted when the page closes, as usual.",
   "Mang vào tài khoản": "Move into account",
   "Đã đăng xuất. Dữ liệu của tài khoản vẫn được giữ — đăng nhập lại là thấy đủ.": "Signed out. Your account data is kept; sign in again to see everything.",
-  "Dữ liệu của tài khoản vẫn được giữ nguyên, đăng nhập lại là thấy đủ. Sau khi đăng xuất bạn dùng ở chế độ khách: dữ liệu tạo lúc đó sẽ mất khi đóng trang.": "Your account data stays as it is; sign in again to see everything. After signing out you are in guest mode: anything created then is deleted when the page closes."
+  "Dữ liệu của tài khoản vẫn được giữ nguyên, đăng nhập lại là thấy đủ. Sau khi đăng xuất bạn dùng ở chế độ khách: dữ liệu tạo lúc đó sẽ mất khi đóng trang.": "Your account data stays as it is; sign in again to see everything. After signing out you are in guest mode: anything created then is deleted when the page closes.",
+  "Báo cả những ngày không có lịch dạy": "Also notify on days with no lessons",
+  "Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.": "Morning: today's lessons. Evening: tomorrow's (free days too). Plus one reminder before each lesson. Cancelled lessons are skipped."
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3035,10 +3037,15 @@ function renderProfileCard() {
      (miễn là Chrome đang chạy). Trang chỉ việc chuẩn bị lịch 5 tuần tới vào localStorage.
    - Chưa cài tiện ích: vẫn nhắc bằng thông báo của trình duyệt khi trang đang mở.
    ===================================================================== */
-const REM_DEF = { enabled: true, lead: [15], morning: true, morningAt: '07:00', evening: true, eveningAt: '21:00' };
+const REM_DEF = { enabled: true, lead: [60], morning: true, morningAt: '09:00', evening: true, eveningAt: '21:00', empty: true };
 const Reminders = {
   ext: document.documentElement.dataset.vinExt || '', timer: null,
-  settings() { return { ...REM_DEF, ...(S.settings.reminders || {}) }; },
+  settings() {
+    const r = S.settings.reminders;
+    // v2: sáng 9:00, tối 21:00, nhắc trước 1 tiếng, báo cả ngày trống — áp dụng một lần cho cài đặt cũ
+    if (r && r.v !== 2) { S.settings.reminders = { ...r, lead: [60], morningAt: '09:00', eveningAt: '21:00', empty: true, v: 2 }; saveSettings(); }
+    return { ...REM_DEF, ...(S.settings.reminders || {}), v: 2 };
+  },
   save(patch) { S.settings.reminders = { ...this.settings(), ...patch }; saveSettings(); this.sync(); },
   upcoming(days = 35) {
     const now = new Date(), from = dstr(now), end = dstr(addDays(now, days)), out = [];
@@ -3121,7 +3128,8 @@ function remModalPaint(body) {
       <div class="rem-chips">${leads.map(m => `<button data-lead="${m}" class="${s.lead.includes(m) ? 'on' : ''}">${t('{m} phút', { m })}</button>`).join('')}</div>
       <div class="rem-line"><label class="switch"><input type="checkbox" data-r="morning" ${s.morning ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Tóm tắt lịch buổi sáng')}</span></label><input type="time" data-t="morningAt" value="${s.morningAt}" ${s.morning ? '' : 'disabled'}></div>
       <div class="rem-line"><label class="switch"><input type="checkbox" data-r="evening" ${s.evening ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Báo trước lịch ngày mai')}</span></label><input type="time" data-t="eveningAt" value="${s.eveningAt}" ${s.evening ? '' : 'disabled'}></div>
-      <p class="hint">${t('Chỉ nhắc những ngày có tiết, bỏ qua buổi nghỉ. Mở Chrome muộn vẫn được nhắc bù lịch hôm nay.')}</p>
+      <div class="rem-line"><label class="switch"><input type="checkbox" data-r="empty" ${s.empty ? 'checked' : ''} ${s.morning || s.evening ? '' : 'disabled'}><span class="knob"></span><span class="lbl">${t('Báo cả những ngày không có lịch dạy')}</span></label></div>
+      <p class="hint">${t('Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.')}</p>
     </div>
     <div class="rem-foot">
       <button class="btn ghost sm" data-rtest>${ic('bell', 15)}${t('Thử thông báo')}</button>

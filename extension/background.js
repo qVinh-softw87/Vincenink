@@ -2,7 +2,7 @@
 // Lịch được trang Vincenink chuẩn bị sẵn cho ~5 tuần tới; tiện ích đặt báo thức (chrome.alarms)
 // và hiện thông báo kể cả khi không mở trang, miễn là Chrome đang chạy.
 
-const DEF = { enabled: true, lead: [15], morning: true, morningAt: '07:00', evening: true, eveningAt: '21:00' };
+const DEF = { enabled: true, lead: [60], morning: true, morningAt: '09:00', evening: true, eveningAt: '21:00', empty: true };
 const pad = n => String(n).padStart(2, '0');
 const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const at = (date, hm) => { const [y, m, d] = date.split('-').map(Number), [h, mi] = hm.split(':').map(Number); return new Date(y, m - 1, d, h, mi).getTime(); };
@@ -63,14 +63,16 @@ async function catchUp() {
 }
 
 async function summary(ds, data) {
-  const list = lessonsOn(data, ds).filter(l => at(ds, l.end) > Date.now()), V = vi(data);
+  const all = lessonsOn(data, ds), list = all.filter(l => at(ds, l.end) > Date.now()), V = vi(data), set = { ...DEF, ...(data.settings || {}) };
+  if (!all.length && set.empty && (data.lessons || []).some(l => !l.off)) return notify(`sum|${ds}`, V ? '☀️ Hôm nay cậu không có buổi dạy nào' : '☀️ No lessons today', V ? 'Một ngày trống lịch — nghỉ ngơi, nạp năng lượng thật đầy nhé!' : 'A free day — rest up and recharge!');
   if (!list.length) return;
   await notify(`sum|${ds}`, V ? `☀️ Hôm nay cậu có ${list.length} buổi dạy` : `☀️ ${list.length} lesson${list.length > 1 ? 's' : ''} today`,
     list.slice(0, 4).map(line).join('\n') + (list.length > 4 ? (V ? `\n… và ${list.length - 4} buổi nữa` : `\n… and ${list.length - 4} more`) : ''));
 }
 async function evening(ds, data) {
   const d = new Date(); const tmr = dstr(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1));
-  const list = lessonsOn(data, tmr), V = vi(data);
+  const list = lessonsOn(data, tmr), V = vi(data), set = { ...DEF, ...(data.settings || {}) };
+  if (!list.length && set.empty && (data.lessons || []).some(l => !l.off)) return notify(`eve|${ds}`, V ? '🌙 Ngày mai cậu được nghỉ' : '🌙 No lessons tomorrow', V ? 'Không có buổi dạy nào. Tối nay cứ thong thả, ngủ ngon nha!' : 'Nothing scheduled. Take it easy tonight and sleep well!');
   if (!list.length) return;
   await notify(`eve|${ds}`, V ? `🌙 Ngày mai cậu có ${list.length} buổi` : `🌙 ${list.length} lesson${list.length > 1 ? 's' : ''} tomorrow`,
     (V ? `Buổi đầu ${list[0].start} với ${list[0].who}. Soạn bài xong thì ngủ sớm nha.` : `First at ${list[0].start} with ${list[0].who}. Get some rest tonight.`));

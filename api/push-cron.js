@@ -4,7 +4,7 @@
 const webpush = require('web-push');
 const { env, admin, vapid } = require('./_supa');
 
-const DEF = { enabled: true, lead: [15], morning: true, morningAt: '07:00', evening: true, eveningAt: '21:00' };
+const DEF = { enabled: true, lead: [60], morning: true, morningAt: '09:00', evening: true, eveningAt: '21:00', empty: true };
 const WINDOW = 3 * 60e3; // chấp nhận trễ tối đa 3 phút (phòng khi cron lỡ một nhịp)
 
 const sb = admin;
@@ -40,10 +40,12 @@ function dueFor(state, now) {
   }
   if (set.morning && inWin(at(today, set.morningAt, tz))) {
     const list = on(today);
+    if (!list.length && set.empty && lessons.length) out.push({ key: `sum|${today}`, title: vi ? '☀️ Hôm nay cậu không có buổi dạy nào' : '☀️ No lessons today', body: vi ? 'Một ngày trống lịch — nghỉ ngơi, nạp năng lượng thật đầy nhé!' : 'A free day — rest up and recharge!' });
     if (list.length) out.push({ key: `sum|${today}`, title: vi ? `☀️ Hôm nay cậu có ${list.length} buổi dạy` : `☀️ ${list.length} lesson${list.length > 1 ? 's' : ''} today`, body: list.slice(0, 4).map(line).join('\n') + (list.length > 4 ? (vi ? `\n… và ${list.length - 4} buổi nữa` : `\n… and ${list.length - 4} more`) : '') });
   }
   if (set.evening && inWin(at(today, set.eveningAt, tz))) {
     const list = on(tmr);
+    if (!list.length && set.empty && lessons.length) out.push({ key: `eve|${today}`, title: vi ? '🌙 Ngày mai cậu được nghỉ' : '🌙 No lessons tomorrow', body: vi ? 'Không có buổi dạy nào. Tối nay cứ thong thả, ngủ ngon nha!' : 'Nothing scheduled. Take it easy tonight and sleep well!' });
     if (list.length) out.push({ key: `eve|${today}`, title: vi ? `🌙 Ngày mai cậu có ${list.length} buổi` : `🌙 ${list.length} lesson${list.length > 1 ? 's' : ''} tomorrow`, body: vi ? `Buổi đầu ${list[0].start} với ${list[0].who}. Soạn bài xong thì ngủ sớm nha.` : `First at ${list[0].start} with ${list[0].who}. Get some rest tonight.` });
   }
   return out;

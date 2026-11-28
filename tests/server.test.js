@@ -81,6 +81,27 @@ const call = (fn, req) => new Promise(res => { const o = { code: 200, h: {}, set
     assert.strictEqual(new Date(cron.at('2026-07-01', '09:00', 'Europe/London')).toISOString(), '2026-07-01T08:00:00.000Z');
     assert.strictEqual(new Date(cron.at('2026-11-27', '18:00', 'Asia/Saigon')).toISOString(), '2026-11-27T11:00:00.000Z'); // Chrome báo 'Asia/Saigon'
   });
+  await t('lịch mặc định: 9:00 báo hôm nay, 21:00 báo ngày mai, trước buổi 1 tiếng, có cả ngày trống', async () => {
+    const tz = 'Asia/Ho_Chi_Minh', L = (date, start) => ({ id: date + start, date, start, end: '23:00', who: 'Lớp 9A' });
+    const st = lessons => ({ reminders: { tz, lang: 'vi', lessons } });
+    const at = (d, h) => cron.at(d, h, tz) + 30e3;
+    // 28/11 có buổi 15:00, 29/11 trống, 30/11 có buổi
+    const ls = [L('2026-11-28', '15:00'), L('2026-11-30', '10:00')];
+    let n = cron.dueFor(st(ls), at('2026-11-28', '09:00'));
+    assert.ok(n.length === 1 && n[0].key === 'sum|2026-11-28' && /có 1 buổi/.test(n[0].title));
+    n = cron.dueFor(st(ls), at('2026-11-28', '07:00')); assert.strictEqual(n.length, 0);
+    n = cron.dueFor(st(ls), at('2026-11-28', '14:00'));
+    assert.ok(n.length === 1 && /60 phút nữa/.test(n[0].title));
+    n = cron.dueFor(st(ls), at('2026-11-28', '21:00'));
+    assert.ok(n.length === 1 && n[0].key === 'eve|2026-11-28' && /Ngày mai cậu được nghỉ/.test(n[0].title));
+    n = cron.dueFor(st(ls), at('2026-11-29', '09:00'));
+    assert.ok(n.length === 1 && /không có buổi dạy nào/.test(n[0].title));
+    n = cron.dueFor(st(ls), at('2026-11-29', '21:00'));
+    assert.ok(n.length === 1 && /Ngày mai cậu có 1 buổi/.test(n[0].title));
+    // tắt "báo ngày trống" → im lặng; chưa có lịch nào → không làm phiền
+    assert.strictEqual(cron.dueFor({ reminders: { tz, lessons: ls, settings: { empty: false } } }, at('2026-11-29', '09:00')).length, 0);
+    assert.strictEqual(cron.dueFor(st([]), at('2026-11-29', '09:00')).length, 0);
+  });
   await t('push-test: không có/ sai JWT → 401', async () => {
     reset(); assert.strictEqual((await call(test, {})).code, 401); assert.strictEqual((await call(test, { headers: { authorization: 'Bearer jwt-B' } })).code, 401);
   });
