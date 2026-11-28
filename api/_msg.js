@@ -1,5 +1,5 @@
 // Vincenink: lời nhắn thông báo tự sinh, mỗi lần một kiểu (không rập khuôn).
-// Dùng chung cho máy chủ (api/push-cron.js) và tiện ích Chrome (extension/msg.js là bản sao y hệt).
+// Dùng cho máy chủ (api/push-cron.js).
 (function (root) {
   const pick = (a, r) => a[Math.floor(r() * a.length) % a.length];
   const WD_VI = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];

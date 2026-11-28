@@ -6,9 +6,9 @@
     "web-push": "^3.6.7"
   },
   "scripts": {
-    "check": "node --check app.js && node --check sw.js && for f in api/*.js extension/*.js; do node --check $f || exit 1; done",
+    "check": "node --check app.js && node --check sw.js && for f in api/*.js; do node --check $f || exit 1; done",
     "test": "node tests/server.test.js && node tests/rls.test.mjs",
-    "test:e2e": "python3 tests/e2e_account.py && python3 tests/e2e_guest.py && python3 tests/e2e_pushask.py"
+    "test:e2e": "python3 tests/e2e_account.py && python3 tests/e2e_guest.py && python3 tests/e2e_pushask.py && python3 tests/e2e_onboarding.py"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.6.1"

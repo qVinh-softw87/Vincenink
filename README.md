@@ -106,20 +106,13 @@ Gói miễn phí của Gemini cho phép Google dùng nội dung gửi lên để
 
 ## Nhắc lịch bằng thông báo (kể cả khi không mở trang)
 
-Trang web không thể tự hiện thông báo khi đã đóng, nên Vincenink đi kèm một **tiện ích Chrome nhỏ** (thư mục `extension/`, hoặc tệp `vincenink-nhac-lich.zip`):
-
-1. Tải `vincenink-nhac-lich.zip` (nút trong **Hồ sơ → Nhắc lịch & thông báo**) và giải nén.
-2. Mở `chrome://extensions`, bật **Chế độ dành cho nhà phát triển**.
-3. Bấm **Tải tiện ích đã giải nén** và chọn thư mục `vincenink-nhac-lich`.
-4. Mở/tải lại Vincenink một lần để tiện ích nhận lịch (lịch 5 tuần tới, tự cập nhật mỗi lần mở trang).
+Không cần cài gì thêm. Đăng nhập, Vincenink hỏi **"Bạn có muốn Vincenink nhắc nhở mình không?"** → bấm **Có, nhắc mình nhé** → chọn **Cho phép**. Máy chủ (cron Supabase mỗi phút → `api/push-cron.js`) gửi Web Push tới trình duyệt kể cả khi đã đóng trang.
 
 Mặc định:
-- **Nhắc trước mỗi buổi 15 phút**. Bạn chọn được tối đa 2 mốc trong 5 / 10 / 15 / 30 / 60 phút.
-- **Tóm tắt buổi sáng** lúc 07:00 và **báo lịch ngày mai** lúc 21:00. Chỉ nhắc những ngày có tiết và bỏ qua buổi nghỉ.
-- Mở Chrome muộn vẫn được nhắc bù lịch hôm nay. Mỗi lời nhắc chỉ hiện một lần.
-- Bấm vào thông báo để mở Vincenink.
-
-Chưa cài tiện ích thì Vincenink vẫn nhắc bằng thông báo trình duyệt khi trang đang mở.
+- **9:00 sáng**: lịch dạy hôm nay (ngày trống cũng báo).
+- **Trước mỗi buổi 1 tiếng** (chọn được tối đa 2 mốc trong 5 / 10 / 15 / 30 / 60 phút).
+- **21:00 tối**: lịch ngày mai (ngày trống cũng báo).
+- Lời nhắn tự sinh, mỗi lần một kiểu (`api/_msg.js`). Đổi giờ hoặc tắt trong **Nhắc lịch & thông báo**.
 
 ## Bảng tự xoá & tổng thu nhập
 

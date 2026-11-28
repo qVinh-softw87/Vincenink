@@ -102,14 +102,13 @@ const call = (fn, req) => new Promise(res => { const o = { code: 200, h: {}, set
     assert.strictEqual(cron.dueFor({ reminders: { tz, lessons: ls, settings: { empty: false } } }, at('2026-11-29', '09:00')).length, 0);
     assert.strictEqual(cron.dueFor(st([]), at('2026-11-29', '09:00')).length, 0);
   });
-  await t('lời nhắn tự sinh: đổi liên tục, không rập khuôn; bản tiện ích giống hệt bản máy chủ', async () => {
+  await t('lời nhắn tự sinh: đổi liên tục, không rập khuôn', async () => {
     const M = require('../api/_msg'), L = [{ start: '15:00', end: '16:00', who: 'Lớp 9A' }];
     for (const [k, ctx] of [['morning', { date: '2026-11-28', list: L }], ['morning', { date: '2026-11-29', list: [] }], ['evening', { date: '2026-11-29', list: L }], ['evening', { date: '2026-11-30', list: [] }], ['lead', { lesson: L[0], lead: 60 }]]) {
       const seen = new Set(); for (let i = 0; i < 60; i++) { const m = M.compose(k, ctx, true); assert.ok(m.title && m.body); seen.add(m.title + '|' + m.body); }
       assert.ok(seen.size >= 8, `${k}: chỉ có ${seen.size} kiểu`);
       const en = M.compose(k, ctx, false); assert.ok(!/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test((en.title + en.body).replace(/Lớp 9A/g, '')), 'EN không dấu');
     }
-    assert.strictEqual(require('fs').readFileSync(path.join(__dirname, '..', 'extension', 'msg.js'), 'utf8'), require('fs').readFileSync(path.join(__dirname, '..', 'api', '_msg.js'), 'utf8'));
   });
   await t('push-test: không có/ sai JWT → 401', async () => {
     reset(); assert.strictEqual((await call(test, {})).code, 401); assert.strictEqual((await call(test, { headers: { authorization: 'Bearer jwt-B' } })).code, 401);

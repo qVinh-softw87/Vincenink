@@ -528,7 +528,9 @@ const EN = {
   "Gửi thử lại": "Send again",
   "Sẽ gửi lại sau vài giây…": "Sending again in a few seconds\u2026",
   "Đăng ký lại": "Re-register",
-  "Đã đăng ký lại — sẽ tự gửi thử sau vài giây": "Re-registered; a test will be sent in a few seconds"
+  "Đã đăng ký lại — sẽ tự gửi thử sau vài giây": "Re-registered; a test will be sent in a few seconds",
+  "Đăng nhập / Đăng ký để lưu dữ liệu": "Sign in / Sign up to save your data",
+  "Khách: dùng được ngay nhưng <b>đóng trang là mất dữ liệu</b>.": "Guest: start right away, but <b>closing the page deletes your data</b>."
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1813,8 +1815,9 @@ async function duplicateBoard(id) {
 /* ---- Bảng tự xoá sau 7 ngày nếu chưa tải xuống (PNG/PDF) và chưa bấm Giữ lại ---- */
 const BOARD_TTL = 7 * 864e5;
 const boardExpiry = b => (b.keep || b.exportedAt) ? 0 : Math.max(b.updatedAt || 0, b.createdAt || 0) + BOARD_TTL;
-const boardDaysLeft = b => { if (isMemberSync()) return null; const e = boardExpiry(b); return e ? Math.max(0, Math.ceil((e - Date.now()) / 864e5)) : null; };
+const boardDaysLeft = b => { return null; const e = boardExpiry(b); return e ? Math.max(0, Math.ceil((e - Date.now()) / 864e5)) : null; };
 async function purgeOldBoards() {
+  return;   // v45: bỏ tự xoá sau 7 ngày — khách đóng trang là mất, thành viên được sao lưu
   if (isMemberSync()) return;   // đã đăng nhập: bảng được sao lưu, không tự xoá
   const old = S.boards.filter(b => { const e = boardExpiry(b); return e && e < Date.now() && b.id !== S.settings.lastBoard; });
   for (const b of old) { await DB.del('boards', b.id); await DB.del('boardData', b.id); }
@@ -2078,7 +2081,7 @@ function renderBoardsTab(body) {
       ${groups[d].map(b => `
         <div class="board-card ${b.id === S.boardId ? 'active' : ''}" data-board="${b.id}">
           <div class="thumb">${b.thumb ? `<img src="${b.thumb}" alt="">` : ''}</div>
-          <div class="meta"><div class="t">${esc(boardTitle(b))}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return isMemberSync() ? '' : b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
+          <div class="meta"><div class="t">${esc(boardTitle(b))}</div><div class="s">${t('Sửa lúc {t}', { t: fmtTime(b.updatedAt) })}${(() => { const d = boardDaysLeft(b); return true ? '' : b.exportedAt ? `<span class="bk ok" title="${t('Đã tải xuống — không tự xoá')}">${ic('download', 11)}</span>` : b.keep ? `<span class="bk ok" title="${t('Đã giữ lại')}">${ic('check', 11)}</span>` : `<span class="bk ${d <= 2 ? 'warn' : ''}" title="${t('Tự xoá nếu chưa tải xuống')}">${t('còn {d} ngày', { d })}</span>`; })()}</div></div>
           <button class="icon-btn sm more" data-bmenu="${b.id}" title="${t('Tuỳ chọn')}">${ic('more', 18)}</button>
         </div>`).join('')}`).join('')
     || `<div class="empty"><div class="big">${t(q ? 'Không tìm thấy bảng' : 'Chưa có bảng nào')}</div>${t(q ? 'Thử từ khoá khác.' : 'Bấm “Bảng mới hôm nay” để bắt đầu buổi học.')}</div>`}`;
@@ -2092,7 +2095,6 @@ function renderBoardsTab(body) {
       e.stopPropagation(); const id = m.dataset.bmenu;
       popMenu(m, [{ icon: 'edit', label: t('Đổi tên, ngày, chủ sở hữu'), onClick: () => editBoardMeta(id) },
         { icon: 'copy', label: t('Nhân bản (dùng làm mẫu)'), onClick: () => duplicateBoard(id) },
-        ...(S.boards.find(x => x.id === id)?.exportedAt ? [] : [{ icon: 'check', label: t(S.boards.find(x => x.id === id)?.keep ? 'Bỏ giữ lại (tự xoá sau 7 ngày)' : 'Giữ lại, không tự xoá'), onClick: () => toggleKeep(id) }]),
         '-', { icon: 'trash', label: t('Xoá bảng'), danger: true, onClick: () => deleteBoard(id) }]);
       return;
     }
@@ -2714,7 +2716,7 @@ const Weather = {
     return { quick, final };
   },
   /* Bấm "Vị trí chính xác": hỏi quyền GPS của trình duyệt */
-  async locate(silent) {
+  async locate(silent, quiet) {
     this.locating = true; refreshDay();
     const before = this.data && this.data.city;
     const g = await Loc.gps(true);
@@ -2722,7 +2724,7 @@ const Weather = {
     this.locating = false;
     const d = this.data;
     if (!g) { if (!silent) toast(t('Chưa lấy được vị trí — hãy cho phép trình duyệt truy cập vị trí'), true); }
-    else toast(t('Đã cập nhật thời tiết cho {c}', { c: cityName(d) }));
+    else if (!quiet) toast(t('Đã cập nhật thời tiết cho {c}', { c: cityName(d) }));
     refreshDay(); if (d && d.city !== before) Daily.load();
   },
 };
@@ -3104,7 +3106,7 @@ function renderProfileCard() {
    ===================================================================== */
 const REM_DEF = { enabled: true, lead: [60], morning: true, morningAt: '09:00', evening: true, eveningAt: '21:00', empty: true };
 const Reminders = {
-  ext: document.documentElement.dataset.vinExt || '', timer: null,
+  timer: null,
   settings() {
     const r = S.settings.reminders;
     // v2: sáng 9:00, tối 21:00, nhắc trước 1 tiếng, báo cả ngày trống — áp dụng một lần cho cài đặt cũ
@@ -3162,7 +3164,6 @@ const Reminders = {
     new Notification(t('🐶 Vincenink đã sẵn sàng'), { body: t('Thông báo nhắc lịch sẽ hiện như thế này.'), icon: 'assets/icon-192.png' });
   },
 };
-window.addEventListener('vincenink:ext', e => { Reminders.ext = String(e.detail || '1'); Reminders.sync(); const m = $('#remModal'); if (m) remModalPaint(m); });
 setInterval(() => Reminders.tick(), 30000);
 
 function remModalPaint(body) {
@@ -3290,6 +3291,7 @@ const Guest = {
     }
     let fresh = false;
     try { fresh = !sessionStorage.getItem('vincenink.sess'); sessionStorage.setItem('vincenink.sess', '1'); } catch (e) { /* */ }
+    this.fresh = fresh;
     if (!fresh || isMemberSync() || !hasData) return false;
     if (await this.othersOpen()) return false;
     await this.wipe(this.legacyAt());
@@ -3403,7 +3405,17 @@ var Cloud = window.Cloud = {
   /* Đổi kho dữ liệu khi đăng nhập / đăng xuất / đổi tài khoản: mỗi tài khoản một kho riêng, rồi tải lại trang */
   async switchTo(uid) {
     if (this.switching) return; this.switching = true; this.blocked = true;
-    if (!DB.owner && uid && document.visibilityState === 'visible' && Guest.hasData()) {
+    let empty = false;
+    if (!DB.owner && uid && Guest.hasData()) {
+      try {
+        const [{ data: st }, { data: bs }] = await Promise.all([
+          this.sb.from('user_state').select('classes,schedule').eq('user_id', uid).maybeSingle(),
+          this.sb.from('boards').select('id').eq('user_id', uid).eq('deleted', false).limit(1)]);
+        empty = !(st && ((st.classes || []).some(c => !c.deleted) || Object.keys(st.schedule || {}).length)) && !(bs || []).length;
+      } catch (e) { empty = false; }
+    }
+    if (empty) { try { await Guest.moveTo(dbNameFor(uid)); } catch (e) { console.warn(e); } }
+    else if (!DB.owner && uid && document.visibilityState === 'visible' && Guest.hasData()) {
       const take = await confirmBox(t('Mang dữ liệu đang có vào tài khoản?'),
         t('Trên trình duyệt này đang có dữ liệu dùng khi chưa đăng nhập (lớp, lịch, bảng vẽ…). Mang vào tài khoản {e} để giữ lại? Chọn “Huỷ” thì tài khoản giữ nguyên dữ liệu của nó; dữ liệu khách sẽ mất khi đóng trang như bình thường.', { e: esc(this.user && this.user.email || '') }),
         t('Mang vào tài khoản'), false);
@@ -3629,6 +3641,7 @@ const authErr = e => {
   return m || t('Có lỗi xảy ra, thử lại nhé');
 };
 function renderAccountUI() {
+  if (!$('#welcome').classList.contains('hidden')) renderWelcomeChoice();
   const tp = $('#topProfile'); if (tp) tp.classList.toggle('signed', !!Cloud.user);
   renderBackupNudge();
 }
@@ -3912,7 +3925,11 @@ function bindTopbar() {
   $('#btnIncome').onclick = incomeModal;
   $('#backupNudge').onclick = accountModal;
   $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
-  $('#btnStart').onclick = () => showWelcome(false);
+  $('#btnStart').onclick = () => {
+    const cloud = Cloud.configured() && !Cloud.user; showWelcome(false); askLocationLater();
+    if (cloud) toast(t('Đang dùng chế độ khách — nhớ đăng nhập trước khi đóng trang để không mất dữ liệu'));
+  };
+  $('#btnStartLogin').onclick = () => { showWelcome(false); setTimeout(() => accountModal({ retry: true }), 60); askLocationLater(); };
 }
 /* ---- Kéo đổi độ rộng thanh bên & cột học sinh ---- */
 const SIZES = { sidebar: { def: 232, min: 190, max: 360, rail: 76 }, panel: { def: 304, min: 250, max: 560 } };
@@ -3947,10 +3964,22 @@ function initResizers() {
 function toggleFocus() { $('#app').classList.toggle('focus'); setTimeout(resize, 0); }
 function showWelcome(on) {
   $('#welcome').classList.toggle('hidden', !on);
-  if (on) renderOnboard();
-  if (!on) { ls.set('vincenink.seen', '1'); setTimeout(maybeBackupPrompt, 350); }
+  if (on) { renderOnboard(); renderWelcomeChoice(); }
+  if (!on) ls.set('vincenink.seen', '1');
   updateTitle();
 }
+/* Trang giới thiệu có sẵn 2 lựa chọn: Đăng nhập (lưu dữ liệu) hoặc Dùng thử (khách) */
+function renderWelcomeChoice() {
+  const cloud = typeof Cloud !== 'undefined' && Cloud.configured() && !Cloud.user;
+  $('#btnStartLogin').classList.toggle('hidden', !cloud);
+  $('#wlGuestNote').classList.toggle('hidden', !cloud);
+  $('#btnStart').classList.toggle('primary', !cloud); $('#btnStart').classList.toggle('ghost', cloud);
+  $('#btnStart').innerHTML = cloud ? t('Dùng thử với tư cách khách') : t('Bắt đầu dạy ngay');
+  $('#btnStartLogin').innerHTML = ic('user', 16) + t('Đăng nhập / Đăng ký để lưu dữ liệu');
+  $('#wlGuestNote').innerHTML = t('Khách: dùng được ngay nhưng <b>đóng trang là mất dữ liệu</b>.');
+}
+/* Sau khi người dùng đã chọn cách dùng: mới hỏi quyền vị trí (chính xác bằng GPS, IP lấp chỗ trống cho nhanh) */
+function askLocationLater() { setTimeout(() => Loc.geoState().then(st => { if (st === 'prompt') Weather.locate(true, true); }), 900); }
 /* Người mới: chưa từng đóng trang giới thiệu, chưa có học sinh và hồ sơ */
 const isNewUser = () => !ls.get('vincenink.seen', '') && !S.students.length && !profile().name;
 const needsSetup = () => !profile().name || !S.students.length || !S.students.some(st => (S.sched.get(st.id)?.fixed || []).length);
@@ -3984,7 +4013,7 @@ function renderOnboard() {
 /* ---- Cửa sổ chào khi vào trang (người đã dùng) ---- */
 function showGreet(on) {
   const el = $('#greetPop'); el.classList.toggle('hidden', !on);
-  if (on) renderGreet(); else { ls.set('vincenink.seen', '1'); setTimeout(maybeBackupPrompt, 350); }
+  if (on) { renderGreet(); ls.set('vincenink.greetDay', todayStr()); } else ls.set('vincenink.seen', '1');
   updateTitle();
 }
 /* ---- Nhắc đăng nhập để sao lưu: hiện sau khi đóng trang giới thiệu / lời chào, mỗi lần mở web khi chưa đăng nhập ---- */
@@ -4049,7 +4078,7 @@ let exitWarnAt = 0, exitWarnN = 0;
 function exitWarn() {
   if (typeof Cloud === 'undefined' || !Cloud.configured() || isMemberSync() || Guest.leaving) return;
   if ($('.modal-back') || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
-  if (exitWarnN >= 3 || Date.now() - exitWarnAt < 90e3) return;
+  if (exitWarnN >= 1) return;
   exitWarnAt = Date.now(); exitWarnN++;
   const body = document.createElement('div'); body.className = 'push-ask exit-warn';
   body.innerHTML = `
@@ -4392,10 +4421,13 @@ async function init() {
   await openBoard(b.id); renderPanel();
   if (innerWidth <= 900) $('#app').classList.add('focus');
   bindChat(); Chat.renderState();
-  if (isNewUser()) showWelcome(true); else showGreet(true);
+  // Khách: mỗi phiên mới (hoặc người mới) mở trang giới thiệu có 2 lựa chọn. Thành viên: lời chào mỗi ngày 1 lần.
+  let switched = false; try { switched = !!sessionStorage.getItem('vincenink.justIn'); } catch (e) { /* */ }
+  if (isMemberSync()) { if (!switched && ls.get('vincenink.greetDay', '') !== todayStr()) showGreet(true); }
+  else if (isNewUser() || Guest.fresh) showWelcome(true);
   // Hiện ngay thời tiết đã lưu, rồi lấy vị trí + thời tiết mới SONG SONG với kiểm tra AI
   Weather.useCache(); Weather.locating = !Weather.data; refreshDay();
-  const wxP = Loc.geoState().then(st => Weather.refresh({ ask: st !== 'denied' }).quick).catch(() => null);
+  const wxP = Loc.geoState().then(st => Weather.refresh({ ask: st === 'granted' || (st === 'prompt' && isMemberSync()) }).quick).catch(() => null);
   // Không bắt lời nhắn chờ thời tiết quá 1,8 giây; thời tiết về sau vẫn tự hiện
   Promise.all([AI.check(), Promise.race([wxP, sleep(1800)])]).then(() => { Weather.locating = false; refreshDay(); Daily.load(); Note.load(); });
   Cloud.init();

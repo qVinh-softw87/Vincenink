@@ -44,7 +44,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
 <link rel="preconnect" href="https://api.bigdatacloud.net" crossorigin>
-<link rel="stylesheet" href="styles.css?v=44">
+<link rel="stylesheet" href="styles.css?v=45">
 <script>
   // Áp dụng giao diện sáng/tối trước khi vẽ trang để tránh nháy màn hình
   (function () {
@@ -215,8 +215,8 @@
       <img src="assets/logo.png" alt="" width="64" height="64">
       <div>
         <h1 id="welcomeTitle"><span class="l-vi">Vincenink – Bảng trắng dạy học trực tuyến</span><span class="l-en">Vincenink – Online teaching whiteboard</span></h1>
-        <p class="wl-lead l-vi">Bảng trắng miễn phí dành cho giáo viên và gia sư. Viết như trên giấy, đưa phiếu bài tập lên bảng, và giữ bài giảng, tài liệu, lịch học riêng cho từng học sinh. Không cần đăng nhập, mở là dạy.</p>
-        <p class="wl-lead l-en">A free whiteboard for teachers and tutors. Write like on paper, put worksheets on the board, and keep lessons, files and schedules for every student. No sign-up — open it and teach.</p>
+        <p class="wl-lead l-vi">Bảng trắng miễn phí dành cho giáo viên và gia sư. Viết như trên giấy, đưa phiếu bài tập lên bảng, và giữ bài giảng, tài liệu, lịch học riêng cho từng học sinh. Dùng thử ngay, đăng nhập miễn phí để lưu lại mọi thứ.</p>
+        <p class="wl-lead l-en">A free whiteboard for teachers and tutors. Write like on paper, put worksheets on the board, and keep lessons, files and schedules for every student. Try it instantly; sign in for free to keep everything.</p>
       </div>
     </header>
 
@@ -232,9 +232,9 @@
       </ul>
       <h2>Câu hỏi thường gặp</h2>
       <h3>Vincenink có miễn phí không?</h3>
-      <p>Có. Vincenink miễn phí, không cần tạo tài khoản hay đăng nhập.</p>
+      <p>Có. Vincenink miễn phí. Có thể dùng thử ngay không cần tài khoản; đăng nhập (miễn phí) để lưu và dùng trên nhiều máy.</p>
       <h3>Dữ liệu bài giảng được lưu ở đâu?</h3>
-      <p>Ngay trong trình duyệt trên máy của bạn. Bạn có thể tải bản sao lưu về máy và khôi phục bất cứ lúc nào.</p>
+      <p>Khi đăng nhập: lưu trên máy và sao lưu vào tài khoản, mở máy khác vẫn thấy đủ. Khi dùng thử (khách): chỉ giữ trong phiên, đóng trang là mất.</p>
       <h3>Có dùng được trên iPad với Apple Pencil không?</h3>
       <p>Có. Bật “Chỉ viết bằng bút cảm ứng” để ngón tay chỉ dùng kéo và phóng to bảng.</p>
       <h3>Có thể đưa phiếu bài tập PDF hoặc ảnh chụp vở lên bảng không?</h3>
@@ -253,9 +253,9 @@
       </ul>
       <h2>Frequently asked questions</h2>
       <h3>Is Vincenink free?</h3>
-      <p>Yes. It is free and needs no account or sign-in.</p>
+      <p>Yes. It is free. Try it right away without an account; sign in (free) to save and use it on several devices.</p>
       <h3>Where is my data stored?</h3>
-      <p>In your browser on this device. You can download a backup and restore it at any time.</p>
+      <p>Signed in: on this device and backed up to your account, so it appears on any device. Guest: kept only for the session; closing the page deletes it.</p>
       <h3>Does it work on iPad with Apple Pencil?</h3>
       <p>Yes. Turn on “Stylus-only drawing” so fingers only pan and zoom.</p>
       <h3>Can I put PDF worksheets or photos on the board?</h3>
@@ -264,7 +264,11 @@
 
     <section class="wl-onboard hidden" id="wlOnboard"></section>
     <footer class="wl-foot">
-      <button class="btn primary" id="btnStart"><span class="l-vi">Bắt đầu dạy ngay</span><span class="l-en">Start teaching</span></button>
+      <div class="wl-choice">
+        <button class="btn primary hidden" id="btnStartLogin"></button>
+        <button class="btn primary" id="btnStart"><span class="l-vi">Bắt đầu dạy ngay</span><span class="l-en">Start teaching</span></button>
+        <p class="wl-gnote hidden" id="wlGuestNote"></p>
+      </div>
     </footer>
   </article>
 </div>
@@ -279,6 +283,6 @@
 <input type="file" id="fileAvatar" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="app.js?v=44" defer></script>
+<script src="app.js?v=45" defer></script>
 </body>
 </html>
