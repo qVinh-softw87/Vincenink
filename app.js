@@ -530,7 +530,11 @@ const EN = {
   "Đăng ký lại": "Re-register",
   "Đã đăng ký lại — sẽ tự gửi thử sau vài giây": "Re-registered; a test will be sent in a few seconds",
   "Đăng nhập / Đăng ký để lưu dữ liệu": "Sign in / Sign up to save your data",
-  "Khách: dùng được ngay nhưng <b>đóng trang là mất dữ liệu</b>.": "Guest: start right away, but <b>closing the page deletes your data</b>."
+  "Khách: dùng được ngay nhưng <b>đóng trang là mất dữ liệu</b>.": "Guest: start right away, but <b>closing the page deletes your data</b>.",
+  "Bạn vừa tạo lớp đầu tiên!": "You just created your first class!",
+  "Bạn đã dạy được một lúc rồi đó!": "You've been teaching for a while!",
+  "Đang ở chế độ khách — đóng trang là mất. Đăng nhập để giữ lại nhé.": "You're in guest mode: closing the page deletes it. Sign in to keep it.",
+  "Đăng nhập để lưu": "Sign in to save"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -1761,7 +1765,7 @@ async function doSave() {
       }
     }
     setStatus(false);
-    if (content) Cloud.queueBoards();
+    if (content) { Cloud.queueBoards(); guestDrawTick(); }
   } catch (err) { console.error(err); toast(t('Không lưu được — bộ nhớ trình duyệt có thể đã đầy'), true); }
 }
 let saving = false;
@@ -1883,7 +1887,7 @@ function studentModal(st) {
       if (st) { Object.assign(st, { name, grade, color }); await DB.put('students', st); renderSidebar(); renderPanel(); renderTopbar(); }
       else {
         const ns = { id: uid(), name, grade, color, note: '', createdAt: Date.now() };
-        await DB.put('students', ns); S.students.push(ns);
+        await DB.put('students', ns); S.students.push(ns); setTimeout(() => guestNudge('class'), 900);
         await selectStudent(ns.id); await createBoard(ns.id, true);
         toast(t('Đã thêm {n} và tạo bảng đầu tiên', { n: name }));
       }
@@ -4094,6 +4098,27 @@ function exitWarn() {
   $('.pa-later', body).onclick = () => m.close();
 }
 document.addEventListener('mouseout', e => { if (!e.relatedTarget && e.clientY <= 4) exitWarn(); });
+/* Khách vừa có thứ đáng giữ (lớp đầu tiên / ~10 phút vẽ): nhắc nhẹ ở góc màn hình, không chặn thao tác, mỗi phiên 1 lần */
+function guestNudge(reason) {
+  if (typeof Cloud === 'undefined' || !Cloud.configured() || isMemberSync() || $('.g-nudge')) return;
+  try { if (sessionStorage.getItem('vincenink.nudged')) return; sessionStorage.setItem('vincenink.nudged', '1'); } catch (e) { /* */ }
+  const el = document.createElement('div'); el.className = 'g-nudge'; el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="gn-ic">${reason === 'class' ? '🎉' : '✍️'}</span>
+    <div class="gn-t"><b>${reason === 'class' ? t('Bạn vừa tạo lớp đầu tiên!') : t('Bạn đã dạy được một lúc rồi đó!')}</b>
+      <small>${t('Đang ở chế độ khách — đóng trang là mất. Đăng nhập để giữ lại nhé.')}</small>
+      <button class="btn primary sm gn-go">${t('Đăng nhập để lưu')}</button></div>
+    <button class="icon-btn sm gn-x" aria-label="${t('Đóng')}">${ic('x', 15)}</button>`;
+  document.body.append(el);
+  const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 250); };
+  $('.gn-go', el).onclick = () => { close(); accountModal({ retry: true }); };
+  $('.gn-x', el).onclick = close;
+  setTimeout(close, 20000);
+}
+function guestDrawTick() {
+  if (isMemberSync()) return;
+  let t0 = 0; try { t0 = +sessionStorage.getItem('vincenink.drawAt') || 0; if (!t0) sessionStorage.setItem('vincenink.drawAt', String(t0 = Date.now())); } catch (e) { return; }
+  if (Date.now() - t0 >= 10 * 6e4) guestNudge('draw');
+}
 async function maybeBackupPrompt() {
   if (backupAsked || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
   for (let i = 0; i < 40 && !Cloud.ready; i++) await new Promise(r => setTimeout(r, 150));

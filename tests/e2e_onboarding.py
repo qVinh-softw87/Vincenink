@@ -52,6 +52,15 @@ async def main():
         assert await p.evaluate("!!document.querySelector('.exit-warn')"); await p.click('.exit-warn .pa-later'); await p.wait_for_timeout(200)
         await p.evaluate("exitWarnAt=0"); await p.evaluate(fire); await p.wait_for_timeout(200)
         assert not await p.evaluate("!!document.querySelector('.exit-warn')"); ok('Cảnh báo thoát của khách chỉ hiện 1 lần mỗi phiên')
+        # Khách: nhắc nhẹ khi vừa tạo lớp đầu tiên / vẽ ~10 phút — mỗi phiên 1 lần, không chặn thao tác
+        await p.evaluate("document.querySelectorAll('.modal-back').forEach(x=>x.remove()); studentModal(null)"); await p.wait_for_timeout(300)
+        await p.fill('.modal [name=name]', 'Lớp 6A'); await p.click('.modal .btn.primary'); await p.wait_for_timeout(1500)
+        t = await p.evaluate("document.querySelector('.g-nudge')?.innerText || ''")
+        assert 'lớp đầu tiên' in t and 'Đăng nhập để lưu' in t and not await p.evaluate("!!document.querySelector('.modal-back')"); ok('Khách tạo lớp đầu tiên → nhắc nhẹ ở góc "đăng nhập để giữ lại", không chặn thao tác')
+        await p.click('.g-nudge .gn-go'); await p.wait_for_timeout(400)
+        assert await p.evaluate("!!document.querySelector('#acctModal')"); ok('Bấm "Đăng nhập để lưu" trong lời nhắc → mở cửa sổ đăng nhập')
+        await p.evaluate("document.querySelectorAll('.modal-back').forEach(x=>x.remove()); sessionStorage.setItem('vincenink.drawAt', String(Date.now()-11*6e4)); guestDrawTick()"); await p.wait_for_timeout(300)
+        assert not await p.evaluate("!!document.querySelector('.g-nudge')"); ok('Đã nhắc trong phiên rồi → vẽ 10 phút không nhắc lại')
         await ctx.close()
 
         assert not errs, errs; ok('Không có lỗi JavaScript')
