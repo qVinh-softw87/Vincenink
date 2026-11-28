@@ -24,7 +24,7 @@ function localDate(ms, tz, addDays = 0) {
   const [y, m, d] = s.split('-').map(Number), t = new Date(Date.UTC(y, m - 1, d + addDays));
   return t.toISOString().slice(0, 10);
 }
-const line = l => `${l.start}–${l.end} · ${l.who}${l.subject ? ' (' + l.subject + ')' : ''}`;
+const Msg = require('./_msg');
 
 /* Tính các thông báo đến hạn trong cửa sổ (now - WINDOW, now] */
 function dueFor(state, now) {
@@ -36,17 +36,15 @@ function dueFor(state, now) {
   const on = ds => lessons.filter(l => l.date === ds).sort((a, b) => a.start.localeCompare(b.start));
   for (const l of lessons) for (const lead of set.lead || []) {
     const start = at(l.date, l.start, tz), t = start - lead * 60e3;
-    if (inWin(t)) out.push({ key: `les|${l.id}|${lead}`, title: vi ? `⏰ ${lead} phút nữa: ${l.who}` : `⏰ In ${lead} min: ${l.who}`, body: `${l.start}–${l.end}${l.subject ? ' · ' + l.subject : ''}${l.note ? '\n' + l.note : ''}`, requireInteraction: lead <= 5 });
+    if (inWin(t)) out.push({ key: `les|${l.id}|${lead}`, ...Msg.compose('lead', { lesson: l, lead }, vi), requireInteraction: lead <= 5 });
   }
   if (set.morning && inWin(at(today, set.morningAt, tz))) {
     const list = on(today);
-    if (!list.length && set.empty && lessons.length) out.push({ key: `sum|${today}`, title: vi ? '☀️ Hôm nay cậu không có buổi dạy nào' : '☀️ No lessons today', body: vi ? 'Một ngày trống lịch — nghỉ ngơi, nạp năng lượng thật đầy nhé!' : 'A free day — rest up and recharge!' });
-    if (list.length) out.push({ key: `sum|${today}`, title: vi ? `☀️ Hôm nay cậu có ${list.length} buổi dạy` : `☀️ ${list.length} lesson${list.length > 1 ? 's' : ''} today`, body: list.slice(0, 4).map(line).join('\n') + (list.length > 4 ? (vi ? `\n… và ${list.length - 4} buổi nữa` : `\n… and ${list.length - 4} more`) : '') });
+    if (list.length || (set.empty && lessons.length)) out.push({ key: `sum|${today}`, ...Msg.compose('morning', { date: today, list }, vi) });
   }
   if (set.evening && inWin(at(today, set.eveningAt, tz))) {
     const list = on(tmr);
-    if (!list.length && set.empty && lessons.length) out.push({ key: `eve|${today}`, title: vi ? '🌙 Ngày mai cậu được nghỉ' : '🌙 No lessons tomorrow', body: vi ? 'Không có buổi dạy nào. Tối nay cứ thong thả, ngủ ngon nha!' : 'Nothing scheduled. Take it easy tonight and sleep well!' });
-    if (list.length) out.push({ key: `eve|${today}`, title: vi ? `🌙 Ngày mai cậu có ${list.length} buổi` : `🌙 ${list.length} lesson${list.length > 1 ? 's' : ''} tomorrow`, body: vi ? `Buổi đầu ${list[0].start} với ${list[0].who}. Soạn bài xong thì ngủ sớm nha.` : `First at ${list[0].start} with ${list[0].who}. Get some rest tonight.` });
+    if (list.length || (set.empty && lessons.length)) out.push({ key: `eve|${today}`, ...Msg.compose('evening', { date: tmr, list }, vi) });
   }
   return out;
 }

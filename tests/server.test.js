@@ -59,7 +59,7 @@ const call = (fn, req) => new Promise(res => { const o = { code: 200, h: {}, set
   await t('cron: gửi nhắc trước 15 phút đúng người, đúng múi giờ', async () => {
     reset(14.6); const { code, body } = await call(cron, { headers: { 'x-cron-secret': 'cron-123' } });
     assert.strictEqual(code, 200, JSON.stringify(body)); assert.strictEqual(body.sent, 1);
-    assert.strictEqual(sent[0].ep, 'ep-A'); assert.match(sent[0].title, /15 phút nữa: Lớp 9A/);
+    assert.strictEqual(sent[0].ep, 'ep-A'); assert.match(sent[0].title, /Lớp 9A/); assert.match(sent[0].body, /Toán/);
   });
   await t('cron: khoá sb_secret chỉ gửi qua header apikey, không có Authorization Bearer', async () => {
     const rest = calls.filter(c => c.url.includes('/rest/v1/'));
@@ -88,19 +88,28 @@ const call = (fn, req) => new Promise(res => { const o = { code: 200, h: {}, set
     // 28/11 có buổi 15:00, 29/11 trống, 30/11 có buổi
     const ls = [L('2026-11-28', '15:00'), L('2026-11-30', '10:00')];
     let n = cron.dueFor(st(ls), at('2026-11-28', '09:00'));
-    assert.ok(n.length === 1 && n[0].key === 'sum|2026-11-28' && /có 1 buổi/.test(n[0].title));
+    assert.ok(n.length === 1 && n[0].key === 'sum|2026-11-28' && /1 buổi/.test(n[0].title) && /15:00/.test(n[0].body));
     n = cron.dueFor(st(ls), at('2026-11-28', '07:00')); assert.strictEqual(n.length, 0);
     n = cron.dueFor(st(ls), at('2026-11-28', '14:00'));
-    assert.ok(n.length === 1 && /60 phút nữa/.test(n[0].title));
+    assert.ok(n.length === 1 && n[0].key.startsWith('les|') && n[0].key.endsWith('|60') && /15:00/.test(n[0].title + n[0].body));
     n = cron.dueFor(st(ls), at('2026-11-28', '21:00'));
-    assert.ok(n.length === 1 && n[0].key === 'eve|2026-11-28' && /Ngày mai cậu được nghỉ/.test(n[0].title));
+    assert.ok(n.length === 1 && n[0].key === 'eve|2026-11-28' && !/\d+ buổi/.test(n[0].title));
     n = cron.dueFor(st(ls), at('2026-11-29', '09:00'));
-    assert.ok(n.length === 1 && /không có buổi dạy nào/.test(n[0].title));
+    assert.ok(n.length === 1 && n[0].key === 'sum|2026-11-29' && !/\d+ buổi/.test(n[0].title));
     n = cron.dueFor(st(ls), at('2026-11-29', '21:00'));
-    assert.ok(n.length === 1 && /Ngày mai cậu có 1 buổi/.test(n[0].title));
+    assert.ok(n.length === 1 && n[0].key === 'eve|2026-11-29' && /1 buổi/.test(n[0].title) && /10:00/.test(n[0].body));
     // tắt "báo ngày trống" → im lặng; chưa có lịch nào → không làm phiền
     assert.strictEqual(cron.dueFor({ reminders: { tz, lessons: ls, settings: { empty: false } } }, at('2026-11-29', '09:00')).length, 0);
     assert.strictEqual(cron.dueFor(st([]), at('2026-11-29', '09:00')).length, 0);
+  });
+  await t('lời nhắn tự sinh: đổi liên tục, không rập khuôn; bản tiện ích giống hệt bản máy chủ', async () => {
+    const M = require('../api/_msg'), L = [{ start: '15:00', end: '16:00', who: 'Lớp 9A' }];
+    for (const [k, ctx] of [['morning', { date: '2026-11-28', list: L }], ['morning', { date: '2026-11-29', list: [] }], ['evening', { date: '2026-11-29', list: L }], ['evening', { date: '2026-11-30', list: [] }], ['lead', { lesson: L[0], lead: 60 }]]) {
+      const seen = new Set(); for (let i = 0; i < 60; i++) { const m = M.compose(k, ctx, true); assert.ok(m.title && m.body); seen.add(m.title + '|' + m.body); }
+      assert.ok(seen.size >= 8, `${k}: chỉ có ${seen.size} kiểu`);
+      const en = M.compose(k, ctx, false); assert.ok(!/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test((en.title + en.body).replace(/Lớp 9A/g, '')), 'EN không dấu');
+    }
+    assert.strictEqual(require('fs').readFileSync(path.join(__dirname, '..', 'extension', 'msg.js'), 'utf8'), require('fs').readFileSync(path.join(__dirname, '..', 'api', '_msg.js'), 'utf8'));
   });
   await t('push-test: không có/ sai JWT → 401', async () => {
     reset(); assert.strictEqual((await call(test, {})).code, 401); assert.strictEqual((await call(test, { headers: { authorization: 'Bearer jwt-B' } })).code, 401);

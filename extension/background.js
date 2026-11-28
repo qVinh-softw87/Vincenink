@@ -2,6 +2,7 @@
 // Lịch được trang Vincenink chuẩn bị sẵn cho ~5 tuần tới; tiện ích đặt báo thức (chrome.alarms)
 // và hiện thông báo kể cả khi không mở trang, miễn là Chrome đang chạy.
 
+importScripts('msg.js');
 const DEF = { enabled: true, lead: [60], morning: true, morningAt: '09:00', evening: true, eveningAt: '21:00', empty: true };
 const pad = n => String(n).padStart(2, '0');
 const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -63,24 +64,20 @@ async function catchUp() {
 }
 
 async function summary(ds, data) {
-  const all = lessonsOn(data, ds), list = all.filter(l => at(ds, l.end) > Date.now()), V = vi(data), set = { ...DEF, ...(data.settings || {}) };
-  if (!all.length && set.empty && (data.lessons || []).some(l => !l.off)) return notify(`sum|${ds}`, V ? '☀️ Hôm nay cậu không có buổi dạy nào' : '☀️ No lessons today', V ? 'Một ngày trống lịch — nghỉ ngơi, nạp năng lượng thật đầy nhé!' : 'A free day — rest up and recharge!');
-  if (!list.length) return;
-  await notify(`sum|${ds}`, V ? `☀️ Hôm nay cậu có ${list.length} buổi dạy` : `☀️ ${list.length} lesson${list.length > 1 ? 's' : ''} today`,
-    list.slice(0, 4).map(line).join('\n') + (list.length > 4 ? (V ? `\n… và ${list.length - 4} buổi nữa` : `\n… and ${list.length - 4} more`) : ''));
+  const all = lessonsOn(data, ds), list = all.filter(l => at(ds, l.end) > Date.now()), set = { ...DEF, ...(data.settings || {}) };
+  if (all.length ? !list.length : !(set.empty && (data.lessons || []).some(l => !l.off))) return;
+  const m = VMsg.compose('morning', { date: ds, list }, vi(data)); await notify(`sum|${ds}`, m.title, m.body);
 }
 async function evening(ds, data) {
   const d = new Date(); const tmr = dstr(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1));
-  const list = lessonsOn(data, tmr), V = vi(data), set = { ...DEF, ...(data.settings || {}) };
-  if (!list.length && set.empty && (data.lessons || []).some(l => !l.off)) return notify(`eve|${ds}`, V ? '🌙 Ngày mai cậu được nghỉ' : '🌙 No lessons tomorrow', V ? 'Không có buổi dạy nào. Tối nay cứ thong thả, ngủ ngon nha!' : 'Nothing scheduled. Take it easy tonight and sleep well!');
-  if (!list.length) return;
-  await notify(`eve|${ds}`, V ? `🌙 Ngày mai cậu có ${list.length} buổi` : `🌙 ${list.length} lesson${list.length > 1 ? 's' : ''} tomorrow`,
-    (V ? `Buổi đầu ${list[0].start} với ${list[0].who}. Soạn bài xong thì ngủ sớm nha.` : `First at ${list[0].start} with ${list[0].who}. Get some rest tonight.`));
+  const list = lessonsOn(data, tmr), set = { ...DEF, ...(data.settings || {}) };
+  if (!list.length && !(set.empty && (data.lessons || []).some(l => !l.off))) return;
+  const m = VMsg.compose('evening', { date: tmr, list }, vi(data)); await notify(`eve|${ds}`, m.title, m.body);
 }
 async function lessonSoon(l, lead, data) {
   const V = vi(data), mins = Math.max(1, Math.round((at(l.date, l.start) - Date.now()) / 6e4));
-  await notify(`les|${l.id}|${lead}`, V ? `⏰ ${mins} phút nữa: ${l.who}` : `⏰ In ${mins} min: ${l.who}`,
-    `${l.start}–${l.end}${l.subject ? ' · ' + l.subject : ''}${l.note ? '\n' + l.note : ''}`,
+  const m = VMsg.compose('lead', { lesson: l, lead: mins }, V);
+  await notify(`les|${l.id}|${lead}`, m.title, m.body,
     { requireInteraction: lead <= 5, buttons: [{ title: V ? 'Mở Vincenink' : 'Open Vincenink' }] });
 }
 
