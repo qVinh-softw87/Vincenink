@@ -494,7 +494,16 @@ const EN = {
   "Trước mỗi buổi 1 tiếng": "1 hour before each lesson",
   "21:00 tối: lịch ngày mai": "9:00 PM: tomorrow's lessons",
   "Vẫn nhận được kể cả khi đã đóng Vincenink. Có thể tắt bất cứ lúc nào trong Nhắc lịch.": "Works even when Vincenink is closed. Turn it off anytime in Reminders.",
-  "Nhận thông báo": "Notifications"
+  "Nhận thông báo": "Notifications",
+  "Bạn có muốn Vincenink nhắc nhở mình không?": "Want Vincenink to remind you?",
+  "Mình sẽ báo đúng lúc để cậu không bao giờ lỡ buổi dạy nào — kể cả khi đã đóng trang.": "We'll ping you right on time so you never miss a lesson, even with the page closed.",
+  "Lịch dạy hôm nay": "Today's lessons",
+  "Trước 1 tiếng": "1 hour before",
+  "Mỗi buổi dạy": "Every lesson",
+  "Lịch ngày mai": "Tomorrow's lessons",
+  "Có, nhắc mình nhé": "Yes, remind me",
+  "Đổi giờ hoặc tắt bất cứ lúc nào trong mục Nhắc lịch.": "Change times or turn it off anytime in Reminders.",
+  "Được rồi, 7 ngày nữa mình hỏi lại nhé": "Okay, we'll ask again in 7 days"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3905,18 +3914,22 @@ async function askPush() {
   if (Date.now() - (+ls.get(key, '0') || 0) < 7 * 864e5) return;
   ls.set(key, String(Date.now()));
   const body = document.createElement('div'); body.className = 'push-ask';
-  body.innerHTML = `<div class="pa-ic">🔔</div>
-    <p class="mp-lead">${t('Bạn có muốn nhận thông báo lịch dạy không?')}</p>
-    <ul class="bk-list">
-      <li>☀️ ${t('9:00 sáng: lịch dạy hôm nay')}</li>
-      <li>⏰ ${t('Trước mỗi buổi 1 tiếng')}</li>
-      <li>🌙 ${t('21:00 tối: lịch ngày mai')}</li>
-    </ul>
-    <p class="hint">${t('Vẫn nhận được kể cả khi đã đóng Vincenink. Có thể tắt bất cứ lúc nào trong Nhắc lịch.')}</p>`;
-  openModal({ title: t('Nhận thông báo'), body, width: 420, actions: [
-    { label: t('Để sau') },
-    { label: t('Có, bật thông báo'), kind: 'primary', onClick: () => { Cloud.enablePush(); } },
-  ] });
+  body.innerHTML = `
+    <div class="pa-hero"><span class="pa-bell">🔔</span><span class="pa-dot"></span></div>
+    <h3 class="pa-title">${t('Bạn có muốn Vincenink nhắc nhở mình không?')}</h3>
+    <p class="pa-sub">${t('Mình sẽ báo đúng lúc để cậu không bao giờ lỡ buổi dạy nào — kể cả khi đã đóng trang.')}</p>
+    <div class="pa-times">
+      <div class="pa-t"><span class="pa-e">☀️</span><b>9:00</b><small>${t('Lịch dạy hôm nay')}</small></div>
+      <div class="pa-t"><span class="pa-e">⏰</span><b>${t('Trước 1 tiếng')}</b><small>${t('Mỗi buổi dạy')}</small></div>
+      <div class="pa-t"><span class="pa-e">🌙</span><b>21:00</b><small>${t('Lịch ngày mai')}</small></div>
+    </div>
+    <button class="btn primary pa-yes">${ic('bell', 16)}${t('Có, nhắc mình nhé')}</button>
+    <button class="pa-later">${t('Để sau')}</button>
+    <p class="pa-note">${t('Đổi giờ hoặc tắt bất cứ lúc nào trong mục Nhắc lịch.')}</p>`;
+  const m = openModal({ title: '', body, width: 400, locked: true });
+  m.el && m.el.classList.add('pa-modal');
+  $('.pa-yes', body).onclick = () => { m.close(); Cloud.enablePush(); };
+  $('.pa-later', body).onclick = () => { m.close(); toast(t('Được rồi, 7 ngày nữa mình hỏi lại nhé')); };
 }
 async function maybeBackupPrompt() {
   if (backupAsked || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
