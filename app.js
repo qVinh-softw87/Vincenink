@@ -509,7 +509,26 @@ const EN = {
   "Đăng nhập hoặc đăng ký (miễn phí, chưa tới 1 phút) để lưu lại toàn bộ và dùng tiếp trên mọi máy.": "Sign in or sign up (free, under a minute) to save everything and continue on any device.",
   "Đăng nhập / Đăng ký để lưu": "Sign in / Sign up to save",
   "Vẫn dùng chế độ khách": "Stay in guest mode",
-  "Chọn giờ rồi chọn phút": "Pick the hour, then the minutes"
+  "Chọn giờ rồi chọn phút": "Pick the hour, then the minutes",
+  "Trình duyệt <b>đã nhận</b> thông báo thử. Nếu cậu không thấy nó hiện lên, là do cài đặt của máy đang ẩn thông báo:": "Your browser <b>received</b> the test. If you didn't see it, your device settings are hiding notifications:",
+  "Mở <b>Cài đặt hệ thống → Thông báo → Google Chrome</b> (hoặc trình duyệt đang dùng), bật <b>Cho phép thông báo</b>, kiểu hiển thị chọn <b>Cảnh báo</b> hoặc <b>Biểu ngữ</b>.": "Open <b>System Settings \u2192 Notifications \u2192 Google Chrome</b> (or your browser), turn on <b>Allow notifications</b>, style <b>Alerts</b> or <b>Banners</b>.",
+  "Tắt <b>Tập trung / Không làm phiền</b> ở góc phải thanh menu.": "Turn off <b>Focus / Do Not Disturb</b> in the menu bar.",
+  "Mở <b>Cài đặt → Hệ thống → Thông báo</b>, bật thông báo và bật cho trình duyệt đang dùng.": "Open <b>Settings \u2192 System \u2192 Notifications</b> and allow your browser.",
+  "Tắt <b>Không làm phiền / Hỗ trợ tập trung</b>.": "Turn off <b>Do Not Disturb / Focus assist</b>.",
+  "Mở cài đặt thông báo của máy, cho phép trình duyệt đang dùng hiện thông báo.": "Open your device's notification settings and allow your browser.",
+  "Tắt chế độ Không làm phiền / Tập trung.": "Turn off Do Not Disturb / Focus.",
+  "Xem thêm ở Trung tâm thông báo — có thể thông báo đã nằm sẵn trong đó.": "Check the Notification Center; it may already be there.",
+  "Sửa xong bấm “Gửi thử lại” để kiểm tra.": "Then press \u201cSend again\u201d to check.",
+  "Máy chủ đã gửi nhưng trình duyệt này <b>chưa nhận được</b>.": "The server sent it but this browser <b>didn't receive it</b>.",
+  "Bấm “Đăng ký lại” bên dưới để làm mới đăng ký nhận thông báo của máy này.": "Press \u201cRe-register\u201d to refresh this device's subscription.",
+  "Kiểm tra trình duyệt đang cho phép thông báo: biểu tượng ổ khoá cạnh địa chỉ web → Thông báo → Cho phép.": "Make sure notifications are allowed: lock icon next to the address \u2192 Notifications \u2192 Allow.",
+  "Chế độ ẩn danh và một số trình duyệt (Brave, Cốc Cốc chặn sẵn…) không nhận được thông báo đẩy.": "Incognito and some browsers (Brave, Coc Coc\u2026) block push notifications.",
+  "Thông báo đã tới nhưng bị máy ẩn": "Notification arrived but your device hid it",
+  "Trình duyệt chưa nhận được thông báo": "The browser didn't receive the notification",
+  "Gửi thử lại": "Send again",
+  "Sẽ gửi lại sau vài giây…": "Sending again in a few seconds\u2026",
+  "Đăng ký lại": "Re-register",
+  "Đã đăng ký lại — sẽ tự gửi thử sau vài giây": "Re-registered; a test will be sent in a few seconds"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -2673,9 +2692,11 @@ const Weather = {
       Loc.cur = c; return { quick: this.fetchFor(c), final: Promise.resolve(this.data) };
     }
     const gpsP = Loc.gps(ask).catch(() => null);
-    const ipP = Loc.ip();
+    // Đã từng biết vị trí (3 ngày gần đây): dùng ngay để hiện thời tiết, GPS về sau sẽ tự cập nhật
+    const recent = !force && c && Date.now() - c.at < 3 * 864e5;
+    const ipP = recent ? Promise.resolve(null) : Loc.ip();
     const quick = (async () => {
-      let loc = await Promise.race([gpsP, sleep(ask && !c ? 3500 : 2500).then(() => null)]);
+      let loc = recent ? c : await Promise.race([gpsP, sleep(1500).then(() => null)]);
       if (!loc) loc = (c && c.src === 'gps' && Date.now() - c.at < 6 * 36e5) ? c : (await ipP) || c;
       if (loc) await this.fetchFor(loc);
       return this.data;
@@ -2895,10 +2916,22 @@ const Daily = {
   lines() { return parseDaily(this.raw()).lines; },
   mood() { return parseDaily(this.raw()).mood || moodGuess(); },
   /* Mỗi lần mở / tải lại trang là một lời nhắn mới */
+  nextKey() { return `${todayStr()}|${dayPart()}|${LANG}`; },
   async load() {
     this.started = true; this.cur = null;
     if (AI.status !== 'on') { refreshDay(); return; }
+    // Lời nhắn đã chuẩn bị sẵn từ lần trước (cùng ngày, cùng buổi): hiện ngay, rồi chuẩn bị lời nhắn khác cho lần sau
+    let nx = null; try { nx = JSON.parse(ls.get('vincenink.daily.next', 'null')); } catch (e) { /* */ }
+    ls.set('vincenink.daily.next', '');
+    if (nx && nx.k === this.nextKey() && nx.txt) { this.cur = nx.txt; refreshDay(); setTimeout(() => this.prefetch(), 5000); return; }
     this.loading = true; refreshDay();
+    await this.fetchOne().then(txt => { this.cur = txt || fallbackDaily(this.salt); }, () => { this.cur = fallbackDaily(this.salt); });
+    this.loading = false; refreshDay(); setTimeout(() => this.prefetch(), 5000);
+  },
+  async prefetch() {
+    try { const txt = await this.fetchOne(); if (txt) ls.set('vincenink.daily.next', JSON.stringify({ k: this.nextKey(), txt })); } catch (e) { /* */ }
+  },
+  async fetchOne() {
     const tones = LANG === 'vi'
       ? ['thân thiết như bạn thân lâu năm, xưng "tớ" gọi "cậu", hơi trêu nhẹ', 'ngọt ngào, quan tâm như người yêu nhắn tin (tình cảm nhưng tinh tế, không sến)', 'hào hứng, tràn năng lượng như người truyền cảm hứng', 'nhắng nhít, lầy lội dễ thương như cạ cứng', 'ấm áp, chân thành, đầy lạc quan']
       : ['like a best friend of many years, lightly teasing', 'sweet and caring like a partner texting (tender, not cheesy)', 'upbeat and inspiring like a motivator', 'playful and silly like a bestie', 'warm, sincere and optimistic'];
@@ -2906,9 +2939,7 @@ const Daily = {
       ? ['tiền vào như nước, tự do tài chính', 'sức khoẻ, ăn ngon ngủ kỹ', 'niềm vui nhỏ mỗi ngày', 'tự tin, tin vào bản thân', 'học thêm điều mới mỗi ngày', 'biết ơn và lạc quan', 'năng suất mà vẫn thảnh thơi', 'gieo hạt giống tốt cho học trò']
       : ['money flowing in, financial freedom', 'health, good food and sleep', 'small daily joys', 'self-belief', 'learning something new every day', 'gratitude and optimism', 'productive yet relaxed', 'planting good seeds in students'];
     const pick = a => a[Math.floor(Math.random() * a.length)];
-    try { const txt = await AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8), tone: pick(tones), angle: pick(angles) + ' · ' + pick(angles) }); this.cur = txt || fallbackDaily(this.salt); }
-    catch (e) { this.cur = fallbackDaily(this.salt); }
-    this.loading = false; refreshDay();
+    return AI.ask('daily', { seed: Math.random().toString(36).slice(2, 8), tone: pick(tones), angle: pick(angles) + ' · ' + pick(angles) });
   },
 };
 /* ---- Ghi chú AI mỗi ngày ---- */
@@ -3506,7 +3537,7 @@ var Cloud = window.Cloud = {
   },
 
   /* ---- Thông báo đẩy ---- */
-  async reg() { return navigator.serviceWorker.register('sw.js', { scope: './' }); },
+  async reg() { return navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' }).then(r => { try { r.update && r.update().catch(() => {}); } catch (e) { /* */ } return r; }); },
   async checkPush() {
     this.pushOn = false;
     if (!this.user || !this.canPush() || Notification.permission !== 'granted') return;
@@ -3537,13 +3568,26 @@ var Cloud = window.Cloud = {
     Reminders.sync(); this.lastHash = ''; this.queue(true); renderAccountUI();
     const m = $('#acctModal'); if (m) acctPaint(m); const r = $('#remModal'); if (r) remModalPaint(r);
   },
+  async resubscribe() {
+    try { const reg = await this.reg(); const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) { /* */ }
+    this.pushOn = false; await this.enablePush();
+    if (this.pushOn) setTimeout(() => this.testPush(), 16000), toast(t('Đã đăng ký lại — sẽ tự gửi thử sau vài giây'));
+  },
   async testPush() {
     const { data } = await this.sb.auth.getSession(), tok = data.session && data.session.access_token;
     if (!tok) return toast(t('Phiên đăng nhập đã hết, hãy đăng nhập lại'), true);
     let r, j = {};
     try { r = await fetch('api/push-test', { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: LANG }) }); j = await r.json().catch(() => ({})); }
     catch (e) { return toast(t('Không gọi được máy chủ'), true); }
-    if (r.ok) return toast(t('Đã gửi thông báo thử — kiểm tra góc màn hình nhé 🔔'));
+    if (r.ok) {
+      toast(t('Đã gửi thông báo thử — kiểm tra góc màn hình nhé 🔔'));
+      if (!navigator.serviceWorker || typeof navigator.serviceWorker.addEventListener !== 'function') return;
+      const got = await new Promise(res => {
+        const on = e => { if (e.data && e.data.type === 'vincenink-push') { navigator.serviceWorker.removeEventListener('message', on); res(true); } };
+        navigator.serviceWorker.addEventListener('message', on); setTimeout(() => { navigator.serviceWorker.removeEventListener('message', on); res(false); }, 12000);
+      });
+      return pushHelp(got);
+    }
     if (j.error === 'no_subscription') { await this.enablePush(true); return toast(t('Máy chủ chưa có đăng ký của trình duyệt này — đã đăng ký lại, bấm gửi thử lần nữa'), true); }
     if (j.error === 'rate_limited') return toast(t('Đợi vài giây rồi thử lại nhé'), true);
     if (j.error === 'subs') return toast(t('Máy chủ chưa cấp quyền cho bảng dữ liệu — chủ trang cần chạy supabase/fix-01-grants.sql'), true);
@@ -3946,6 +3990,32 @@ function showGreet(on) {
 /* ---- Nhắc đăng nhập để sao lưu: hiện sau khi đóng trang giới thiệu / lời chào, mỗi lần mở web khi chưa đăng nhập ---- */
 let backupAsked = false;
 /* Đã đăng nhập mà máy này chưa bật thông báo: hỏi một câu, đồng ý là xong (hỏi lại sau 7 ngày nếu chọn "Để sau") */
+/* Gửi thử xong: trình duyệt đã nhận (got=true) mà không thấy → do cài đặt máy; chưa nhận → do đăng ký/ mạng */
+function pushHelp(got) {
+  const mac = /Mac/.test(navigator.platform || navigator.userAgent), win = /Win/.test(navigator.platform || navigator.userAgent);
+  const body = document.createElement('div'); body.className = 'push-help';
+  body.innerHTML = got ? `
+    <p class="mp-lead">${t('Trình duyệt <b>đã nhận</b> thông báo thử. Nếu cậu không thấy nó hiện lên, là do cài đặt của máy đang ẩn thông báo:')}</p>
+    <ol class="ph-steps">
+      ${mac ? `<li>${t('Mở <b>Cài đặt hệ thống → Thông báo → Google Chrome</b> (hoặc trình duyệt đang dùng), bật <b>Cho phép thông báo</b>, kiểu hiển thị chọn <b>Cảnh báo</b> hoặc <b>Biểu ngữ</b>.')}</li>
+      <li>${t('Tắt <b>Tập trung / Không làm phiền</b> ở góc phải thanh menu.')}</li>`
+      : win ? `<li>${t('Mở <b>Cài đặt → Hệ thống → Thông báo</b>, bật thông báo và bật cho trình duyệt đang dùng.')}</li>
+      <li>${t('Tắt <b>Không làm phiền / Hỗ trợ tập trung</b>.')}</li>`
+      : `<li>${t('Mở cài đặt thông báo của máy, cho phép trình duyệt đang dùng hiện thông báo.')}</li>
+      <li>${t('Tắt chế độ Không làm phiền / Tập trung.')}</li>`}
+      <li>${t('Xem thêm ở Trung tâm thông báo — có thể thông báo đã nằm sẵn trong đó.')}</li>
+    </ol>
+    <p class="hint">${t('Sửa xong bấm “Gửi thử lại” để kiểm tra.')}</p>`
+    : `<p class="mp-lead">${t('Máy chủ đã gửi nhưng trình duyệt này <b>chưa nhận được</b>.')}</p>
+    <ol class="ph-steps">
+      <li>${t('Bấm “Đăng ký lại” bên dưới để làm mới đăng ký nhận thông báo của máy này.')}</li>
+      <li>${t('Kiểm tra trình duyệt đang cho phép thông báo: biểu tượng ổ khoá cạnh địa chỉ web → Thông báo → Cho phép.')}</li>
+      <li>${t('Chế độ ẩn danh và một số trình duyệt (Brave, Cốc Cốc chặn sẵn…) không nhận được thông báo đẩy.')}</li>
+    </ol>`;
+  openModal({ title: got ? t('Thông báo đã tới nhưng bị máy ẩn') : t('Trình duyệt chưa nhận được thông báo'), body, width: 460, actions: got
+    ? [{ label: t('Đóng') }, { label: t('Gửi thử lại'), kind: 'primary', onClick: () => { setTimeout(() => Cloud.testPush(), 16000 - 0); toast(t('Sẽ gửi lại sau vài giây…')); } }]
+    : [{ label: t('Đóng') }, { label: t('Đăng ký lại'), kind: 'primary', onClick: async () => { await Cloud.resubscribe(); } }] });
+}
 async function askPush() {
   for (let i = 0; i < 400; i++) {
     if ($('#welcome').classList.contains('hidden') && $('#greetPop').classList.contains('hidden') && !$('.modal-back')) break;
@@ -4326,7 +4396,8 @@ async function init() {
   // Hiện ngay thời tiết đã lưu, rồi lấy vị trí + thời tiết mới SONG SONG với kiểm tra AI
   Weather.useCache(); Weather.locating = !Weather.data; refreshDay();
   const wxP = Loc.geoState().then(st => Weather.refresh({ ask: st !== 'denied' }).quick).catch(() => null);
-  Promise.all([AI.check(), wxP]).then(() => { Weather.locating = false; refreshDay(); Daily.load(); Note.load(); });
+  // Không bắt lời nhắn chờ thời tiết quá 1,8 giây; thời tiết về sau vẫn tự hiện
+  Promise.all([AI.check(), Promise.race([wxP, sleep(1800)])]).then(() => { Weather.locating = false; refreshDay(); Daily.load(); Note.load(); });
   Cloud.init();
   document.fonts && document.fonts.ready.then(() => { bbCache = new WeakMap(); requestRender(true); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});

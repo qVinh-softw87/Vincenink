@@ -1631,3 +1631,6 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 .tp-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .tp-pop .tp-head { background: none; }
 .tp-pop .tp-head small { text-transform: none; letter-spacing: 0; font-weight: 400; white-space: nowrap; }
+
+/* Hướng dẫn khi gửi thử thông báo không hiện (v44) */
+.ph-steps { margin: 6px 0 10px; padding-left: 20px; display: grid; gap: 8px; font-size: 13.5px; line-height: 1.5; color: #4A3A2C; }
