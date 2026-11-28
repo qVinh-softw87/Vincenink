@@ -475,7 +475,26 @@ const EN = {
   "Đã đăng xuất. Dữ liệu của tài khoản vẫn được giữ — đăng nhập lại là thấy đủ.": "Signed out. Your account data is kept; sign in again to see everything.",
   "Dữ liệu của tài khoản vẫn được giữ nguyên, đăng nhập lại là thấy đủ. Sau khi đăng xuất bạn dùng ở chế độ khách: dữ liệu tạo lúc đó sẽ mất khi đóng trang.": "Your account data stays as it is; sign in again to see everything. After signing out you are in guest mode: anything created then is deleted when the page closes.",
   "Báo cả những ngày không có lịch dạy": "Also notify on days with no lessons",
-  "Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.": "Morning: today's lessons. Evening: tomorrow's (free days too). Plus one reminder before each lesson. Cancelled lessons are skipped."
+  "Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.": "Morning: today's lessons. Evening: tomorrow's (free days too). Plus one reminder before each lesson. Cancelled lessons are skipped.",
+  "Thông báo đang bật trên máy này": "Notifications are on for this device",
+  "Nhắc lịch được gửi tới máy này kể cả khi đã đóng Vincenink.": "Reminders reach this device even when Vincenink is closed.",
+  "Bạn có muốn nhận thông báo lịch dạy không?": "Would you like lesson notifications?",
+  "Bấm nút bên dưới rồi chọn “Cho phép” là xong — không cần cài gì thêm.": "Tap the button, then choose \u201cAllow\u201d. Nothing to install.",
+  "Có, bật thông báo": "Yes, turn on notifications",
+  "Đăng nhập để nhận thông báo lịch dạy": "Sign in to get lesson notifications",
+  "Thông báo được gửi theo lịch của tài khoản, kể cả khi đã đóng trang.": "Notifications follow your account's schedule, even when the page is closed.",
+  "Trình duyệt đang chặn thông báo": "Your browser is blocking notifications",
+  "Bấm biểu tượng ổ khoá cạnh địa chỉ web → Thông báo → Cho phép, rồi tải lại trang.": "Click the lock icon next to the address \u2192 Notifications \u2192 Allow, then reload.",
+  "Trình duyệt này chưa hỗ trợ thông báo": "This browser doesn't support notifications",
+  "Hãy dùng Chrome, Edge hoặc Safari bản mới. Trên iPhone: thêm Vincenink vào Màn hình chính rồi mở từ đó.": "Use a recent Chrome, Edge or Safari. On iPhone, add Vincenink to the Home Screen and open it from there.",
+  "Gửi thử thông báo": "Send a test notification",
+  "Thông báo đang bật": "Notifications on",
+  "Chưa bật thông báo": "Notifications off",
+  "9:00 sáng: lịch dạy hôm nay": "9:00 AM: today's lessons",
+  "Trước mỗi buổi 1 tiếng": "1 hour before each lesson",
+  "21:00 tối: lịch ngày mai": "9:00 PM: tomorrow's lessons",
+  "Vẫn nhận được kể cả khi đã đóng Vincenink. Có thể tắt bất cứ lúc nào trong Nhắc lịch.": "Works even when Vincenink is closed. Turn it off anytime in Reminders.",
+  "Nhận thông báo": "Notifications"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3101,27 +3120,22 @@ window.addEventListener('vincenink:ext', e => { Reminders.ext = String(e.detail 
 setInterval(() => Reminders.tick(), 30000);
 
 function remModalPaint(body) {
-  const s = Reminders.settings(), ext = Reminders.ext, perm = 'Notification' in window ? Notification.permission : 'denied';
+  const s = Reminders.settings(), perm = 'Notification' in window ? Notification.permission : 'denied';
   const leads = [5, 10, 15, 30, 60];
   const cp = Cloud.configured() && Cloud.canPush();
+  const st = !cp ? 'nosupport' : Cloud.pushOn ? 'on' : !Cloud.user ? 'guest' : perm === 'denied' ? 'denied' : 'off';
+  const card = {
+    on: [true, 'check', t('Thông báo đang bật trên máy này'), t('Nhắc lịch được gửi tới máy này kể cả khi đã đóng Vincenink.'), ''],
+    off: [false, 'bell', t('Bạn có muốn nhận thông báo lịch dạy không?'), t('Bấm nút bên dưới rồi chọn “Cho phép” là xong — không cần cài gì thêm.'), `<button class="btn primary sm rem-cta" data-rpush>${ic('bell', 14)}${t('Có, bật thông báo')}</button>`],
+    guest: [false, 'bell', t('Đăng nhập để nhận thông báo lịch dạy'), t('Thông báo được gửi theo lịch của tài khoản, kể cả khi đã đóng trang.'), `<button class="btn primary sm rem-cta" data-rpush>${ic('bell', 14)}${t('Đăng nhập để bật')}</button>`],
+    denied: [false, 'info', t('Trình duyệt đang chặn thông báo'), t('Bấm biểu tượng ổ khoá cạnh địa chỉ web → Thông báo → Cho phép, rồi tải lại trang.'), ''],
+    nosupport: [false, 'info', t('Trình duyệt này chưa hỗ trợ thông báo'), t('Hãy dùng Chrome, Edge hoặc Safari bản mới. Trên iPhone: thêm Vincenink vào Màn hình chính rồi mở từ đó.'), ''],
+  }[st];
   body.innerHTML = `
-    ${cp ? `<div class="rem-status ${Cloud.pushOn ? 'ok' : ''}">
-      <span class="rs-ic">${ic(Cloud.pushOn ? 'check' : 'bell', 18)}</span>
-      <div>${Cloud.pushOn ? `<b>${t('Thông báo qua tài khoản đang bật')}</b><small>${t('Máy chủ gửi nhắc lịch tới trình duyệt này kể cả khi đã đóng Vincenink — không cần cài tiện ích.')}</small>`
-        : `<b>${t('Cách dễ nhất: bật thông báo qua tài khoản')}</b><small>${t(Cloud.user ? 'Bấm “Bật thông báo” rồi chọn “Cho phép” là xong.' : 'Đăng nhập (miễn phí) rồi bấm “Cho phép” — không cần cài tiện ích.')}</small>
-        <button class="btn primary sm rem-cta" data-rpush>${ic('bell', 14)}${t(Cloud.user ? 'Bật thông báo' : 'Đăng nhập để bật')}</button>`}</div>
-    </div>` : ''}
-    ${cp && Cloud.pushOn ? '' : `<div class="rem-status ${ext ? 'ok' : ''}">
-      <span class="rs-ic">${ic(ext ? 'check' : 'bell', 18)}</span>
-      <div>${ext ? `<b>${t('Tiện ích Chrome đang chạy')}</b><small>${t('Thông báo sẽ hiện cả khi không mở Vincenink — chỉ cần Chrome đang chạy.')}</small>`
-        : `<b>${t('Chưa cài tiện ích nhắc lịch')}</b><small>${t('Hiện chỉ nhắc được khi trang đang mở. Cài tiện ích để nhận thông báo cả khi đóng trang.')}</small>`}</div>
+    <div class="rem-status ${card[0] ? 'ok' : ''}">
+      <span class="rs-ic">${ic(card[1], 18)}</span>
+      <div><b>${card[2]}</b><small>${card[3]}</small>${card[4]}</div>
     </div>
-    ${ext ? '' : `<ol class="rem-steps">
-      <li><a class="btn outline sm" href="vincenink-nhac-lich.zip" download>${ic('download', 15)}${t('Tải tiện ích (.zip)')}</a> ${t('rồi giải nén.')}</li>
-      <li>${t('Mở')} <code>chrome://extensions</code>, ${t('bật')} <b>${t('Chế độ dành cho nhà phát triển')}</b>.</li>
-      <li>${t('Bấm')} <b>${t('Tải tiện ích đã giải nén')}</b> ${t('và chọn thư mục vừa giải nén.')}</li>
-      <li>${t('Tải lại trang Vincenink — xong!')}</li>
-    </ol>`}`}
     <label class="switch rem-row"><input type="checkbox" data-r="enabled" ${s.enabled ? 'checked' : ''}><span class="knob"></span><span class="lbl">${t('Bật nhắc lịch dạy')}</span></label>
     <div class="rem-block ${s.enabled ? '' : 'dim'}">
       <div class="rem-lab">${ic('clock', 14)}${t('Nhắc trước mỗi buổi')}</div>
@@ -3132,8 +3146,7 @@ function remModalPaint(body) {
       <p class="hint">${t('Sáng báo lịch hôm nay, tối báo lịch ngày mai (kể cả ngày trống), trước mỗi buổi nhắc thêm một lần. Buổi đã đánh dấu nghỉ thì bỏ qua.')}</p>
     </div>
     <div class="rem-foot">
-      <button class="btn ghost sm" data-rtest>${ic('bell', 15)}${t('Thử thông báo')}</button>
-      ${!ext && perm !== 'granted' ? `<button class="btn outline sm" data-rperm>${t('Cho phép thông báo trên trang')}</button>` : ''}
+      ${Cloud.pushOn ? `<button class="btn ghost sm" data-rtest>${ic('bell', 15)}${t('Gửi thử thông báo')}</button>` : ''}
     </div>`;
 }
 function remindersModal() {
@@ -3153,7 +3166,7 @@ function remindersModal() {
       Reminders.save({ lead: next.sort((a, b) => b - a) }); return remModalPaint(body);
     }
     if (e.target.closest('[data-rpush]')) return Cloud.user ? Cloud.enablePush() : accountModal();
-    if (e.target.closest('[data-rtest]')) return Reminders.test();
+    if (e.target.closest('[data-rtest]')) return Cloud.testPush();
     if (e.target.closest('[data-rperm]')) { await Notification.requestPermission(); remModalPaint(body); }
   });
   openModal({ title: t('Nhắc lịch & thông báo'), body, width: 480, actions: [{ label: t('Xong'), kind: 'primary' }] });
@@ -3296,6 +3309,7 @@ var Cloud = window.Cloud = {
     if (uid !== DB.owner && !(isRecovery && uid)) return this.switchTo(uid);   // vd: vừa quay về từ Google, hoặc phiên đã hết hạn
     let just = ''; try { just = sessionStorage.getItem('vincenink.justIn') || ''; sessionStorage.removeItem('vincenink.justIn'); } catch (e) { /* */ }
     if (this.user) { await this.pull(); await this.checkPush(); }
+    if (this.user) setTimeout(() => askPush(), 1200);
     if (just === 'out') toast(t('Đã đăng xuất. Dữ liệu của tài khoản vẫn được giữ — đăng nhập lại là thấy đủ.'));
     else if (just && this.user) {
       const pend = ls.get('vincenink.pendingConfirm', '');
@@ -3599,6 +3613,7 @@ function emailSentModal(kind, email) {
   openModal({ title: t('Tài khoản Vincenink'), body, width: 420, actions: [{ label: kind === 'reset' ? t('Đóng') : t('Đã xác nhận, đăng nhập'), kind: 'primary', onClick: () => { if (kind !== 'reset') setTimeout(accountModal, 50); } }] });
 }
 function welcomeAccountModal() {
+  if (Cloud.user) ls.set('vincenink.pushAsk.' + Cloud.user.id, String(Date.now()));   // đã hỏi bật thông báo ở đây
   const body = document.createElement('div'); body.className = 'mail-pop';
   body.innerHTML = `<div class="mp-ic">🎉</div><h3>${t('Xác nhận email thành công!')}</h3>
     <p class="mp-lead">${t('Tài khoản {e} đã sẵn sàng. Lịch học và hồ sơ sẽ tự đồng bộ giữa các máy.', { e: `<b>${esc(Cloud.user.email || '')}</b>` })}</p>
@@ -3664,7 +3679,7 @@ function profileMenu() {
     { icon: 'user', label: p.name || t('Hồ sơ của bạn'), sub: p.role || p.school || t('Thêm ảnh đại diện và thông tin cá nhân'), onClick: profileModal },
     { icon: 'camera', label: t(p.avatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'), onClick: profileModal },
     '-',
-    { icon: 'bell', label: t('Nhắc lịch & thông báo'), sub: t(Reminders.ext ? 'Tiện ích Chrome đang chạy' : 'Thông báo cả khi đóng trang'), onClick: remindersModal },
+    { icon: 'bell', label: t('Nhắc lịch & thông báo'), sub: t(Cloud.pushOn ? 'Thông báo đang bật' : 'Chưa bật thông báo'), onClick: remindersModal },
     { icon: 'settings', label: t('Cài đặt & sao lưu'), onClick: settingsModal },
     { icon: 'info', label: t('Giới thiệu Vincenink'), onClick: () => showWelcome(true) },
   ]);
@@ -3879,6 +3894,30 @@ function showGreet(on) {
 }
 /* ---- Nhắc đăng nhập để sao lưu: hiện sau khi đóng trang giới thiệu / lời chào, mỗi lần mở web khi chưa đăng nhập ---- */
 let backupAsked = false;
+/* Đã đăng nhập mà máy này chưa bật thông báo: hỏi một câu, đồng ý là xong (hỏi lại sau 7 ngày nếu chọn "Để sau") */
+async function askPush() {
+  for (let i = 0; i < 400; i++) {
+    if ($('#welcome').classList.contains('hidden') && $('#greetPop').classList.contains('hidden') && !$('.modal-back')) break;
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (!Cloud.user || Cloud.pushOn || !Cloud.canPush() || Notification.permission === 'denied' || $('.modal-back')) return;
+  const key = 'vincenink.pushAsk.' + Cloud.user.id;
+  if (Date.now() - (+ls.get(key, '0') || 0) < 7 * 864e5) return;
+  ls.set(key, String(Date.now()));
+  const body = document.createElement('div'); body.className = 'push-ask';
+  body.innerHTML = `<div class="pa-ic">🔔</div>
+    <p class="mp-lead">${t('Bạn có muốn nhận thông báo lịch dạy không?')}</p>
+    <ul class="bk-list">
+      <li>☀️ ${t('9:00 sáng: lịch dạy hôm nay')}</li>
+      <li>⏰ ${t('Trước mỗi buổi 1 tiếng')}</li>
+      <li>🌙 ${t('21:00 tối: lịch ngày mai')}</li>
+    </ul>
+    <p class="hint">${t('Vẫn nhận được kể cả khi đã đóng Vincenink. Có thể tắt bất cứ lúc nào trong Nhắc lịch.')}</p>`;
+  openModal({ title: t('Nhận thông báo'), body, width: 420, actions: [
+    { label: t('Để sau') },
+    { label: t('Có, bật thông báo'), kind: 'primary', onClick: () => { Cloud.enablePush(); } },
+  ] });
+}
 async function maybeBackupPrompt() {
   if (backupAsked || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
   for (let i = 0; i < 40 && !Cloud.ready; i++) await new Promise(r => setTimeout(r, 150));

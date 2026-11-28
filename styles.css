@@ -1581,3 +1581,9 @@ button:focus-visible, select:focus-visible, a:focus-visible, [role=button]:focus
 /* Cửa sổ bắt buộc chọn: bấm ra ngoài chỉ rung nhẹ, không đóng (v36) */
 @keyframes vn-nudge { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
 .nudge { animation: vn-nudge .38s ease; }
+
+/* Hỏi bật thông báo sau khi đăng nhập (v40) */
+.push-ask { text-align: center; }
+.push-ask .pa-ic { font-size: 34px; line-height: 1; margin: 2px 0 8px; }
+.push-ask .bk-list { text-align: left; display: inline-grid; gap: 6px; margin: 6px auto 10px; }
+.rem-status .rem-cta { margin-top: 10px; }
