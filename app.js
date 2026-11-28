@@ -503,7 +503,12 @@ const EN = {
   "Lịch ngày mai": "Tomorrow's lessons",
   "Có, nhắc mình nhé": "Yes, remind me",
   "Đổi giờ hoặc tắt bất cứ lúc nào trong mục Nhắc lịch.": "Change times or turn it off anytime in Reminders.",
-  "Được rồi, 7 ngày nữa mình hỏi lại nhé": "Okay, we'll ask again in 7 days"
+  "Được rồi, 7 ngày nữa mình hỏi lại nhé": "Okay, we'll ask again in 7 days",
+  "Khoan đã! Thoát bây giờ là mất dữ liệu": "Wait! Leaving now loses your data",
+  "Bạn đang dùng <b>chế độ khách</b>: lớp học, lịch, học phí và bảng vẽ <b>chưa được lưu</b>. Đóng trang là mất hết.": "You're in <b>guest mode</b>: classes, schedule, fees and boards <b>aren't saved</b>. Closing the page deletes them.",
+  "Đăng nhập hoặc đăng ký (miễn phí, chưa tới 1 phút) để lưu lại toàn bộ và dùng tiếp trên mọi máy.": "Sign in or sign up (free, under a minute) to save everything and continue on any device.",
+  "Đăng nhập / Đăng ký để lưu": "Sign in / Sign up to save",
+  "Vẫn dùng chế độ khách": "Stay in guest mode"
 };
 const WD = { vi: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
 const WDS = { vi: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
@@ -3931,6 +3936,28 @@ async function askPush() {
   $('.pa-yes', body).onclick = () => { m.close(); Cloud.enablePush(); };
   $('.pa-later', body).onclick = () => { m.close(); toast(t('Được rồi, 7 ngày nữa mình hỏi lại nhé')); };
 }
+/* Khách đưa chuột lên thanh tab / nút đóng: hiện cảnh báo của Vincenink TRƯỚC khi trình duyệt hiện hộp thoại mặc định
+   (Chrome không cho trang tự đặt chữ trong hộp "Leave site? Changes you made may not be saved") */
+let exitWarnAt = 0, exitWarnN = 0;
+function exitWarn() {
+  if (typeof Cloud === 'undefined' || !Cloud.configured() || isMemberSync() || Guest.leaving) return;
+  if ($('.modal-back') || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
+  if (exitWarnN >= 3 || Date.now() - exitWarnAt < 90e3) return;
+  exitWarnAt = Date.now(); exitWarnN++;
+  const body = document.createElement('div'); body.className = 'push-ask exit-warn';
+  body.innerHTML = `
+    <div class="pa-hero ew"><span class="pa-bell">⚠️</span></div>
+    <h3 class="pa-title">${t('Khoan đã! Thoát bây giờ là mất dữ liệu')}</h3>
+    <p class="pa-sub">${t('Bạn đang dùng <b>chế độ khách</b>: lớp học, lịch, học phí và bảng vẽ <b>chưa được lưu</b>. Đóng trang là mất hết.')}</p>
+    <div class="ew-box">${ic('check', 15)}<span>${t('Đăng nhập hoặc đăng ký (miễn phí, chưa tới 1 phút) để lưu lại toàn bộ và dùng tiếp trên mọi máy.')}</span></div>
+    <button class="btn primary pa-yes">${t('Đăng nhập / Đăng ký để lưu')}</button>
+    <button class="pa-later">${t('Vẫn dùng chế độ khách')}</button>`;
+  const m = openModal({ title: '', body, width: 400 });
+  m.el.classList.add('pa-modal');
+  $('.pa-yes', body).onclick = () => { m.close(); setTimeout(() => accountModal({ retry: true }), 60); };
+  $('.pa-later', body).onclick = () => m.close();
+}
+document.addEventListener('mouseout', e => { if (!e.relatedTarget && e.clientY <= 4) exitWarn(); });
 async function maybeBackupPrompt() {
   if (backupAsked || !$('#welcome').classList.contains('hidden') || !$('#greetPop').classList.contains('hidden')) return;
   for (let i = 0; i < 40 && !Cloud.ready; i++) await new Promise(r => setTimeout(r, 150));

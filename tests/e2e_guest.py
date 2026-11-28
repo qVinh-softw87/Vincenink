@@ -43,6 +43,12 @@ async def main():
         txt = await p.evaluate("document.querySelector('.mode-pick')?.innerText || ''")
         assert 'Đăng nhập' in txt and 'khách' in txt and 'mất toàn bộ dữ liệu' in txt; ok('Sau giới thiệu: chọn Đăng nhập hoặc Khách, ghi rõ khách sẽ mất dữ liệu khi đóng')
         assert await p.evaluate("(()=>{ const e=new Event('beforeunload',{cancelable:true}); window.dispatchEvent(e); return e.defaultPrevented })()"); ok('Khách bấm đóng trang → trình duyệt hỏi lại (có thể mất dữ liệu)')
+        await p.evaluate("document.querySelectorAll('.modal-back').forEach(x=>x.remove())")
+        await p.mouse.move(600, 300); await p.mouse.move(600, 0); await p.evaluate("document.dispatchEvent(new MouseEvent('mouseout',{clientY:0,relatedTarget:null}))"); await p.wait_for_timeout(300)
+        t2 = await p.evaluate("document.querySelector('.exit-warn')?.innerText || ''")
+        assert 'Thoát bây giờ là mất dữ liệu' in t2 and 'Đăng nhập / Đăng ký để lưu' in t2; ok('Khách đưa chuột lên nút đóng tab → hiện cảnh báo "Thoát bây giờ là mất dữ liệu — Đăng nhập/Đăng ký để lưu"')
+        await p.click('.exit-warn .pa-yes'); await p.wait_for_timeout(300)
+        assert await p.evaluate("!!document.querySelector('#acctModal')"); ok('Bấm "Đăng nhập / Đăng ký để lưu" → mở cửa sổ tài khoản')
         await ctx.close()
 
         # 2) Trình duyệt đã có dữ liệu từ trước (legacy) → giữ dữ liệu cũ
